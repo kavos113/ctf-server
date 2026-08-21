@@ -108,6 +108,8 @@ create_server(int port, int max_connections)
   srv->epoll_fd = epoll_fd;
   srv->port = port;
 
+  setup_shutdown(srv);
+
   return srv;
 }
 
@@ -157,7 +159,7 @@ serve(server_t *srv)
         break;
 
       case FD_TYPE_SIGNAL:
-        printf("graceful shutdown...");
+        printf("graceful shutdown...\n");
         is_running = 0;
         break;
       }
@@ -187,7 +189,7 @@ destroy_server(server_t *srv)
 
   free(srv);
 
-  printf("[Server] shutdown completed.");
+  printf("[Server] shutdown completed.\n");
 }
 
 void
