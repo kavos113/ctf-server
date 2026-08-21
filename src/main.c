@@ -22,6 +22,18 @@ static const char RESPONSE[] = "HTTP/1.1 200 OK\r\n"
                                "\r\n"
                                "Hello, World!";
 
+typedef enum
+{
+  FD_TYPE_LISTEN,
+  FD_TYPE_CLIENT
+} fd_type_t;
+
+typedef struct
+{
+  int fd;
+  fd_type_t type;
+} connection_t;
+
 int
 set_nonblocking(int sockfd)
 {
@@ -79,6 +91,8 @@ main()
     return 1;
   }
 
+  connection_t listen_conn = {sockfd, FD_TYPE_LISTEN};
+
   int epoll_fd = epoll_create1(0);
   if (epoll_fd < 0)
   {
@@ -88,7 +102,7 @@ main()
 
   struct epoll_event event;
   event.events = EPOLLIN;
-  event.data.fd = sockfd;
+  event.data.ptr = &listen_conn;
   if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, sockfd, &event) < 0)
   {
     perror("epoll_ctl");
@@ -113,11 +127,10 @@ main()
 
     for (int i = 0; i < n_fds; i++)
     {
-      int current_fd = events[i].data.fd;
-      uint32_t current_events = events[i].events;
+      connection_t *conn = (connection_t *)events[i].data.ptr;
 
       // accept new connections
-      if (current_fd == sockfd)
+      if (conn->type == FD_TYPE_LISTEN)
       {
         while (1)
         {
@@ -142,30 +155,34 @@ main()
             continue;
           }
 
+          connection_t *client_conn = malloc(sizeof(connection_t));
+          if (!client_conn)
+          {
+            perror("malloc");
+            close(client_fd);
+            continue;
+          }
+          client_conn->fd = client_fd;
+          client_conn->type = FD_TYPE_CLIENT;
+
           struct epoll_event client_event;
           client_event.events = EPOLLIN | EPOLLET; // Edge-triggered
-          client_event.data.fd = client_fd;
+          client_event.data.ptr = client_conn;
           if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_fd, &client_event) < 0)
           {
             perror("epoll_ctl");
             close(client_fd);
+            free(client_conn);
             continue;
           }
 
           printf("Accepted connection on fd %d\n", client_fd);
         }
       }
-      // error / hangup events
-      else if (current_events & (EPOLLERR | EPOLLHUP | EPOLLRDHUP))
-      {
-        fprintf(stderr, "epoll error on fd %d\n", current_fd);
-        close(current_fd);
-      }
-      // read data
-      else if (current_events & EPOLLIN)
+      else if (conn->type == FD_TYPE_CLIENT)
       {
         char buffer[1024];
-        ssize_t bytes_read = recv(current_fd, buffer, sizeof(buffer) - 1, 0);
+        ssize_t bytes_read = recv(conn->fd, buffer, sizeof(buffer) - 1, 0);
         if (bytes_read > 0)
         {
           buffer[bytes_read] = '\0';
@@ -173,25 +190,28 @@ main()
           if (strstr(buffer, "\r\n\r\n") != NULL)
           {
             // Send HTTP response
-            send(current_fd, RESPONSE, sizeof(RESPONSE) - 1, 0);
+            send(conn->fd, RESPONSE, sizeof(RESPONSE) - 1, 0);
 
-            epoll_ctl(epoll_fd, EPOLL_CTL_DEL, current_fd, NULL);
-            close(current_fd);
+            epoll_ctl(epoll_fd, EPOLL_CTL_DEL, conn->fd, NULL);
+            close(conn->fd);
+            free(conn);
           }
         }
         else if (bytes_read == 0)
         {
           // Client closed connection
-          epoll_ctl(epoll_fd, EPOLL_CTL_DEL, current_fd, NULL);
-          close(current_fd);
+          epoll_ctl(epoll_fd, EPOLL_CTL_DEL, conn->fd, NULL);
+          close(conn->fd);
+          free(conn);
         }
         else
         {
           if (errno != EAGAIN && errno != EWOULDBLOCK)
           {
             perror("recv");
-            epoll_ctl(epoll_fd, EPOLL_CTL_DEL, current_fd, NULL);
-            close(current_fd);
+            epoll_ctl(epoll_fd, EPOLL_CTL_DEL, conn->fd, NULL);
+            close(conn->fd);
+            free(conn);
           }
         }
       }
