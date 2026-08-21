@@ -4,9 +4,11 @@
 typedef enum
 {
   FD_TYPE_LISTEN,
-  FD_TYPE_CLIENT
+  FD_TYPE_CLIENT,
+  FD_TYPE_SIGNAL
 } fd_type_t;
 
+// connection_t represents event notified from epoll
 typedef struct
 {
   int fd;
@@ -18,6 +20,7 @@ typedef struct
   int port;
   int epoll_fd;
   connection_t listen_conn;
+  connection_t signal_conn;
 } server_t;
 
 server_t *create_server(int port, int max_connections);

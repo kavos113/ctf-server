@@ -3,14 +3,17 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <fcntl.h>
 #include <string.h>
 #include <unistd.h>
+#include <signal.h>
 
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/epoll.h>
+#include <sys/signalfd.h>
 
 #define MAX_EVENTS 10
 
@@ -42,7 +45,8 @@ void setup_shutdown(server_t *srv);
 void listen_handler(const server_t *srv);
 void client_handler(const server_t *srv, connection_t *conn);
 
-void destroy_connection(connection_t *conn, const server_t *server);
+int add_connection(const server_t *server, connection_t *conn, uint32_t event_mask);
+void remove_connection(const server_t *server, connection_t *conn);
 
 server_t *
 create_server(int port, int max_connections)
@@ -123,7 +127,9 @@ serve(server_t *srv)
   struct epoll_event events[MAX_EVENTS];
   printf("Server listening on port %d\n", srv->port);
 
-  while (1)
+  int is_running = 1;
+
+  while (is_running)
   {
     int n_fds = epoll_wait(srv->epoll_fd, events, MAX_EVENTS, -1);
     if (n_fds < 0)
@@ -148,6 +154,11 @@ serve(server_t *srv)
 
       case FD_TYPE_CLIENT:
         client_handler(srv, conn);
+        break;
+
+      case FD_TYPE_SIGNAL:
+        printf("graceful shutdown...");
+        is_running = 0;
         break;
       }
     }
@@ -175,11 +186,24 @@ destroy_server(server_t *srv)
   }
 
   free(srv);
+
+  printf("[Server] shutdown completed.");
 }
 
 void
 setup_shutdown(server_t *srv)
 {
+  sigset_t mask;
+  sigemptyset(&mask);
+  sigaddset(&mask, SIGINT);
+  sigaddset(&mask, SIGTERM);
+  sigprocmask(SIG_BLOCK, &mask, NULL);
+
+  connection_t *conn = malloc(sizeof(connection_t));
+  conn->fd = signalfd(-1, &mask, SFD_NONBLOCK);
+  conn->type = FD_TYPE_SIGNAL;
+
+  add_connection(srv, conn, EPOLLIN);
 }
 
 void
@@ -218,12 +242,8 @@ listen_handler(const server_t *srv)
     client_conn->fd = client_fd;
     client_conn->type = FD_TYPE_CLIENT;
 
-    struct epoll_event client_event;
-    client_event.events = EPOLLIN | EPOLLET; // Edge-triggered
-    client_event.data.ptr = client_conn;
-    if (epoll_ctl(srv->epoll_fd, EPOLL_CTL_ADD, client_fd, &client_event) < 0)
+    if (add_connection(srv, client_conn, EPOLLIN | EPOLLET) < 0) // Edge-triggered
     {
-      perror("epoll_ctl");
       close(client_fd);
       free(client_conn);
       continue;
@@ -247,27 +267,44 @@ client_handler(const server_t *srv, connection_t *conn)
       // Send HTTP response
       send(conn->fd, RESPONSE, sizeof(RESPONSE) - 1, 0);
 
-      destroy_connection(conn, srv);
+      remove_connection(srv, conn);
     }
   }
   else if (bytes_read == 0)
   {
-    destroy_connection(conn, srv);
+    remove_connection(srv, conn);
   }
   else
   {
     if (errno != EAGAIN && errno != EWOULDBLOCK)
     {
       perror("recv");
-      destroy_connection(conn, srv);
+      remove_connection(srv, conn);
     }
   }
 }
 
+int
+add_connection(const server_t *server, connection_t *conn, uint32_t event_mask)
+{
+  struct epoll_event event;
+  event.events = event_mask;
+  event.data.ptr = conn;
+
+  if (epoll_ctl(server->epoll_fd, EPOLL_CTL_ADD, conn->fd, &event) < 0)
+  {
+    perror("epoll_ctl");
+    return -1;
+  }
+
+  return 0;
+}
+
 void
-destroy_connection(connection_t *conn, const server_t *server)
+remove_connection(const server_t *server, connection_t *conn)
 {
   epoll_ctl(server->epoll_fd, EPOLL_CTL_DEL, conn->fd, NULL);
   close(conn->fd);
   free(conn);
 }
+
