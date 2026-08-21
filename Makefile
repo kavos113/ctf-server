@@ -6,6 +6,8 @@ TARGET=ctf-server
 CC=gcc
 CFLAGS=-Wall -Wextra -Werror -g
 
+all: $(TARGET)
+
 $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^
 
