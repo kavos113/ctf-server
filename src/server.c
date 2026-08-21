@@ -257,29 +257,36 @@ void
 client_handler(const server_t *srv, connection_t *conn)
 {
   char buffer[1024];
-  ssize_t bytes_read = recv(conn->fd, buffer, sizeof(buffer) - 1, 0);
-  if (bytes_read > 0)
+
+  while (1)
   {
-    buffer[bytes_read] = '\0';
-
-    if (strstr(buffer, "\r\n\r\n") != NULL)
+    ssize_t bytes_read = recv(conn->fd, buffer, sizeof(buffer) - 1, 0);
+    if (bytes_read > 0)
     {
-      // Send HTTP response
-      send(conn->fd, RESPONSE, sizeof(RESPONSE) - 1, 0);
+      buffer[bytes_read] = '\0';
 
-      remove_connection(srv, conn);
+      if (strstr(buffer, "\r\n\r\n") != NULL)
+      {
+        // Send HTTP response
+        send(conn->fd, RESPONSE, sizeof(RESPONSE) - 1, 0);
+
+        remove_connection(srv, conn);
+        break;
+      }
     }
-  }
-  else if (bytes_read == 0)
-  {
-    remove_connection(srv, conn);
-  }
-  else
-  {
-    if (errno != EAGAIN && errno != EWOULDBLOCK)
+    else if (bytes_read == 0)
     {
-      perror("recv");
       remove_connection(srv, conn);
+      break;
+    }
+    else
+    {
+      if (errno != EAGAIN && errno != EWOULDBLOCK)
+      {
+        perror("recv");
+        remove_connection(srv, conn);
+        break;
+      }
     }
   }
 }
