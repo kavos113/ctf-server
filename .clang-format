@@ -1,4 +1,3 @@
----
 BasedOnStyle: LLVM
 IndentWidth: 2
 UseTab: Never
@@ -13,4 +12,3 @@ AlignConsecutiveMacros: AcrossComments
 BreakAfterReturnType: TopLevelDefinitions
 BreakStringLiterals: true
 BreakAdjacentStringLiterals: true
----

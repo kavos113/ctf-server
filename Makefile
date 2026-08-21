@@ -16,3 +16,6 @@ $(TARGET): $(OBJS)
 
 clean:
 	rm -f $(OBJS) $(TARGET)
+
+fmt:
+	clang-format-19 --style=file -i ./src/*.c

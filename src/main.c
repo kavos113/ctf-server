@@ -1,6 +1,6 @@
 #include "server.h"
 
-#define PORT       8080
+#define PORT            8080
 #define MAX_CONNECTIONS 10
 
 int

@@ -1,27 +1,27 @@
 #include "server.h"
 
 #include <errno.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdint.h>
 #include <fcntl.h>
+#include <signal.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <signal.h>
 
 #include <arpa/inet.h>
-#include <sys/socket.h>
-#include <sys/types.h>
 #include <sys/epoll.h>
 #include <sys/signalfd.h>
+#include <sys/socket.h>
+#include <sys/types.h>
 
 #define MAX_EVENTS 10
 
 static const char RESPONSE[] = "HTTP/1.1 200 OK\r\n"
-    "Content-Type: text/plain\r\n"
-    "Content-Length: 13\r\n"
-    "\r\n"
-    "Hello, World!";
+                               "Content-Type: text/plain\r\n"
+                               "Content-Length: 13\r\n"
+                               "\r\n"
+                               "Hello, World!";
 
 static int
 set_nonblocking(int sockfd)
@@ -316,4 +316,3 @@ remove_connection(const server_t *server, connection_t *conn)
   close(conn->fd);
   free(conn);
 }
-
