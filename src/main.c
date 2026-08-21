@@ -6,7 +6,7 @@
 int
 main()
 {
-  server *server = create_server(PORT, MAX_CONNECTIONS);
+  server_t *server = create_server(PORT, MAX_CONNECTIONS);
   serve(server);
 
   destroy_server(server);

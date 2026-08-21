@@ -18,13 +18,13 @@ typedef struct
   int port;
   int epoll_fd;
   connection_t listen_conn;
-} server;
+} server_t;
 
-server *create_server(int port, int max_connections);
+server_t *create_server(int port, int max_connections);
 
-void serve(server *srv);
+void serve(server_t *srv);
 
 // destroy and free
-void destroy_server(server *srv);
+void destroy_server(server_t *srv);
 
 #endif // SERVER_H

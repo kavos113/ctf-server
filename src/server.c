@@ -15,10 +15,10 @@
 #define MAX_EVENTS 10
 
 static const char RESPONSE[] = "HTTP/1.1 200 OK\r\n"
-                               "Content-Type: text/plain\r\n"
-                               "Content-Length: 13\r\n"
-                               "\r\n"
-                               "Hello, World!";
+    "Content-Type: text/plain\r\n"
+    "Content-Length: 13\r\n"
+    "\r\n"
+    "Hello, World!";
 
 static int
 set_nonblocking(int sockfd)
@@ -37,10 +37,17 @@ set_nonblocking(int sockfd)
   return 0;
 }
 
-server *
+void setup_shutdown(server_t *srv);
+
+void listen_handler(const server_t *srv);
+void client_handler(const server_t *srv, connection_t *conn);
+
+void destroy_connection(connection_t *conn, const server_t *server);
+
+server_t *
 create_server(int port, int max_connections)
 {
-  server *srv = malloc(sizeof(server));
+  server_t *srv = malloc(sizeof(server_t));
   if (!srv)
   {
     perror("malloc");
@@ -101,7 +108,7 @@ create_server(int port, int max_connections)
 }
 
 void
-serve(server *srv)
+serve(server_t *srv)
 {
   struct epoll_event event;
   event.events = EPOLLIN;
@@ -133,101 +140,134 @@ serve(server *srv)
     {
       connection_t *conn = (connection_t *)events[i].data.ptr;
 
-      // accept new connections
-      if (conn->type == FD_TYPE_LISTEN)
+      switch (conn->type)
       {
-        while (1)
-        {
-          struct sockaddr_in client_addr;
-          socklen_t client_len = sizeof(client_addr);
-          int client_fd = accept(srv->listen_conn.fd, (struct sockaddr *)&client_addr, &client_len);
-          if (client_fd < 0)
-          {
-            if (errno == EAGAIN || errno == EWOULDBLOCK)
-            {
-              // No more incoming connections
-              break;
-            }
-            perror("accept");
-            return;
-          }
+      case FD_TYPE_LISTEN:
+        listen_handler(srv);
+        break;
 
-          if (set_nonblocking(client_fd) < 0)
-          {
-            perror("set_nonblocking");
-            close(client_fd);
-            continue;
-          }
-
-          connection_t *client_conn = malloc(sizeof(connection_t));
-          if (!client_conn)
-          {
-            perror("malloc");
-            close(client_fd);
-            continue;
-          }
-          client_conn->fd = client_fd;
-          client_conn->type = FD_TYPE_CLIENT;
-
-          struct epoll_event client_event;
-          client_event.events = EPOLLIN | EPOLLET; // Edge-triggered
-          client_event.data.ptr = client_conn;
-          if (epoll_ctl(srv->epoll_fd, EPOLL_CTL_ADD, client_fd, &client_event) < 0)
-          {
-            perror("epoll_ctl");
-            close(client_fd);
-            free(client_conn);
-            continue;
-          }
-
-          printf("Accepted connection on fd %d\n", client_fd);
-        }
-      }
-      else if (conn->type == FD_TYPE_CLIENT)
-      {
-        char buffer[1024];
-        ssize_t bytes_read = recv(conn->fd, buffer, sizeof(buffer) - 1, 0);
-        if (bytes_read > 0)
-        {
-          buffer[bytes_read] = '\0';
-
-          if (strstr(buffer, "\r\n\r\n") != NULL)
-          {
-            // Send HTTP response
-            send(conn->fd, RESPONSE, sizeof(RESPONSE) - 1, 0);
-
-            epoll_ctl(srv->epoll_fd, EPOLL_CTL_DEL, conn->fd, NULL);
-            close(conn->fd);
-            free(conn);
-          }
-        }
-        else if (bytes_read == 0)
-        {
-          // Client closed connection
-          epoll_ctl(srv->epoll_fd, EPOLL_CTL_DEL, conn->fd, NULL);
-          close(conn->fd);
-          free(conn);
-        }
-        else
-        {
-          if (errno != EAGAIN && errno != EWOULDBLOCK)
-          {
-            perror("recv");
-            epoll_ctl(srv->epoll_fd, EPOLL_CTL_DEL, conn->fd, NULL);
-            close(conn->fd);
-            free(conn);
-          }
-        }
+      case FD_TYPE_CLIENT:
+        client_handler(srv, conn);
+        break;
       }
     }
   }
 }
 
 void
-destroy_server(server *srv)
+destroy_server(server_t *srv)
 {
-  close(srv->epoll_fd);
-  close(srv->listen_conn.fd);
+  if (!srv)
+  {
+    return;
+  }
+
+  if (srv->epoll_fd >= 0)
+  {
+    close(srv->epoll_fd);
+    srv->epoll_fd = -1;
+  }
+
+  if (srv->listen_conn.fd >= 0)
+  {
+    close(srv->listen_conn.fd);
+    srv->listen_conn.fd = -1;
+  }
 
   free(srv);
+}
+
+void
+setup_shutdown(server_t *srv)
+{
+}
+
+void
+listen_handler(const server_t *srv)
+{
+  while (1)
+  {
+    struct sockaddr_in client_addr;
+    socklen_t client_len = sizeof(client_addr);
+    int client_fd = accept(srv->listen_conn.fd, (struct sockaddr *)&client_addr, &client_len);
+    if (client_fd < 0)
+    {
+      if (errno == EAGAIN || errno == EWOULDBLOCK)
+      {
+        // No more incoming connections
+        break;
+      }
+      perror("accept");
+      return;
+    }
+
+    if (set_nonblocking(client_fd) < 0)
+    {
+      perror("set_nonblocking");
+      close(client_fd);
+      continue;
+    }
+
+    connection_t *client_conn = malloc(sizeof(connection_t));
+    if (!client_conn)
+    {
+      perror("malloc");
+      close(client_fd);
+      continue;
+    }
+    client_conn->fd = client_fd;
+    client_conn->type = FD_TYPE_CLIENT;
+
+    struct epoll_event client_event;
+    client_event.events = EPOLLIN | EPOLLET; // Edge-triggered
+    client_event.data.ptr = client_conn;
+    if (epoll_ctl(srv->epoll_fd, EPOLL_CTL_ADD, client_fd, &client_event) < 0)
+    {
+      perror("epoll_ctl");
+      close(client_fd);
+      free(client_conn);
+      continue;
+    }
+
+    printf("Accepted connection on fd %d\n", client_fd);
+  }
+}
+
+void
+client_handler(const server_t *srv, connection_t *conn)
+{
+  char buffer[1024];
+  ssize_t bytes_read = recv(conn->fd, buffer, sizeof(buffer) - 1, 0);
+  if (bytes_read > 0)
+  {
+    buffer[bytes_read] = '\0';
+
+    if (strstr(buffer, "\r\n\r\n") != NULL)
+    {
+      // Send HTTP response
+      send(conn->fd, RESPONSE, sizeof(RESPONSE) - 1, 0);
+
+      destroy_connection(conn, srv);
+    }
+  }
+  else if (bytes_read == 0)
+  {
+    destroy_connection(conn, srv);
+  }
+  else
+  {
+    if (errno != EAGAIN && errno != EWOULDBLOCK)
+    {
+      perror("recv");
+      destroy_connection(conn, srv);
+    }
+  }
+}
+
+void
+destroy_connection(connection_t *conn, const server_t *server)
+{
+  epoll_ctl(server->epoll_fd, EPOLL_CTL_DEL, conn->fd, NULL);
+  close(conn->fd);
+  free(conn);
 }
