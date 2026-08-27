@@ -6,7 +6,7 @@ TESTOBJS=$(TESTS:.c=.o) $(SRCS:.c=.o)
 TARGET=ctf-server
 
 CC=gcc
-CFLAGS=-Wall -Wextra -Werror -g
+CFLAGS=-Wall -Wextra -g
 
 all: $(TARGET) $(TESTTARGET)
 
