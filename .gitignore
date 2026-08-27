@@ -1,3 +1,4 @@
 *.o
 .idea
 ctf-server
+test-ctf-server
