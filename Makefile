@@ -25,3 +25,4 @@ clean:
 
 fmt:
 	clang-format-19 --style=file -i ./src/*.c
+	clang-format-19 --style=file -i ./test/*.c

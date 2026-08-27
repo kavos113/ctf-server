@@ -12,3 +12,4 @@ AlignConsecutiveMacros: AcrossComments
 BreakAfterReturnType: TopLevelDefinitions
 BreakStringLiterals: true
 BreakAdjacentStringLiterals: true
+UseCRLF: false
