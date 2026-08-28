@@ -13,6 +13,9 @@ typedef struct http_parser_internal_state http_parser_internal_state;
 void test_parse_method(test_ctx_t *ctx);
 void test_parse_version(test_ctx_t *ctx);
 
+void test_parse_chunk(test_ctx_t *ctx);
+void test_parse_chunk_state_transition(test_ctx_t *ctx);
+
 void
 test_http(test_ctx_t *ctx)
 {
@@ -21,6 +24,7 @@ test_http(test_ctx_t *ctx)
 
   test_parse_method(ctx);
   test_parse_version(ctx);
+  test_parse_chunk(ctx);
 
   ctx->indent -= PREFACE_INDENT;
 }
@@ -149,6 +153,7 @@ test_parse_method(test_ctx_t *ctx)
 
   for (size_t i = 0; i < sizeof(test_cases) / sizeof(test_cases[0]); i++)
   {
+    ctx->is_canceled = false;
     struct test_case *tc = &test_cases[i];
 
     http_request req;
@@ -234,6 +239,7 @@ test_parse_version(test_ctx_t *ctx)
 
   for (size_t i = 0; i < sizeof(test_cases) / sizeof(test_cases[0]); i++)
   {
+    ctx->is_canceled = false;
     struct test_case *tc = &test_cases[i];
 
     http_request req;
@@ -249,6 +255,227 @@ test_parse_version(test_ctx_t *ctx)
 
     ASSERT_EQ(tc->name, tc->expected_result, result);
     ASSERT_EQ(tc->name, tc->expected_version, req.version);
+
+    CHECK_TEST(tc->name);
+  }
+
+  ctx->indent -= PREFACE_INDENT;
+}
+
+void
+test_parse_chunk(test_ctx_t *ctx)
+{
+  PRINT_TEST_PREFACE("test_parse_chunk")
+  ctx->indent += PREFACE_INDENT;
+
+  test_parse_chunk_state_transition(ctx);
+
+  ctx->indent -= PREFACE_INDENT;
+}
+
+void
+test_parse_chunk_state_transition(test_ctx_t *ctx)
+{
+  PRINT_TEST_PREFACE("test_parse_chunk_state_transition")
+  ctx->indent += PREFACE_INDENT;
+
+  struct test_case
+  {
+    const char *name;
+
+    const char *buf;
+    size_t buf_len;
+    size_t bytes_read;
+    parse_state current_state;
+
+    error_code expected_error;
+    parse_state expected_state;
+  } test_cases[] = {
+      {
+          .name = "with 1 chunk: request line and headers",
+          .buf = "GET / HTTP/1.1\r\nHost: example.com\r\n\r\n",
+          .buf_len = 44,
+          .bytes_read = 44,
+          .current_state = STATE_REQ_METHOD,
+          .expected_error = ERR_NONE,
+          .expected_state = STATE_HEADER_END,
+      },
+      {
+          .name = "with 1 chunk: method -> uri",
+          .buf = "GET /a",
+          .buf_len = 4,
+          .bytes_read = 4,
+          .current_state = STATE_REQ_METHOD,
+          .expected_error = ERR_MORE_DATA_NEEDED,
+          .expected_state = STATE_REQ_URI,
+      },
+      {
+          .name = "with 1 chunk: uri -> version",
+          .buf = "GET /www HTTP/1.",
+          .buf_len = 16,
+          .bytes_read = 10,
+          .current_state = STATE_REQ_URI,
+          .expected_error = ERR_MORE_DATA_NEEDED,
+          .expected_state = STATE_REQ_VERSION,
+      },
+      {
+          .name = "with 1 chunk: version -> header key",
+          .buf = "GET / HTTP/1.1\r\n",
+          .buf_len = 16,
+          .bytes_read = 4,
+          .current_state = STATE_REQ_VERSION,
+          .expected_error = ERR_MORE_DATA_NEEDED,
+          .expected_state = STATE_HEADER_KEY,
+      },
+      {
+          .name = "with 1 chunk, error: unknown method",
+          .buf = "UNKNOWN / HTTP/1.1\r\n",
+          .buf_len = 20,
+          .bytes_read = 20,
+          .current_state = STATE_REQ_METHOD,
+          .expected_error = ERR_HTTP_PARSE_FAILED,
+          .expected_state = STATE_ERROR,
+      },
+      {
+          .name = "with 1 chunk, error: invalid version",
+          .buf = "GET / HTTP/2.0\r\n",
+          .buf_len = 16,
+          .bytes_read = 16,
+          .current_state = STATE_REQ_VERSION,
+          .expected_error = ERR_HTTP_PARSE_FAILED,
+          .expected_state = STATE_ERROR,
+      },
+      {
+          .name = "with 1 chunk, error: single CR",
+          .buf = "GET / HTTP/1.1\r",
+          .buf_len = 15,
+          .bytes_read = 15,
+          .current_state = STATE_REQ_VERSION,
+          .expected_error = ERR_HTTP_PARSE_FAILED,
+          .expected_state = STATE_ERROR,
+      },
+  };
+
+  for (size_t i = 0; i < sizeof(test_cases) / sizeof(test_cases[0]); i++)
+  {
+    ctx->is_canceled = false;
+    struct test_case *tc = &test_cases[i];
+
+    http_request req;
+    memset(&req, 0, sizeof(http_request));
+
+    http_parser_internal_state s;
+    memset(&s, 0, sizeof(http_parser_internal_state));
+    s.state = tc->current_state;
+    req.internal = &s;
+
+    memcpy(s.buf, tc->buf, tc->buf_len);
+    s.buf_len = tc->buf_len;
+
+    error e = parse_chunk(&req, tc->bytes_read);
+    ASSERT_EQ(tc->name, tc->expected_error, e.code);
+    ASSERT_EQ(tc->name, tc->expected_state, s.state);
+
+    CHECK_TEST(tc->name);
+  }
+
+  struct test_case_by_byte
+  {
+    const char *name;
+
+    const char *buf;
+    size_t buf_len;
+    parse_state current_state;
+
+    error_code expected_error;
+    parse_state expected_state;
+  } test_cases_by_byte[] = {
+      {
+          .name = "with 1 byte at a time: request line and headers",
+          .buf = "GET / HTTP/1.1\r\nHost: example.com\r\n\r\n",
+          .buf_len = 44,
+          .current_state = STATE_REQ_METHOD,
+          .expected_error = ERR_NONE,
+          .expected_state = STATE_HEADER_END,
+      },
+      {
+          .name = "with 1 byte at a time: method -> uri",
+          .buf = "GET /a",
+          .buf_len = 4,
+          .current_state = STATE_REQ_METHOD,
+          .expected_error = ERR_MORE_DATA_NEEDED,
+          .expected_state = STATE_REQ_URI,
+      },
+      {
+          .name = "with 1 byte at a time: uri -> version",
+          .buf = "GET /www HTTP/1.",
+          .buf_len = 16,
+          .current_state = STATE_REQ_URI,
+          .expected_error = ERR_MORE_DATA_NEEDED,
+          .expected_state = STATE_REQ_VERSION,
+      },
+      {
+          .name = "with 1 byte at a time: version -> header key",
+          .buf = "GET / HTTP/1.1\r\n",
+          .buf_len = 16,
+          .current_state = STATE_REQ_VERSION,
+          .expected_error = ERR_MORE_DATA_NEEDED,
+          .expected_state = STATE_HEADER_KEY,
+      },
+      {
+          .name = "with 1 byte at a time, error: unknown method",
+          .buf = "UNKNOWN / HTTP/1.1\r\n",
+          .buf_len = 20,
+          .current_state = STATE_REQ_METHOD,
+          .expected_error = ERR_HTTP_PARSE_FAILED,
+          .expected_state = STATE_ERROR,
+      },
+      {
+          .name = "with 1 byte at a time, error: invalid version",
+          .buf = "GET / HTTP/2.0\r\n",
+          .buf_len = 16,
+          .current_state = STATE_REQ_VERSION,
+          .expected_error = ERR_HTTP_PARSE_FAILED,
+          .expected_state = STATE_ERROR,
+      },
+      {
+          .name = "with 1 byte at a time, error: single CR",
+          .buf = "GET / HTTP/1.1\r",
+          .buf_len = 15,
+          .current_state = STATE_REQ_VERSION,
+          .expected_error = ERR_HTTP_PARSE_FAILED,
+          .expected_state = STATE_ERROR,
+      },
+  };
+
+  for (size_t i = 0; i < sizeof(test_cases_by_byte) / sizeof(test_cases_by_byte[0]); i++)
+  {
+    ctx->is_canceled = false;
+    struct test_case_by_byte *tc = &test_cases_by_byte[i];
+
+    http_request req;
+    memset(&req, 0, sizeof(http_request));
+
+    http_parser_internal_state s;
+    memset(&s, 0, sizeof(http_parser_internal_state));
+    s.state = tc->current_state;
+    req.internal = &s;
+
+    memcpy(s.buf, tc->buf, tc->buf_len);
+    s.buf_len = tc->buf_len;
+
+    error e;
+    for (size_t j = 0; j < tc->buf_len; j++)
+    {
+      e = parse_chunk(&req, 1);
+      if (e.code != ERR_MORE_DATA_NEEDED)
+      {
+        break;
+      }
+    }
+
+    ASSERT_EQ(tc->name, tc->expected_error, e.code);
+    ASSERT_EQ(tc->name, tc->expected_state, s.state);
 
     CHECK_TEST(tc->name);
   }

@@ -7,7 +7,7 @@ TARGET=ctf-server
 TESTTARGET=test-ctf-server
 
 CC=gcc
-CFLAGS=-Wall -Wextra -g
+CFLAGS=-std=c11 -Wall -Wextra -g 
 
 all: $(TARGET) test
 

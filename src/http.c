@@ -170,11 +170,29 @@ parse_chunk(http_request *req, size_t read_bytes)
       {
         s->version_len = cur - s->version;
         s->state = STATE_REQ_LF;
+        int result = parse_version(req, s->version, s->version_len);
+        if (result < 0)
+        {
+          s->state = STATE_ERROR;
+          error e = {
+              .code = ERR_HTTP_PARSE_FAILED,
+              .msg = "invalid request line: invalid HTTP version"};
+          return e;
+        }
       }
       else if (*cur == '\n')
       {
         s->version_len = cur - s->version;
         s->state = STATE_HEADER_KEY;
+        int result = parse_version(req, s->version, s->version_len);
+        if (result < 0)
+        {
+          s->state = STATE_ERROR;
+          error e = {
+              .code = ERR_HTTP_PARSE_FAILED,
+              .msg = "invalid request line: invalid HTTP version"};
+          return e;
+        }
       }
       break;
 
