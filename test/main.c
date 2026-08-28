@@ -21,11 +21,11 @@ main(int argc, char **argv)
     ctx.detailed = 1;
   }
 
-  printf("---------- test started -----------\n");
+  printf("===== TEST STARTED =====\n\n");
 
   test_http(&ctx);
 
-  printf("---------- test ended -------------\n");
+  printf("\n====== TEST ENDED ======\n");
 
   return 0;
 }

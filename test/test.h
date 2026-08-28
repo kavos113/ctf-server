@@ -2,7 +2,7 @@
 #define TEST_TEST_H
 
 #define PREFACE_INDENT       2
-#define TESTCASE_MORE_INDENT 2
+#define TESTCASE_MORE_INDENT 4
 
 typedef struct test_ctx
 {

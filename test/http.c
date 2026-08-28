@@ -166,6 +166,7 @@ test_parse_method(test_ctx_t *ctx)
     if (result < 0)
     {
       ASSERT_EQ(tc->name, tc->expected_result, result);
+      PRINT_TEST_PASS(tc->name);
       continue;
     }
 
@@ -242,6 +243,7 @@ test_parse_version(test_ctx_t *ctx)
     if (result < 0)
     {
       ASSERT_EQ(tc->name, tc->expected_result, result);
+      PRINT_TEST_PASS(tc->name);
       continue;
     }
 
