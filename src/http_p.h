@@ -11,6 +11,12 @@ typedef enum
 {
   STATE_REQ_METHOD,
   STATE_REQ_URI,
+  STATE_REQ_VERSION,
+  STATE_REQ_LF,
+  STATE_HEADER_KEY,
+  STATE_HEADER_VALUE,
+  STATE_HEADER_LF,
+  STATE_HEADER_END,
   STATE_ERROR,
 } parse_state;
 
@@ -20,19 +26,22 @@ struct http_parser_internal_state
   size_t buf_len;
 
   parse_state state;
+
   const char *method;
   size_t method_len;
+  const char *version;
+  size_t version_len;
 };
 
 /**
  * parse request body
  * @param req
- * @param buf
  * @param read_bytes
  * @return 1: continue, 0: parsed successfully, -1: parse error
  */
 int parse_chunk(http_request *req, size_t read_bytes);
 
-int read_method(http_request *req, const char *cur);
+int parse_method(http_request *req, const char *cur);
+int parse_version(http_request *req, const char *cur, size_t len);
 
 #endif //SRC_HTTP_P_H

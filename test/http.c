@@ -10,7 +10,7 @@
 
 typedef struct http_parser_internal_state http_parser_internal_state;
 
-void test_read_method(test_ctx_t *ctx);
+void test_parse_method(test_ctx_t *ctx);
 
 void
 test_http(test_ctx_t *ctx)
@@ -18,15 +18,15 @@ test_http(test_ctx_t *ctx)
   TEST_PREFACE("test_http")
   ctx->indent += PREFACE_INDENT;
 
-  test_read_method(ctx);
+  test_parse_method(ctx);
 
   ctx->indent -= PREFACE_INDENT;
 }
 
 void
-test_read_method(test_ctx_t *ctx)
+test_parse_method(test_ctx_t *ctx)
 {
-  TEST_PREFACE("test_read_method")
+  TEST_PREFACE("test_parse_method")
   ctx->indent += PREFACE_INDENT;
 
   struct test_case
@@ -160,7 +160,7 @@ test_read_method(test_ctx_t *ctx)
     memcpy(s.buf, tc->buf, tc->buf_len);
     s.buf_len = tc->buf_len;
 
-    int result = read_method(&req, s.buf);
+    int result = parse_method(&req, s.buf);
     if (result < 0)
     {
       ASSERT_EQ(tc->name, tc->expected_result, result);

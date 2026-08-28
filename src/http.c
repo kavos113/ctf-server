@@ -127,7 +127,7 @@ parse_chunk(http_request *req, size_t read_bytes)
         return 1;
       }
 
-      if (read_method(req, s->method) < 0)
+      if (parse_method(req, s->method) < 0)
       {
         s->state = STATE_ERROR;
         return -1;
@@ -138,7 +138,55 @@ parse_chunk(http_request *req, size_t read_bytes)
       break;
     }
 
-    default:
+    case STATE_REQ_URI:
+      if (!req->uri)
+      {
+        req->uri = cur;
+      }
+
+      if (*cur == ' ')
+      {
+        req->uri_len = cur - req->uri;
+        s->state = STATE_REQ_VERSION;
+      }
+      else if (*cur == '\r' || *cur == '\n')
+      {
+        s->state = STATE_ERROR;
+        return -1;
+      }
+      break;
+
+    case STATE_REQ_VERSION:
+      if (!s->version)
+      {
+        s->version = cur;
+      }
+
+      if (*cur == '\r')
+      {
+        s->version_len = cur - s->version;
+        s->state = STATE_REQ_LF;
+      }
+      else if (*cur == '\n')
+      {
+        s->version_len = cur - s->version;
+        s->state = STATE_HEADER_KEY;
+      }
+      break;
+
+    case STATE_REQ_LF:
+      if (*cur == '\n')
+      {
+        s->state = STATE_HEADER_KEY;
+      }
+      else
+      {
+        s->state = STATE_ERROR;
+        return -1;
+      }
+      break;
+
+    case STATE_ERROR:
       return -1;
     }
   }
@@ -147,7 +195,7 @@ parse_chunk(http_request *req, size_t read_bytes)
 }
 
 int
-read_method(http_request *req, const char *cur)
+parse_method(http_request *req, const char *cur)
 {
   uint64_t v;
   memcpy(&v, cur, sizeof(uint64_t));
@@ -209,6 +257,47 @@ read_method(http_request *req, const char *cur)
     req->method = HTTP_METHOD_CONNECT;
     s->method_len = 7;
     return 0;
+  }
+
+  return -1;
+}
+
+int parse_version(http_request *req, const char *cur, size_t len)
+{
+  if (len != 8)
+  {
+    return -1;
+  }
+
+  if (cur[0] != 'H' || cur[1] != 'T' || cur[2] != 'T' || cur[3] != 'P' || cur[4] != '/' || cur[6] != '.')
+  {
+    return -1;
+  }
+
+  if (cur[5] < '0' || cur[5] > '9')
+  {
+    return -1;
+  }
+  if (cur[7] < '0' || cur[7] > '9')
+  {
+    return -1;
+  }
+
+  int major = cur[5] - '0';
+  int minor = cur[7] - '0';
+
+  if (major == 1)
+  {
+    if (minor == 0)
+    {
+      req->version = HTTP_1_0;
+      return 0;
+    }
+    else if (minor == 1)
+    {
+      req->version = HTTP_1_1;
+      return 0;
+    }
   }
 
   return -1;

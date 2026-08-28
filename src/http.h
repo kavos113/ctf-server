@@ -8,8 +8,8 @@
 
 typedef enum
 {
+  HTTP_1_0,
   HTTP_1_1,
-  HTTP_2,
 } http_version;
 
 typedef enum
@@ -40,8 +40,8 @@ typedef struct http_request
 
   http_version version;
   http_method method;
-  const char *url;
-  size_t url_len;
+  const char *uri;
+  size_t uri_len;
 
   struct http_parser_internal_state *internal;
 } http_request;
