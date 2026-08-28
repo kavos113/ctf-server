@@ -264,7 +264,7 @@ client_handler(const server_t *srv, connection_t *conn)
   error err = parse_http_request(conn, req);
   if (err.code != ERR_NONE)
   {
-    perror("parse http request");
+    fprintf(stderr, "[HTTP parse fail]: %s\n", err.msg);
   }
 
   fprintf(stdout, "[HTTP Request] version: %s, method: %s, uri: ",
