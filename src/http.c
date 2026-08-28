@@ -1,8 +1,13 @@
 #include "http.h"
 #include "http_p.h"
 
+#include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
+#include <errno.h>
+
+#include <sys/socket.h>
 
 #define METHOD_VALUE_GET     0x0000000020544547ULL
 #define METHOD_VALUE_HEAD    0x0000002044414548ULL
@@ -14,40 +19,110 @@
 #define METHOD_VALUE_PATCH   0x0000204843544150ULL
 #define METHOD_VALUE_CONNECT 0x205443454e4e4f43ULL
 
+typedef struct http_parser_internal_state http_parser_internal_state;
+
 error
 parse_http_request(connection_t *conn, http_request *out_request)
 {
+  memset(out_request, 0, sizeof(http_request));
+
+  out_request->internal = malloc(sizeof(http_parser_internal_state));
+  http_parser_internal_state *s = out_request->internal;
+
+  memset(s, 0, sizeof(http_parser_internal_state));
+  s->state = STATE_REQ_METHOD;
+
+  while (1)
+  {
+    ssize_t bytes_read =  recv(
+      conn->fd,
+      s->buf + s->buf_len,
+      MAX_HEADER_BYTES - s->buf_len,
+      0
+    );
+
+    if (bytes_read > 0)
+    {
+      s->buf_len += bytes_read;
+
+      int result = parse_chunk(out_request, bytes_read);
+      if (result < 0)
+      {
+        error e = {
+          .code = ERR_HTTP_PARSE_FAILED,
+          .msg = "http parse failed"
+        };
+        return e;
+      }
+      if (result > 0)
+      {
+        continue;
+      }
+      else
+      {
+        error e = {
+          .code = ERR_NONE
+        };
+        return e;
+      }
+    }
+    else if (bytes_read == 0)
+    {
+      // TODO: 4096超えたときの処理
+      error e = {
+        .code = ERR_CONNECTION_CLOSED,
+        .msg = "connection closed by client"
+      };
+      return e;
+    }
+    else
+    {
+      if (errno != EAGAIN && errno != EWOULDBLOCK)
+      {
+        perror("recv");
+        error e = {
+          .code = ERR_CONNECTION_CLOSED,
+          .msg = "recv failed"
+        };
+        return e;
+      }
+    }
+  }
 }
 
 int
-parse_chunk(http_request *req, const char *buf, size_t len)
+parse_chunk(http_request *req, size_t read_bytes)
 {
-  struct http_parser_internal_state *s = req->internal;
+  http_parser_internal_state *s = req->internal;
 
-  for (size_t i = 0; i < len;)
+  size_t start_idx = s->buf_len - read_bytes;
+  size_t end_idx = s->buf_len;
+
+  for (size_t i = start_idx; i < end_idx;)
   {
-    if (s->buf_len < MAX_HEADER_SIZE)
+    if (s->buf_len < MAX_HEADER_BYTES)
     {
       s->state = STATE_ERROR;
       return -1;
     }
 
-    s->buf[s->buf_len] = buf[i];
-    char *cur = &s->buf[s->buf_len];
+    char *cur = &s->buf[i];
 
     switch (s->state)
     {
     case STATE_REQ_METHOD:
+    {
       if (!s->method)
       {
         s->method = cur;
       }
 
+      size_t method_idx = s->method - s->buf;
+
       // not all arrived yet
-      if ((cur - s->method) + len < 8)
+      if (end_idx - method_idx < 8)
       {
-        i++;
-        break;
+        return 1;
       }
 
       if (read_method(req, s->method) < 0)
@@ -55,8 +130,11 @@ parse_chunk(http_request *req, const char *buf, size_t len)
         s->state = STATE_ERROR;
         return -1;
       }
-      i = (s->method - buf) + s->method_len;
+
+      i = method_idx + s->method_len + 1;
+      s->state = STATE_REQ_URI;
       break;
+    }
 
     default:
       return -1;
@@ -72,7 +150,7 @@ read_method(http_request *req, const char *cur)
   uint64_t v;
   memcpy(&v, cur, sizeof(uint64_t));
 
-  struct http_parser_internal_state *s = req->internal;
+  http_parser_internal_state *s = req->internal;
 
   switch (v & 0x00000000ffffffffULL)
   {

@@ -3,13 +3,15 @@
 
 typedef enum error_code
 {
-  ERR_UNKNOWN,
+  ERR_NONE,
+  ERR_CONNECTION_CLOSED,
+  ERR_HTTP_PARSE_FAILED,
 } error_code;
 
 typedef struct error
 {
   error_code code;
-  char *msg;
+  const char *msg;
 } error;
 
 #endif // ERROR_H
