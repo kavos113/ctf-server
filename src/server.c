@@ -268,7 +268,7 @@ client_handler(const server_t *srv, connection_t *conn)
   }
 
   fprintf(stdout, "[HTTP Request] version: %s, method: %s, uri: ",
-    http_version_to_string(req->version), http_method_to_string(req->method));
+          http_version_to_string(req->version), http_method_to_string(req->method));
   fwrite(req->uri, sizeof(char), req->uri_len, stdout);
   fprintf(stdout, "\n");
 

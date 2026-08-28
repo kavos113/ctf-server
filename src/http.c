@@ -91,7 +91,7 @@ parse_chunk(http_request *req, size_t read_bytes)
   size_t start_idx = s->buf_len - read_bytes;
   size_t end_idx = s->buf_len;
 
-  for (size_t i = start_idx; i < end_idx;)
+  for (size_t i = start_idx; i < end_idx; i++)
   {
     if (s->buf_len >= MAX_HEADER_BYTES)
     {
@@ -133,7 +133,8 @@ parse_chunk(http_request *req, size_t read_bytes)
         return e;
       }
 
-      i = method_idx + s->method_len + 1;
+      // consider i++
+      i = method_idx + s->method_len;
       s->state = STATE_REQ_URI;
       break;
     }
@@ -192,15 +193,39 @@ parse_chunk(http_request *req, size_t read_bytes)
       }
       break;
 
+    case STATE_HEADER_KEY:
+      if (*cur == '\r')
+      {
+        s->state = STATE_HEADER_END;
+      }
+      else if (*cur == '\n')
+      {
+        s->state = STATE_HEADER_END;
+        return (error){.code = ERR_NONE};
+      }
+      break;
+
+    case STATE_HEADER_VALUE:
+      break;
+    case STATE_HEADER_LF:
+      break;
+    case STATE_HEADER_END:
+      if (*cur == '\n')
+      {
+        return (error){.code = ERR_NONE};
+      }
+      break;
+
     case STATE_ERROR:
-      error e = {
+      return (error){
           .code = ERR_HTTP_PARSE_FAILED,
           .msg = "parse error"};
-      return e;
     }
   }
 
-  error e = {.code = ERR_NONE};
+  error e = {
+      .code = ERR_MORE_DATA_NEEDED,
+      .msg = "more data needed"};
   return e;
 }
 
