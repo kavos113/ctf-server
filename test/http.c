@@ -15,6 +15,9 @@ void test_parse_version(test_ctx_t *ctx);
 
 void test_parse_chunk(test_ctx_t *ctx);
 void test_parse_chunk_state_transition(test_ctx_t *ctx);
+void test_parse_chunk_parse_method(test_ctx_t *ctx);
+void test_parse_chunk_parse_uri(test_ctx_t *ctx);
+void test_parse_chunk_parse_version(test_ctx_t *ctx);
 
 void
 test_http(test_ctx_t *ctx)
@@ -269,6 +272,9 @@ test_parse_chunk(test_ctx_t *ctx)
   ctx->indent += PREFACE_INDENT;
 
   test_parse_chunk_state_transition(ctx);
+  test_parse_chunk_parse_method(ctx);
+  test_parse_chunk_parse_uri(ctx);
+  test_parse_chunk_parse_version(ctx);
 
   ctx->indent -= PREFACE_INDENT;
 }
@@ -477,6 +483,249 @@ test_parse_chunk_state_transition(test_ctx_t *ctx)
 
     ASSERT_EQ(tc->name, tc->expected_error, e.code);
     ASSERT_EQ(tc->name, tc->expected_state, s.state);
+
+    CHECK_TEST(tc->name);
+  }
+
+  ctx->indent -= PREFACE_INDENT;
+}
+
+void
+test_parse_chunk_parse_method(test_ctx_t *ctx)
+{
+  PRINT_TEST_PREFACE("test_parse_chunk_parse_method")
+  ctx->indent += PREFACE_INDENT;
+
+  struct test_case
+  {
+    const char *name;
+
+    const char *buf;
+    size_t buf_len;
+
+    error_code expected_error;
+    http_method expected_method;
+    size_t expected_method_len;
+  } test_cases[] = {
+      {
+          .name = "success: GET method",
+          .buf = "GET /aaaaaaa HTTP/1.1\r\n\r\n",
+          .buf_len = 25,
+          .expected_error = ERR_NONE,
+          .expected_method = HTTP_METHOD_GET,
+          .expected_method_len = 3,
+      },
+      {
+          .name = "success: POST method",
+          .buf = "POST /aaaaaaa HTTP/1.1\r\n\r\n",
+          .buf_len = 26,
+          .expected_error = ERR_NONE,
+          .expected_method = HTTP_METHOD_POST,
+          .expected_method_len = 4,
+      },
+      {
+          .name = "error: unknown method",
+          .buf = "UNKNOWN /aaaaaaa HTTP/1.1\r\n\r\n",
+          .buf_len = 29,
+          .expected_error = ERR_HTTP_PARSE_FAILED,
+          .expected_method = HTTP_METHOD_GET, // dummy value
+          .expected_method_len = 0,
+      },
+  };
+
+  for (size_t i = 0; i < sizeof(test_cases) / sizeof(test_cases[0]); i++)
+  {
+    ctx->is_canceled = false;
+    struct test_case *tc = &test_cases[i];
+
+    http_request req;
+    memset(&req, 0, sizeof(http_request));
+
+    http_parser_internal_state s;
+    memset(&s, 0, sizeof(http_parser_internal_state));
+    s.state = STATE_REQ_METHOD;
+    req.internal = &s;
+
+    memcpy(s.buf, tc->buf, tc->buf_len);
+    s.buf_len = tc->buf_len;
+
+    error e = parse_chunk(&req, tc->buf_len);
+    ASSERT_EQ(tc->name, tc->expected_error, e.code);
+    ASSERT_EQ(tc->name, tc->expected_method, req.method);
+    ASSERT_EQ(tc->name, tc->expected_method_len, s.method_len);
+
+    CHECK_TEST(tc->name);
+  }
+
+  ctx->indent -= PREFACE_INDENT;
+}
+
+void
+test_parse_chunk_parse_uri(test_ctx_t *ctx)
+{
+  PRINT_TEST_PREFACE("test_parse_chunk_parse_uri")
+  ctx->indent += PREFACE_INDENT;
+
+  struct test_case
+  {
+    const char *name;
+
+    const char *buf;
+    size_t buf_len;
+
+    error_code expected_error;
+    const char *expected_uri;
+    size_t expected_uri_len;
+  } test_cases[] = {
+      {
+          .name = "success: simple uri",
+          .buf = "GET /aaaaaaa HTTP/1.1\r\n\r\n",
+          .buf_len = 26,
+          .expected_error = ERR_NONE,
+          .expected_uri = "/aaaaaaa",
+          .expected_uri_len = 8,
+      },
+      {
+          .name = "success: complex uri",
+          .buf = "GET /path/to/resource?query=param HTTP/1.1\r\n\r\n",
+          .buf_len = 46,
+          .expected_error = ERR_NONE,
+          .expected_uri = "/path/to/resource?query=param",
+          .expected_uri_len = 29,
+      },
+      {
+          .name = "error: no uri",
+          .buf = "GET  HTTP/1.1\r\n\r\n",
+          .buf_len = 17,
+          .expected_error = ERR_HTTP_PARSE_FAILED,
+          .expected_uri = NULL,
+          .expected_uri_len = 0,
+      },
+      {
+          .name = "error: too many spaces before uri",
+          .buf = "GET    / HTTP/1.1\r\n\r\n",
+          .buf_len = 21,
+          .expected_error = ERR_HTTP_PARSE_FAILED,
+          .expected_uri = NULL,
+          .expected_uri_len = 0,
+      },
+      {
+          .name = "error: unexpected CR",
+          .buf = "GET \raa HTTP/1.1\r\r\n",
+          .buf_len = 19,
+          .expected_error = ERR_HTTP_PARSE_FAILED,
+          .expected_uri = NULL,
+          .expected_uri_len = 0,
+      },
+      {
+          .name = "error: unexpected LF",
+          .buf = "GET \naa HTTP/1.1\n\r\n",
+          .buf_len = 19,
+          .expected_error = ERR_HTTP_PARSE_FAILED,
+          .expected_uri = NULL,
+          .expected_uri_len = 0,
+      },
+  };
+
+  for (size_t i = 0; i < sizeof(test_cases) / sizeof(test_cases[0]); i++)
+  {
+    ctx->is_canceled = false;
+    struct test_case *tc = &test_cases[i];
+
+    http_request req;
+    memset(&req, 0, sizeof(http_request));
+
+    http_parser_internal_state s;
+    memset(&s, 0, sizeof(http_parser_internal_state));
+    req.internal = &s;
+
+    memcpy(s.buf, tc->buf, tc->buf_len);
+    s.buf_len = tc->buf_len;
+
+    error e = parse_chunk(&req, tc->buf_len);
+    ASSERT_EQ(tc->name, tc->expected_error, e.code);
+    if (e.code == ERR_NONE)
+    {
+      ASSERT_STR_N_EQ(tc->name, tc->expected_uri, req.uri, tc->expected_uri_len);
+      ASSERT_EQ(tc->name, tc->expected_uri_len, req.uri_len);
+    }
+    else
+    {
+      ASSERT_EQ(tc->name, 0, req.uri_len);
+    }
+
+    CHECK_TEST(tc->name);
+  }
+
+  ctx->indent -= PREFACE_INDENT;
+}
+
+void
+test_parse_chunk_parse_version(test_ctx_t *ctx)
+{
+  PRINT_TEST_PREFACE("test_parse_chunk_parse_version")
+  ctx->indent += PREFACE_INDENT;
+
+  struct test_case
+  {
+    const char *name;
+
+    const char *buf;
+    size_t buf_len;
+
+    error_code expected_error;
+    http_version expected_version;
+  } test_cases[] = {
+      {
+          .name = "success: HTTP/1.0",
+          .buf = "GET / HTTP/1.0\r\n\r\n",
+          .buf_len = 18,
+          .expected_error = ERR_NONE,
+          .expected_version = HTTP_VERSION_1_0,
+      },
+      {
+          .name = "success: HTTP/1.1",
+          .buf = "GET / HTTP/1.1\r\n\r\n",
+          .buf_len = 18,
+          .expected_error = ERR_NONE,
+          .expected_version = HTTP_VERSION_1_1,
+      },
+      {
+          .name = "error: invalid version",
+          .buf = "GET / HTTP/2.0\r\n\r\n",
+          .buf_len = 18,
+          .expected_error = ERR_HTTP_PARSE_FAILED,
+          .expected_version = HTTP_VERSION_1_0, // dummy value
+      },
+      {
+          .name = "error: not http version",
+          .buf = "GET / SOMETEXT\r\n\r\n",
+          .buf_len = 18,
+          .expected_error = ERR_HTTP_PARSE_FAILED,
+          .expected_version = HTTP_VERSION_1_0, // dummy value
+      }};
+
+  for (size_t i = 0; i < sizeof(test_cases) / sizeof(test_cases[0]); i++)
+  {
+    ctx->is_canceled = false;
+    struct test_case *tc = &test_cases[i];
+
+    http_request req;
+    memset(&req, 0, sizeof(http_request));
+
+    http_parser_internal_state s;
+    memset(&s, 0, sizeof(http_parser_internal_state));
+    req.internal = &s;
+
+    memcpy(s.buf, tc->buf, tc->buf_len);
+    s.buf_len = tc->buf_len;
+
+    error e = parse_chunk(&req, tc->buf_len);
+    ASSERT_EQ(tc->name, tc->expected_error, e.code);
+    if (e.code == ERR_NONE)
+    {
+      ASSERT_EQ(tc->name, tc->expected_version, req.version);
+    }
 
     CHECK_TEST(tc->name);
   }

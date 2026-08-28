@@ -149,6 +149,15 @@ parse_chunk(http_request *req, size_t read_bytes)
       {
         req->uri_len = cur - req->uri;
         s->state = STATE_REQ_VERSION;
+
+        if (req->uri_len == 0)
+        {
+          s->state = STATE_ERROR;
+          error e = {
+              .code = ERR_HTTP_PARSE_FAILED,
+              .msg = "invalid request line: empty URI"};
+          return e;
+        }
       }
       else if (*cur == '\r' || *cur == '\n')
       {
