@@ -33,13 +33,7 @@ struct http_parser_internal_state
   size_t version_len;
 };
 
-/**
- * parse request body
- * @param req
- * @param read_bytes
- * @return 1: continue, 0: parsed successfully, -1: parse error
- */
-int parse_chunk(http_request *req, size_t read_bytes);
+error parse_chunk(http_request *req, size_t read_bytes);
 
 int parse_method(http_request *req, const char *cur);
 int parse_version(http_request *req, const char *cur, size_t len);

@@ -5,6 +5,7 @@ typedef enum error_code
 {
   ERR_NONE,
   ERR_CONNECTION_CLOSED,
+  ERR_MORE_DATA_NEEDED,
   ERR_HTTP_PARSE_FAILED,
 } error_code;
 

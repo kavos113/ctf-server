@@ -51,23 +51,14 @@ parse_http_request(connection_t *conn, http_request *out_request)
     {
       s->buf_len += bytes_read;
 
-      int result = parse_chunk(out_request, bytes_read);
-      if (result < 0)
-      {
-        error e = {
-            .code = ERR_HTTP_PARSE_FAILED,
-            .msg = "http parse failed"};
-        return e;
-      }
-      if (result > 0)
+      error err = parse_chunk(out_request, bytes_read);
+      if (err.code == ERR_MORE_DATA_NEEDED)
       {
         continue;
       }
       else
       {
-        error e = {
-            .code = ERR_NONE};
-        return e;
+        return err;
       }
     }
     else if (bytes_read == 0)
@@ -92,7 +83,7 @@ parse_http_request(connection_t *conn, http_request *out_request)
   }
 }
 
-int
+error
 parse_chunk(http_request *req, size_t read_bytes)
 {
   http_parser_internal_state *s = req->internal;
@@ -102,10 +93,13 @@ parse_chunk(http_request *req, size_t read_bytes)
 
   for (size_t i = start_idx; i < end_idx;)
   {
-    if (s->buf_len < MAX_HEADER_BYTES)
+    if (s->buf_len >= MAX_HEADER_BYTES)
     {
       s->state = STATE_ERROR;
-      return -1;
+      error e = {
+          .code = ERR_HTTP_PARSE_FAILED,
+          .msg = "header too large"};
+      return e;
     }
 
     char *cur = &s->buf[i];
@@ -124,13 +118,19 @@ parse_chunk(http_request *req, size_t read_bytes)
       // not all arrived yet
       if (end_idx - method_idx < 8)
       {
-        return 1;
+        error e = {
+            .code = ERR_MORE_DATA_NEEDED,
+            .msg = "more data needed"};
+        return e;
       }
 
       if (parse_method(req, s->method) < 0)
       {
         s->state = STATE_ERROR;
-        return -1;
+        error e = {
+            .code = ERR_HTTP_PARSE_FAILED,
+            .msg = "invalid request line: unknown method"};
+        return e;
       }
 
       i = method_idx + s->method_len + 1;
@@ -152,7 +152,10 @@ parse_chunk(http_request *req, size_t read_bytes)
       else if (*cur == '\r' || *cur == '\n')
       {
         s->state = STATE_ERROR;
-        return -1;
+        error e = {
+            .code = ERR_HTTP_PARSE_FAILED,
+            .msg = "invalid request line: unexpected end of line while parsing URI"};
+        return e;
       }
       break;
 
@@ -182,16 +185,23 @@ parse_chunk(http_request *req, size_t read_bytes)
       else
       {
         s->state = STATE_ERROR;
-        return -1;
+        error e = {
+            .code = ERR_HTTP_PARSE_FAILED,
+            .msg = "invalid request line: expected LF"};
+        return e;
       }
       break;
 
     case STATE_ERROR:
-      return -1;
+      error e = {
+          .code = ERR_HTTP_PARSE_FAILED,
+          .msg = "parse error"};
+      return e;
     }
   }
 
-  return 0;
+  error e = {.code = ERR_NONE};
+  return e;
 }
 
 int
