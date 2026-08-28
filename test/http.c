@@ -16,18 +16,18 @@ void
 test_http(test_ctx_t *ctx)
 {
   TEST_PREFACE("test_http")
-  ctx->indent += PRINT_INDENT;
+  ctx->indent += PREFACE_INDENT;
 
   test_read_method(ctx);
 
-  ctx->indent -= PRINT_INDENT;
+  ctx->indent -= PREFACE_INDENT;
 }
 
 void
 test_read_method(test_ctx_t *ctx)
 {
   TEST_PREFACE("test_read_method")
-  ctx->indent += PRINT_INDENT;
+  ctx->indent += PREFACE_INDENT;
 
   struct test_case
   {
@@ -173,9 +173,9 @@ test_read_method(test_ctx_t *ctx)
 
     if (ctx->detailed)
     {
-      fprintf(stderr, "%*sPASS: %s\n", ctx->indent, "", tc->name);
+      fprintf(stderr, "%*sPASS: %s\n", ctx->indent + TESTCASE_MORE_INDENT, "", tc->name);
     }
   }
 
-  ctx->indent -= PRINT_INDENT;
+  ctx->indent -= PREFACE_INDENT;
 }
