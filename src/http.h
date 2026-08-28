@@ -8,8 +8,8 @@
 
 typedef enum
 {
-  HTTP_1_0,
-  HTTP_1_1,
+  HTTP_VERSION_1_0,
+  HTTP_VERSION_1_1,
 } http_version;
 
 typedef enum

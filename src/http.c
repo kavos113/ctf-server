@@ -262,7 +262,8 @@ parse_method(http_request *req, const char *cur)
   return -1;
 }
 
-int parse_version(http_request *req, const char *cur, size_t len)
+int
+parse_version(http_request *req, const char *cur, size_t len)
 {
   if (len != 8)
   {
@@ -290,12 +291,12 @@ int parse_version(http_request *req, const char *cur, size_t len)
   {
     if (minor == 0)
     {
-      req->version = HTTP_1_0;
+      req->version = HTTP_VERSION_1_0;
       return 0;
     }
     else if (minor == 1)
     {
-      req->version = HTTP_1_1;
+      req->version = HTTP_VERSION_1_1;
       return 0;
     }
   }

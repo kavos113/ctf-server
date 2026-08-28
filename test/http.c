@@ -11,14 +11,16 @@
 typedef struct http_parser_internal_state http_parser_internal_state;
 
 void test_parse_method(test_ctx_t *ctx);
+void test_parse_version(test_ctx_t *ctx);
 
 void
 test_http(test_ctx_t *ctx)
 {
-  TEST_PREFACE("test_http")
+  PRINT_TEST_PREFACE("test_http")
   ctx->indent += PREFACE_INDENT;
 
   test_parse_method(ctx);
+  test_parse_version(ctx);
 
   ctx->indent -= PREFACE_INDENT;
 }
@@ -26,7 +28,7 @@ test_http(test_ctx_t *ctx)
 void
 test_parse_method(test_ctx_t *ctx)
 {
-  TEST_PREFACE("test_parse_method")
+  PRINT_TEST_PREFACE("test_parse_method")
   ctx->indent += PREFACE_INDENT;
 
   struct test_case
@@ -171,10 +173,82 @@ test_parse_method(test_ctx_t *ctx)
     ASSERT_EQ(tc->name, tc->expected_method, req.method);
     ASSERT_EQ(tc->name, tc->expected_method_len, s.method_len);
 
-    if (ctx->detailed)
+    PRINT_TEST_PASS(tc->name);
+  }
+
+  ctx->indent -= PREFACE_INDENT;
+}
+
+void
+test_parse_version(test_ctx_t *ctx)
+{
+  PRINT_TEST_PREFACE("test_parse_version")
+  ctx->indent += PREFACE_INDENT;
+
+  struct test_case
+  {
+    const char *name;
+
+    const char *buf;
+    size_t buf_len;
+    int expected_result;
+    http_version expected_version;
+  } test_cases[] = {
+      {
+          .name = "HTTP/1.0",
+          .buf = "HTTP/1.0",
+          .buf_len = 8,
+          .expected_result = 0,
+          .expected_version = HTTP_VERSION_1_0,
+      },
+      {
+          .name = "HTTP/1.1",
+          .buf = "HTTP/1.1",
+          .buf_len = 8,
+          .expected_result = 0,
+          .expected_version = HTTP_VERSION_1_1,
+      },
+      {
+          .name = "invalid version",
+          .buf = "HTTP/2.0",
+          .buf_len = 8,
+          .expected_result = -1,
+          .expected_version = HTTP_VERSION_1_0, // dummy value
+      },
+      {
+          .name = "too short version",
+          .buf = "HTTP/1.",
+          .buf_len = 7,
+          .expected_result = -1,
+          .expected_version = HTTP_VERSION_1_0, // dummy value
+      },
+      {
+          .name = "too long version",
+          .buf = "HTTP/1.10",
+          .buf_len = 9,
+          .expected_result = -1,
+          .expected_version = HTTP_VERSION_1_0, // dummy value
+      },
+  };
+
+  for (size_t i = 0; i < sizeof(test_cases) / sizeof(test_cases[0]); i++)
+  {
+    struct test_case *tc = &test_cases[i];
+
+    http_request req;
+    memset(&req, 0, sizeof(http_request));
+
+    int result = parse_version(&req, tc->buf, tc->buf_len);
+    if (result < 0)
     {
-      fprintf(stderr, "%*sPASS: %s\n", ctx->indent + TESTCASE_MORE_INDENT, "", tc->name);
+      ASSERT_EQ(tc->name, tc->expected_result, result);
+      continue;
     }
+
+    ASSERT_EQ(tc->name, tc->expected_result, result);
+    ASSERT_EQ(tc->name, tc->expected_version, req.version);
+
+    PRINT_TEST_PASS(tc->name);
   }
 
   ctx->indent -= PREFACE_INDENT;
