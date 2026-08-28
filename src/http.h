@@ -25,6 +25,9 @@ typedef enum
   HTTP_METHOD_CONNECT,
 } http_method;
 
+const char *http_method_to_string(http_method method);
+const char *http_version_to_string(http_version version);
+
 // if request method is larger than this, discard
 #define HTTP_METHOD_MAX_LEN 7
 

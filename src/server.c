@@ -6,7 +6,6 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
 
 #include <arpa/inet.h>
@@ -267,6 +266,11 @@ client_handler(const server_t *srv, connection_t *conn)
   {
     perror("parse http request");
   }
+
+  fprintf(stdout, "[HTTP Request] version: %s, method: %s, uri: ",
+    http_version_to_string(req->version), http_method_to_string(req->method));
+  fwrite(req->uri, sizeof(char), req->uri_len, stdout);
+  fprintf(stdout, "\n");
 
   destroy_http_request(req);
   remove_connection(srv, conn);
