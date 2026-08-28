@@ -7,7 +7,7 @@ TARGET=ctf-server
 TESTTARGET=test-ctf-server
 
 CC=gcc
-CFLAGS=-std=c11 -Wall -Wextra -g 
+CFLAGS=-std=c11 -Wall -Wextra -Wno-unused-parameter -Wno-int-to-pointer-cast -g 
 
 all: $(TARGET) test
 

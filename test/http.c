@@ -302,9 +302,9 @@ test_parse_chunk_state_transition(test_ctx_t *ctx)
       },
       {
           .name = "with 1 chunk: method -> uri",
-          .buf = "GET /a",
-          .buf_len = 4,
-          .bytes_read = 4,
+          .buf = "GET /aaaaaaa",
+          .buf_len = 12,
+          .bytes_read = 12,
           .current_state = STATE_REQ_METHOD,
           .expected_error = ERR_MORE_DATA_NEEDED,
           .expected_state = STATE_REQ_URI,
@@ -322,8 +322,8 @@ test_parse_chunk_state_transition(test_ctx_t *ctx)
           .name = "with 1 chunk: version -> header key",
           .buf = "GET / HTTP/1.1\r\n",
           .buf_len = 16,
-          .bytes_read = 4,
-          .current_state = STATE_REQ_VERSION,
+          .bytes_read = 16,
+          .current_state = STATE_REQ_METHOD,
           .expected_error = ERR_MORE_DATA_NEEDED,
           .expected_state = STATE_HEADER_KEY,
       },
@@ -400,8 +400,8 @@ test_parse_chunk_state_transition(test_ctx_t *ctx)
       },
       {
           .name = "with 1 byte at a time: method -> uri",
-          .buf = "GET /a",
-          .buf_len = 4,
+          .buf = "GET /aaaaaaa",
+          .buf_len = 12,
           .current_state = STATE_REQ_METHOD,
           .expected_error = ERR_MORE_DATA_NEEDED,
           .expected_state = STATE_REQ_URI,
@@ -410,7 +410,7 @@ test_parse_chunk_state_transition(test_ctx_t *ctx)
           .name = "with 1 byte at a time: uri -> version",
           .buf = "GET /www HTTP/1.",
           .buf_len = 16,
-          .current_state = STATE_REQ_URI,
+          .current_state = STATE_REQ_METHOD,
           .expected_error = ERR_MORE_DATA_NEEDED,
           .expected_state = STATE_REQ_VERSION,
       },
@@ -418,7 +418,7 @@ test_parse_chunk_state_transition(test_ctx_t *ctx)
           .name = "with 1 byte at a time: version -> header key",
           .buf = "GET / HTTP/1.1\r\n",
           .buf_len = 16,
-          .current_state = STATE_REQ_VERSION,
+          .current_state = STATE_REQ_METHOD,
           .expected_error = ERR_MORE_DATA_NEEDED,
           .expected_state = STATE_HEADER_KEY,
       },
@@ -434,15 +434,15 @@ test_parse_chunk_state_transition(test_ctx_t *ctx)
           .name = "with 1 byte at a time, error: invalid version",
           .buf = "GET / HTTP/2.0\r\n",
           .buf_len = 16,
-          .current_state = STATE_REQ_VERSION,
+          .current_state = STATE_REQ_METHOD,
           .expected_error = ERR_HTTP_PARSE_FAILED,
           .expected_state = STATE_ERROR,
       },
       {
           .name = "with 1 byte at a time, error: single CR",
-          .buf = "GET / HTTP/1.1\r",
-          .buf_len = 15,
-          .current_state = STATE_REQ_VERSION,
+          .buf = "GET / HTTP/1.1\raaa",
+          .buf_len = 18,
+          .current_state = STATE_REQ_METHOD,
           .expected_error = ERR_HTTP_PARSE_FAILED,
           .expected_state = STATE_ERROR,
       },
@@ -462,11 +462,12 @@ test_parse_chunk_state_transition(test_ctx_t *ctx)
     req.internal = &s;
 
     memcpy(s.buf, tc->buf, tc->buf_len);
-    s.buf_len = tc->buf_len;
+    s.buf_len = 0;
 
     error e;
     for (size_t j = 0; j < tc->buf_len; j++)
     {
+      s.buf_len++;
       e = parse_chunk(&req, 1);
       if (e.code != ERR_MORE_DATA_NEEDED)
       {

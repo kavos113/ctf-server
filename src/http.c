@@ -91,17 +91,17 @@ parse_chunk(http_request *req, size_t read_bytes)
   size_t start_idx = s->buf_len - read_bytes;
   size_t end_idx = s->buf_len;
 
+  if (s->buf_len >= MAX_HEADER_BYTES)
+  {
+    s->state = STATE_ERROR;
+    error e = {
+        .code = ERR_HTTP_PARSE_FAILED,
+        .msg = "header too large"};
+    return e;
+  }
+
   for (size_t i = start_idx; i < end_idx; i++)
   {
-    if (s->buf_len >= MAX_HEADER_BYTES)
-    {
-      s->state = STATE_ERROR;
-      error e = {
-          .code = ERR_HTTP_PARSE_FAILED,
-          .msg = "header too large"};
-      return e;
-    }
-
     char *cur = &s->buf[i];
 
     switch (s->state)
