@@ -34,9 +34,9 @@ main(int argc, char **argv)
   test_http(&ctx);
 
   timespec_get(&end_time, TIME_UTC);
-  double elapsed = (end_time.tv_sec - start_time.tv_sec) + (end_time.tv_nsec - start_time.tv_nsec) / 1e9;
+  double elapsed = (end_time.tv_sec - start_time.tv_sec) + (end_time.tv_nsec - start_time.tv_nsec) / 1e6;
   printf("\n====== TEST ENDED ======\n");
-  printf("All: %d, Passed: %d, Failed: %d, Time: %.3f seconds\n", ctx.passed_count + ctx.failed_count, ctx.passed_count, ctx.failed_count, elapsed);
+  printf("All: %d, Passed: %d, Failed: %d, Time: %.3f ms\n", ctx.passed_count + ctx.failed_count, ctx.passed_count, ctx.failed_count, elapsed);
 
   return 0;
 }
