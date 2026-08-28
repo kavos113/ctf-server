@@ -1,8 +1,8 @@
 #include "test.h"
 
+#include <stdio.h>
 #include <string.h>
 
-#include <error.h>
 #include <http.h>
 #include <http_p.h>
 
@@ -10,17 +10,25 @@
 
 typedef struct http_parser_internal_state http_parser_internal_state;
 
-void test_read_method();
+void test_read_method(test_ctx_t *ctx);
 
 void
-test_http()
+test_http(test_ctx_t *ctx)
 {
-  test_read_method();
+  TEST_PREFACE("test_http")
+  ctx->indent += PRINT_INDENT;
+
+  test_read_method(ctx);
+
+  ctx->indent -= PRINT_INDENT;
 }
 
 void
-test_read_method()
+test_read_method(test_ctx_t *ctx)
 {
+  TEST_PREFACE("test_read_method")
+  ctx->indent += PRINT_INDENT;
+
   struct test_case
   {
     const char *name;
@@ -162,5 +170,12 @@ test_read_method()
     ASSERT_EQ(tc->name, tc->expected_result, result);
     ASSERT_EQ(tc->name, tc->expected_method, req.method);
     ASSERT_EQ(tc->name, tc->expected_method_len, s.method_len);
+
+    if (ctx->detailed)
+    {
+      fprintf(stderr, "%*sPASS: %s\n", ctx->indent, "", tc->name);
+    }
   }
+
+  ctx->indent -= PRINT_INDENT;
 }

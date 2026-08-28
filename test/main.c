@@ -1,13 +1,29 @@
 #include <stdio.h>
+#include <string.h>
 
 #include "test.h"
 
 int
-main(void)
+main(int argc, char **argv)
 {
+  if (argc > 1 && strcmp(argv[1], "--help") == 0)
+  {
+    printf("Usage: %s [--detailed]\n", argv[0]);
+    return 0;
+  }
+
+  test_ctx_t ctx = {
+      .detailed = 0,
+      .indent = 0};
+
+  if (argc > 1 && strcmp(argv[1], "--detailed") == 0)
+  {
+    ctx.detailed = 1;
+  }
+
   printf("---------- test started -----------\n");
 
-  test_http();
+  test_http(&ctx);
 
   printf("---------- test ended -------------\n");
 

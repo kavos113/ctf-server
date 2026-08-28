@@ -2,3 +2,4 @@
 .idea
 ctf-server
 test-ctf-server
+.gdb_history
