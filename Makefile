@@ -18,7 +18,7 @@ $(TARGET): $(OBJS)
 
 .PHONY: test fmt clean
 test: $(TESTOBJS)
-	$(CC) $(CFLAGS) -o test-ctf-server $^
+	$(CC) $(CFLAGS) -o test-ctf-server -Isrc $^
 
 clean:
 	rm -f $(OBJS) $(TARGET)
