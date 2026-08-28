@@ -5,21 +5,30 @@
 
 #include "http.h"
 
-#define DEFAULT_HEADER_SIZE 4096
+#define MAX_HEADER_SIZE 4096
 
 typedef enum
 {
   STATE_REQ_METHOD,
+  STATE_ERROR,
 } parse_state;
 
 struct http_parser_internal_state
 {
-  char buf[DEFAULT_HEADER_SIZE];
+  char buf[MAX_HEADER_SIZE];
+  size_t buf_len;
   parse_state state;
 };
 
-int parse_chunk(http_request *request, const char *buf, size_t len);
+/**
+ * parse request body
+ * @param req
+ * @param buf
+ * @param len
+ * @return 1: continue, 0: parsed successfully, -1: parse error
+ */
+int parse_chunk(http_request *req, const char *buf, size_t len);
 
-
+int read_method(http_request *req, const char *cur);
 
 #endif //SRC_HTTP_P_H
