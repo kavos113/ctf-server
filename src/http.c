@@ -1,11 +1,11 @@
 #include "http.h"
 #include "http_p.h"
 
-#include <stdio.h>
+#include <errno.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
 
 #include <sys/socket.h>
 
@@ -41,12 +41,11 @@ parse_http_request(connection_t *conn, http_request *out_request)
 
   while (1)
   {
-    ssize_t bytes_read =  recv(
-      conn->fd,
-      s->buf + s->buf_len,
-      MAX_HEADER_BYTES - s->buf_len,
-      0
-    );
+    ssize_t bytes_read = recv(
+        conn->fd,
+        s->buf + s->buf_len,
+        MAX_HEADER_BYTES - s->buf_len,
+        0);
 
     if (bytes_read > 0)
     {
@@ -56,9 +55,8 @@ parse_http_request(connection_t *conn, http_request *out_request)
       if (result < 0)
       {
         error e = {
-          .code = ERR_HTTP_PARSE_FAILED,
-          .msg = "http parse failed"
-        };
+            .code = ERR_HTTP_PARSE_FAILED,
+            .msg = "http parse failed"};
         return e;
       }
       if (result > 0)
@@ -68,8 +66,7 @@ parse_http_request(connection_t *conn, http_request *out_request)
       else
       {
         error e = {
-          .code = ERR_NONE
-        };
+            .code = ERR_NONE};
         return e;
       }
     }
@@ -77,9 +74,8 @@ parse_http_request(connection_t *conn, http_request *out_request)
     {
       // TODO: 4096超えたときの処理
       error e = {
-        .code = ERR_CONNECTION_CLOSED,
-        .msg = "connection closed by client"
-      };
+          .code = ERR_CONNECTION_CLOSED,
+          .msg = "connection closed by client"};
       return e;
     }
     else
@@ -88,9 +84,8 @@ parse_http_request(connection_t *conn, http_request *out_request)
       {
         perror("recv");
         error e = {
-          .code = ERR_CONNECTION_CLOSED,
-          .msg = "recv failed"
-        };
+            .code = ERR_CONNECTION_CLOSED,
+            .msg = "recv failed"};
         return e;
       }
     }

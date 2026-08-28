@@ -268,6 +268,7 @@ client_handler(const server_t *srv, connection_t *conn)
     perror("parse http request");
   }
 
+  destroy_http_request(req);
   remove_connection(srv, conn);
 }
 
