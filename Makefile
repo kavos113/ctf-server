@@ -4,24 +4,25 @@ OBJS=$(SRCS:.c=.o) src/main.o
 TESTOBJS=$(TESTS:.c=.o) $(SRCS:.c=.o)
 
 TARGET=ctf-server
+TESTTARGET=test-ctf-server
 
 CC=gcc
 CFLAGS=-Wall -Wextra -g
 
-all: $(TARGET) $(TESTTARGET)
+all: $(TARGET) test
 
 $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^
 
 %.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -Isrc -o $@
 
 .PHONY: test fmt clean
 test: $(TESTOBJS)
-	$(CC) $(CFLAGS) -o test-ctf-server -Isrc $^
+	$(CC) $(CFLAGS) -o $(TESTTARGET) $^
 
 clean:
-	rm -f $(OBJS) $(TARGET)
+	rm -f $(OBJS) $(TESTOBJS) $(TARGET) $(TESTTARGET)
 
 fmt:
 	clang-format-19 --style=file -i ./src/*.c

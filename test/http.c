@@ -1,5 +1,7 @@
 #include "test.h"
 
+#include <string.h>
+
 #include <error.h>
 #include <http.h>
 #include <http_p.h>
@@ -145,6 +147,7 @@ test_read_method()
     http_parser_internal_state s;
     memset(&s, 0, sizeof(http_parser_internal_state));
     s.state = STATE_REQ_METHOD;
+    req.internal = &s;
 
     memcpy(s.buf, tc->buf, tc->buf_len);
     s.buf_len = tc->buf_len;
