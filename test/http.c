@@ -159,8 +159,8 @@ test_parse_method(test_ctx_t *ctx)
     ctx->is_canceled = false;
     struct test_case *tc = &test_cases[i];
 
-    http_request req;
-    memset(&req, 0, sizeof(http_request));
+    http_request_t req;
+    memset(&req, 0, sizeof(http_request_t));
 
     http_parser_internal_state s;
     memset(&s, 0, sizeof(http_parser_internal_state));
@@ -245,8 +245,8 @@ test_parse_version(test_ctx_t *ctx)
     ctx->is_canceled = false;
     struct test_case *tc = &test_cases[i];
 
-    http_request req;
-    memset(&req, 0, sizeof(http_request));
+    http_request_t req;
+    memset(&req, 0, sizeof(http_request_t));
 
     int result = parse_version(&req, tc->buf, tc->buf_len);
     if (result < 0)
@@ -367,8 +367,8 @@ test_parse_chunk_state_transition(test_ctx_t *ctx)
     ctx->is_canceled = false;
     struct test_case *tc = &test_cases[i];
 
-    http_request req;
-    memset(&req, 0, sizeof(http_request));
+    http_request_t req;
+    memset(&req, 0, sizeof(http_request_t));
 
     http_parser_internal_state s;
     memset(&s, 0, sizeof(http_parser_internal_state));
@@ -459,8 +459,8 @@ test_parse_chunk_state_transition(test_ctx_t *ctx)
     ctx->is_canceled = false;
     struct test_case_by_byte *tc = &test_cases_by_byte[i];
 
-    http_request req;
-    memset(&req, 0, sizeof(http_request));
+    http_request_t req;
+    memset(&req, 0, sizeof(http_request_t));
 
     http_parser_internal_state s;
     memset(&s, 0, sizeof(http_parser_internal_state));
@@ -538,8 +538,8 @@ test_parse_chunk_parse_method(test_ctx_t *ctx)
     ctx->is_canceled = false;
     struct test_case *tc = &test_cases[i];
 
-    http_request req;
-    memset(&req, 0, sizeof(http_request));
+    http_request_t req;
+    memset(&req, 0, sizeof(http_request_t));
 
     http_parser_internal_state s;
     memset(&s, 0, sizeof(http_parser_internal_state));
@@ -632,8 +632,8 @@ test_parse_chunk_parse_uri(test_ctx_t *ctx)
     ctx->is_canceled = false;
     struct test_case *tc = &test_cases[i];
 
-    http_request req;
-    memset(&req, 0, sizeof(http_request));
+    http_request_t req;
+    memset(&req, 0, sizeof(http_request_t));
 
     http_parser_internal_state s;
     memset(&s, 0, sizeof(http_parser_internal_state));
@@ -710,8 +710,8 @@ test_parse_chunk_parse_version(test_ctx_t *ctx)
     ctx->is_canceled = false;
     struct test_case *tc = &test_cases[i];
 
-    http_request req;
-    memset(&req, 0, sizeof(http_request));
+    http_request_t req;
+    memset(&req, 0, sizeof(http_request_t));
 
     http_parser_internal_state s;
     memset(&s, 0, sizeof(http_parser_internal_state));

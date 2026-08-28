@@ -14,6 +14,7 @@ typedef enum
   STATE_REQ_VERSION,
   STATE_REQ_LF,
   STATE_HEADER_KEY,
+  STATE_HEADER_NAME,
   STATE_HEADER_VALUE,
   STATE_HEADER_LF,
   STATE_HEADER_END,
@@ -33,9 +34,9 @@ struct http_parser_internal_state
   size_t version_len;
 };
 
-error parse_chunk(http_request *req, size_t read_bytes);
+error parse_chunk(http_request_t *req, size_t read_bytes);
 
-int parse_method(http_request *req, const char *cur);
-int parse_version(http_request *req, const char *cur, size_t len);
+int parse_method(http_request_t *req, const char *cur);
+int parse_version(http_request_t *req, const char *cur, size_t len);
 
 #endif //SRC_HTTP_P_H

@@ -9,6 +9,8 @@
 
 #include <sys/socket.h>
 
+#include "strutil.h"
+
 #define METHOD_VALUE_GET     0x0000000020544547ULL
 #define METHOD_VALUE_HEAD    0x0000002044414548ULL
 #define METHOD_VALUE_OPTIONS 0x20534e4f4954504fULL
@@ -22,16 +24,16 @@
 typedef struct http_parser_internal_state http_parser_internal_state;
 
 void
-destroy_http_request(http_request *req)
+destroy_http_request(http_request_t *req)
 {
   free(req->internal);
   free(req);
 }
 
 error
-parse_http_request(connection_t *conn, http_request *out_request)
+parse_http_request(connection_t *conn, http_request_t *out_request)
 {
-  memset(out_request, 0, sizeof(http_request));
+  memset(out_request, 0, sizeof(http_request_t));
 
   out_request->internal = malloc(sizeof(http_parser_internal_state));
   http_parser_internal_state *s = out_request->internal;
@@ -84,7 +86,7 @@ parse_http_request(connection_t *conn, http_request *out_request)
 }
 
 error
-parse_chunk(http_request *req, size_t read_bytes)
+parse_chunk(http_request_t *req, size_t read_bytes)
 {
   http_parser_internal_state *s = req->internal;
 
@@ -230,12 +232,103 @@ parse_chunk(http_request *req, size_t read_bytes)
         s->state = STATE_HEADER_END;
         return (error){.code = ERR_NONE};
       }
+      else if (*cur == ':')
+      {
+        s->state = STATE_ERROR;
+        error e = {
+          .code = ERR_HTTP_PARSE_FAILED,
+          .msg = "empty field name"
+        };
+        return e;
+      }
+      else
+      {
+        if (req->header_count >= MAX_HEADERS)
+        {
+          s->state = STATE_ERROR;
+          error e = {
+            .code = ERR_HTTP_PARSE_FAILED,
+            .msg = "too many headers"
+          };
+          return e;
+        }
+
+        http_header_t *h = &req->headers[req->header_count];
+        h->name = cur;
+        s->state = STATE_HEADER_NAME;
+      }
       break;
 
+    case STATE_HEADER_NAME:
+    {
+      http_header_t *h = &req->headers[req->header_count];
+
+      // white space in header name is not allowed
+      if (is_whitespace(*cur))
+      {
+        s->state = STATE_ERROR;
+        error e = {
+          .code = ERR_HTTP_PARSE_FAILED,
+          .msg = "whitespace is included in field-name"
+        };
+        return e;
+      }
+      else if (*cur == ':')
+      {
+        h->name_len = cur - h->name;
+        s->state = STATE_HEADER_VALUE;
+      }
+
+      break;
+    }
+
     case STATE_HEADER_VALUE:
+    {
+      http_header_t *h = &req->headers[req->header_count];
+
+      if (is_whitespace(*cur))
+      {
+        break;
+      }
+
+      if (!h->value)
+      {
+        h->value = cur;
+      }
+
+      if (*cur == '\r')
+      {
+        h->value_len = h->value ? (cur - h->value) : 0;
+        s->state = STATE_HEADER_LF;
+      }
+      else if (*cur == '\n')
+      {
+        h->value_len = h->value ? (cur - h->value) : 0;
+        req->header_count++;
+        s->state = STATE_HEADER_KEY;
+      }
+
       break;
+    }
+
     case STATE_HEADER_LF:
+      if (*cur == '\n')
+      {
+        req->header_count++;
+        s->state = STATE_HEADER_KEY;
+      }
+      else
+      {
+        s->state = STATE_ERROR;
+        error e = {
+          .code = ERR_HTTP_PARSE_FAILED,
+          .msg = "unexpected lf"
+        };
+        return e;
+      }
+
       break;
+
     case STATE_HEADER_END:
       if (*cur == '\n')
       {
@@ -257,7 +350,7 @@ parse_chunk(http_request *req, size_t read_bytes)
 }
 
 int
-parse_method(http_request *req, const char *cur)
+parse_method(http_request_t *req, const char *cur)
 {
   uint64_t v;
   memcpy(&v, cur, sizeof(uint64_t));
@@ -325,7 +418,7 @@ parse_method(http_request *req, const char *cur)
 }
 
 int
-parse_version(http_request *req, const char *cur, size_t len)
+parse_version(http_request_t *req, const char *cur, size_t len)
 {
   if (len != 8)
   {

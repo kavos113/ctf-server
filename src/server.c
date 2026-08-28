@@ -261,7 +261,7 @@ listen_handler(const server_t *srv)
 void
 client_handler(const server_t *srv, connection_t *conn)
 {
-  http_request *req = malloc(sizeof(http_request));
+  http_request_t *req = malloc(sizeof(http_request_t));
 
   error err = parse_http_request(conn, req);
   if (err.code != ERR_NONE)

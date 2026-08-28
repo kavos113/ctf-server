@@ -84,6 +84,15 @@ const char *http_status_to_string(http_status status);
 
 // if request method is larger than this, discard
 #define HTTP_METHOD_MAX_LEN 7
+#define MAX_HEADERS 32
+
+typedef struct
+{
+  const char *name;
+  size_t name_len;
+  const char *value;
+  size_t value_len;
+} http_header_t;
 
 struct http_parser_internal_state;
 
@@ -100,10 +109,13 @@ typedef struct http_request
   const char *uri;
   size_t uri_len;
 
-  struct http_parser_internal_state *internal;
-} http_request;
+  http_header_t headers[MAX_HEADERS];
+  size_t header_count;
 
-error parse_http_request(connection_t *conn, http_request *out_request);
-void destroy_http_request(http_request *req);
+  struct http_parser_internal_state *internal;
+} http_request_t;
+
+error parse_http_request(connection_t *conn, http_request_t *out_request);
+void destroy_http_request(http_request_t *req);
 
 #endif // HTTP_H
