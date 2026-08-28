@@ -47,5 +47,6 @@ typedef struct http_request
 } http_request;
 
 error parse_http_request(connection_t *conn, http_request *out_request);
+void destroy_http_request(http_request *req);
 
 #endif // HTTP_H

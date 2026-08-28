@@ -21,6 +21,13 @@
 
 typedef struct http_parser_internal_state http_parser_internal_state;
 
+void
+destroy_http_request(http_request *req)
+{
+  free(req->internal);
+  free(req);
+}
+
 error
 parse_http_request(connection_t *conn, http_request *out_request)
 {
