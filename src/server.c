@@ -15,6 +15,8 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
+#include "http.h"
+
 #define MAX_EVENTS 10
 
 static const char RESPONSE[] = "HTTP/1.1 200 OK\r\n"
@@ -258,39 +260,15 @@ listen_handler(const server_t *srv)
 void
 client_handler(const server_t *srv, connection_t *conn)
 {
-  char buffer[1024];
+  http_request *req = malloc(sizeof(http_request));
 
-  while (1)
+  error err = parse_http_request(conn, req);
+  if (err.code != ERR_NONE)
   {
-    ssize_t bytes_read = recv(conn->fd, buffer, sizeof(buffer) - 1, 0);
-    if (bytes_read > 0)
-    {
-      buffer[bytes_read] = '\0';
-
-      if (strstr(buffer, "\r\n\r\n") != NULL)
-      {
-        // Send HTTP response
-        send(conn->fd, RESPONSE, sizeof(RESPONSE) - 1, 0);
-
-        remove_connection(srv, conn);
-        break;
-      }
-    }
-    else if (bytes_read == 0)
-    {
-      remove_connection(srv, conn);
-      break;
-    }
-    else
-    {
-      if (errno != EAGAIN && errno != EWOULDBLOCK)
-      {
-        perror("recv");
-        remove_connection(srv, conn);
-        break;
-      }
-    }
+    perror("parse http request");
   }
+
+  remove_connection(srv, conn);
 }
 
 int
