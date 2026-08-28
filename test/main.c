@@ -1,5 +1,7 @@
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 #include "test.h"
 
@@ -13,19 +15,28 @@ main(int argc, char **argv)
   }
 
   test_ctx_t ctx = {
-      .detailed = 0,
-      .indent = 0};
+      .detailed = false,
+      .indent = 0,
+      .is_canceled = false,
+      .failed_count = 0,
+      .passed_count = 0,
+  };
 
   if (argc > 1 && strcmp(argv[1], "--detailed") == 0)
   {
-    ctx.detailed = 1;
+    ctx.detailed = true;
   }
 
+  struct timespec start_time, end_time;
+  timespec_get(&start_time, TIME_UTC);
   printf("===== TEST STARTED =====\n\n");
 
   test_http(&ctx);
 
+  timespec_get(&end_time, TIME_UTC);
+  double elapsed = (end_time.tv_sec - start_time.tv_sec) + (end_time.tv_nsec - start_time.tv_nsec) / 1e9;
   printf("\n====== TEST ENDED ======\n");
+  printf("All: %d, Passed: %d, Failed: %d, Time: %.3f seconds\n", ctx.passed_count + ctx.failed_count, ctx.passed_count, ctx.failed_count, elapsed);
 
   return 0;
 }

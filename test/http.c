@@ -166,7 +166,7 @@ test_parse_method(test_ctx_t *ctx)
     if (result < 0)
     {
       ASSERT_EQ(tc->name, tc->expected_result, result);
-      PRINT_TEST_PASS(tc->name);
+      CHECK_TEST(tc->name);
       continue;
     }
 
@@ -174,7 +174,7 @@ test_parse_method(test_ctx_t *ctx)
     ASSERT_EQ(tc->name, tc->expected_method, req.method);
     ASSERT_EQ(tc->name, tc->expected_method_len, s.method_len);
 
-    PRINT_TEST_PASS(tc->name);
+    CHECK_TEST(tc->name);
   }
 
   ctx->indent -= PREFACE_INDENT;
@@ -243,14 +243,14 @@ test_parse_version(test_ctx_t *ctx)
     if (result < 0)
     {
       ASSERT_EQ(tc->name, tc->expected_result, result);
-      PRINT_TEST_PASS(tc->name);
+      CHECK_TEST(tc->name);
       continue;
     }
 
     ASSERT_EQ(tc->name, tc->expected_result, result);
     ASSERT_EQ(tc->name, tc->expected_version, req.version);
 
-    PRINT_TEST_PASS(tc->name);
+    CHECK_TEST(tc->name);
   }
 
   ctx->indent -= PREFACE_INDENT;

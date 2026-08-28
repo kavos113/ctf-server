@@ -5,17 +5,17 @@
 #include <stdlib.h>
 
 #define ASSERT_EQ(name, expected, actual)                                                                         \
-  if ((expected) != (actual))                                                                                     \
+  if (!ctx->is_canceled && (expected) != (actual))                                                                \
   {                                                                                                               \
+    ctx->is_canceled = true;                                                                                      \
     fprintf(stderr, "Assertion failed (%s): %s == %s, at %s:%d\n", name, #expected, #actual, __FILE__, __LINE__); \
-    exit(1);                                                                                                      \
   }
 
 #define ASSERT_NE(name, expected, actual)                                                                         \
-  if ((expected) == (actual))                                                                                     \
+  if (!ctx->is_canceled && (expected) == (actual))                                                                \
   {                                                                                                               \
+    ctx->is_canceled = true;                                                                                      \
     fprintf(stderr, "Assertion failed (%s): %s != %s, at %s:%d\n", name, #expected, #actual, __FILE__, __LINE__); \
-    exit(1);                                                                                                      \
   }
 
 #endif // TEST_UTIL_H
