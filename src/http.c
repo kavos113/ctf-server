@@ -24,7 +24,7 @@ parse_chunk(http_request *req, const char *buf, size_t len)
 {
   struct http_parser_internal_state *s = req->internal;
 
-  for (size_t i = 0; i < len; i++)
+  for (size_t i = 0; i < len;)
   {
     if (s->buf_len < MAX_HEADER_SIZE)
     {
@@ -38,17 +38,25 @@ parse_chunk(http_request *req, const char *buf, size_t len)
     switch (s->state)
     {
     case STATE_REQ_METHOD:
-      // method block is not arrived yet
-      if (s->buf_len + len < 8)
+      if (!s->method)
       {
-        s->buf_len += len;
-        return 1;
+        s->method = cur;
       }
-      if (read_method(req, s->buf) < 0)
+
+      // not all arrived yet
+      if ((cur - s->method) + len < 8)
+      {
+        i++;
+        break;
+      }
+
+      if (read_method(req, s->method) < 0)
       {
         s->state = STATE_ERROR;
         return -1;
       }
+      i = (s->method - buf) + s->method_len;
+      break;
 
     default:
       return -1;
@@ -64,13 +72,17 @@ read_method(http_request *req, const char *cur)
   uint64_t v;
   memcpy(&v, cur, sizeof(uint64_t));
 
+  struct http_parser_internal_state *s = req->internal;
+
   switch (v & 0x00000000ffffffffULL)
   {
   case METHOD_VALUE_GET:
     req->method = HTTP_METHOD_GET;
+    s->method_len = 3;
     return 0;
   case METHOD_VALUE_PUT:
     req->method = HTTP_METHOD_PUT;
+    s->method_len = 3;
     return 0;
   }
 
@@ -78,9 +90,11 @@ read_method(http_request *req, const char *cur)
   {
   case METHOD_VALUE_POST:
     req->method = HTTP_METHOD_POST;
+    s->method_len = 4;
     return 0;
   case METHOD_VALUE_HEAD:
     req->method = HTTP_METHOD_HEAD;
+    s->method_len = 4;
     return 0;
   }
 
@@ -88,27 +102,32 @@ read_method(http_request *req, const char *cur)
   {
   case METHOD_VALUE_PATCH:
     req->method = HTTP_METHOD_PATCH;
+    s->method_len = 5;
     return 0;
   case METHOD_VALUE_TRACE:
     req->method = HTTP_METHOD_TRACE;
+    s->method_len = 5;
     return 0;
   }
 
   if ((v & 0x00ffffffffffffffULL) == METHOD_VALUE_DELETE)
   {
     req->method = HTTP_METHOD_DELETE;
+    s->method_len = 6;
     return 0;
   }
 
   if (v == METHOD_VALUE_OPTIONS)
   {
     req->method = HTTP_METHOD_OPTIONS;
+    s->method_len = 7;
     return 0;
   }
 
   if (v == METHOD_VALUE_CONNECT)
   {
     req->method = HTTP_METHOD_CONNECT;
+    s->method_len = 7;
     return 0;
   }
 

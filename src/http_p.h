@@ -17,7 +17,10 @@ struct http_parser_internal_state
 {
   char buf[MAX_HEADER_SIZE];
   size_t buf_len;
+
   parse_state state;
+  const char *method;
+  size_t method_len;
 };
 
 /**
