@@ -7,12 +7,15 @@ TARGET=ctf-server
 TESTTARGET=test-ctf-server
 
 CC=gcc
-CFLAGS=-std=c11 -Wall -Wextra -Wno-unused-parameter -Wno-int-to-pointer-cast -g 
+CFLAGS=-std=c11 -Wall -Wextra -Wno-unused-parameter -Wno-int-to-pointer-cast -g
+
+CFLAGS += $(shell mysql_config --cflags)
+LDFLAGS = $(shell mysql_config --libs) --pthread
 
 all: $(TARGET) test
 
 $(TARGET): $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $^
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -Isrc -o $@
@@ -27,5 +30,7 @@ clean:
 fmt:
 	clang-format-19 --style=file -i ./src/*.c
 	clang-format-19 --style=file -i ./src/*.h
+	clang-format-19 --style=file -i ./src/app/*.c
+	clang-format-19 --style=file -i ./src/app/*.h
 	clang-format-19 --style=file -i ./test/*.c
 	clang-format-19 --style=file -i ./test/*.h
