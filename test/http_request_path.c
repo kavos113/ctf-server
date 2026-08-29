@@ -1,7 +1,7 @@
 #include "test.h"
 
-#include <http_server.h>
-#include <http_server_p.h>
+#include <http_request.h>
+#include <http_request_p.h>
 
 #include "util.h"
 
@@ -9,9 +9,9 @@ void test_url_decode(test_ctx_t *ctx);
 void test_normalize_path(test_ctx_t *ctx);
 
 void
-test_http_server(test_ctx_t *ctx)
+test_http_request_path(test_ctx_t *ctx)
 {
-  PRINT_TEST_PREFACE("test_http_server");
+  PRINT_TEST_PREFACE("test_http_request_path");
   ctx->indent += PREFACE_INDENT;
 
   test_url_decode(ctx);

@@ -32,7 +32,7 @@ main(int argc, char **argv)
   printf("===== TEST STARTED =====\n\n");
 
   test_http_request(&ctx);
-  test_http_server(&ctx);
+  test_http_request_path(&ctx);
 
   timespec_get(&end_time, TIME_UTC);
   double elapsed = (end_time.tv_sec - start_time.tv_sec) + (end_time.tv_nsec - start_time.tv_nsec) / 1e6;

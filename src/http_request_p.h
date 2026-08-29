@@ -2,6 +2,7 @@
 #define HTTP_P_H
 
 #include <stddef.h>
+#include <unistd.h>
 
 #include "http_request.h"
 
@@ -41,5 +42,10 @@ int parse_version(http_request_t *req, const char *cur, size_t len);
 
 // if field name is common such as "Content-Type", store to req
 void parse_header(http_request_t *req, http_header_t *header);
+
+int normalize_uri(http_request_t *request);
+
+ssize_t url_decode(char *str, size_t len);
+ssize_t normalize_path(char *path, size_t len);
 
 #endif // HTTP_P_H

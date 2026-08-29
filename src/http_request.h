@@ -19,6 +19,20 @@ typedef struct
   size_t value_len;
 } http_header_t;
 
+typedef struct
+{
+  enum
+  {
+    HTTP_PARAM_TYPE_QUERY,
+    HTTP_PARAM_TYPE_FORM,
+  } type;
+
+  const char *name;
+  size_t name_len;
+  const char *value;
+  size_t value_len;
+} http_param_t;
+
 struct http_parser_internal_state;
 
 typedef struct http_request
