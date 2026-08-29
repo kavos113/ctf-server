@@ -319,9 +319,12 @@ client_handler(const server_t *srv, connection_t *conn)
     event.data.ptr = conn;
 
     epoll_ctl(conn->fd, EPOLL_CTL_MOD, conn->fd, &event);
+
+    http_request_register_dispose(conn, req);
+    return;
   }
 
-  http_request_register_dispose(conn, req);
+  remove_connection(srv, conn);
 }
 
 int
