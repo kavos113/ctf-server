@@ -10,6 +10,7 @@
 // if request method is larger than this, discard
 #define HTTP_METHOD_MAX_LEN 7
 #define MAX_HEADERS         32
+#define MAX_QUERY_PARAMS    32
 
 typedef struct
 {
@@ -54,6 +55,9 @@ typedef struct http_request
   size_t content_length;
   const char *content_type;
   const char *host;
+
+  http_param_t query_params[MAX_QUERY_PARAMS];
+  size_t query_param_count;
 
   struct http_parser_internal_state *internal;
 } http_request_t;

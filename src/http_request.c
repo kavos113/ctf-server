@@ -60,6 +60,10 @@ parse_http_request(connection_t *conn, http_request_t *out_request)
       {
         continue;
       }
+      else if (err.code == ERR_NONE)
+      {
+        normalize_uri(out_request);
+      }
       else
       {
         return err;

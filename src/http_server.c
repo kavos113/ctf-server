@@ -3,7 +3,6 @@
 
 #include <stddef.h>
 #include <string.h>
-#include <strings.h>
 
 void
 http_server_add_route(http_server_t *server, http_method method, const char *path, http_handler_t handler)
@@ -24,8 +23,6 @@ http_server_add_route(http_server_t *server, http_method method, const char *pat
 http_response_t
 http_server_handle_request(http_server_t *server, http_request_t *req)
 {
-  normalize_uri(req);
-
   for (size_t i = 0; i < server->route_count; i++)
   {
     http_route_t *route = &server->routes[i];
@@ -49,5 +46,5 @@ http_server_handle_request(http_server_t *server, http_request_t *req)
   return (http_response_t){
       .status = HTTP_STATUS_NOT_FOUND,
       .body = "Not Found",
-      .body_len = strlen("Not Found")};
+      .body_len = 9};
 }

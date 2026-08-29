@@ -44,8 +44,8 @@ int parse_version(http_request_t *req, const char *cur, size_t len);
 void parse_header(http_request_t *req, http_header_t *header);
 
 int normalize_uri(http_request_t *request);
-
 ssize_t url_decode(char *str, size_t len);
 ssize_t normalize_path(char *path, size_t len);
+void parse_query_params(http_request_t *req);
 
 #endif // HTTP_P_H

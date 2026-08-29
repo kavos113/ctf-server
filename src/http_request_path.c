@@ -194,3 +194,71 @@ normalize_uri(http_request_t *request)
 
   return 0;
 }
+
+void parse_query_params(http_request_t *req)
+{
+  size_t final_uri_len = 0;
+
+  for (size_t i = 0; i < req->uri_len; i++)
+  {
+    if (req->uri[i] == '?')
+    {
+      final_uri_len = i;
+
+      i++;
+
+      while (1)
+      {
+        http_param_t *param = &req->query_params[req->query_param_count];
+        param->name = &req->uri[i];
+        size_t name_start_idx = i;
+
+        while (i < req->uri_len && req->uri[i] != '=')
+        {
+          i++;
+        }
+
+        // no value
+        if (i >= req->uri_len)
+        {
+          return;
+        }
+
+        // query param is valid below
+        req->query_param_count++;
+
+        param->name_len = i - name_start_idx;
+        i++;
+
+        // no value
+        if (i >= req->uri_len)
+        {
+          return;
+        }
+
+        param->value = &req->uri[i];
+        size_t value_start_idx = i;
+
+        while (i < req->uri_len && req->uri[i] != '&')
+        {
+          i++;
+        }
+        param->value_len = i - value_start_idx;
+
+        // no other param
+        if (i >= req->uri_len)
+        {
+          return;
+        }
+
+        i++;
+      }
+    }
+    else if (req->uri[i] == '#')
+    {
+      final_uri_len = i;
+    }
+  }
+
+  req->uri_len = final_uri_len;
+}
