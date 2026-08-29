@@ -22,9 +22,9 @@ void test_parse_chunk_parse_version(test_ctx_t *ctx);
 void test_parse_chunk_parse_headers(test_ctx_t *ctx);
 
 void
-test_http(test_ctx_t *ctx)
+test_http_request(test_ctx_t *ctx)
 {
-  PRINT_TEST_PREFACE("test_http")
+  PRINT_TEST_PREFACE("test_http_request");
   ctx->indent += PREFACE_INDENT;
 
   test_parse_method(ctx);
@@ -38,7 +38,7 @@ test_http(test_ctx_t *ctx)
 void
 test_parse_method(test_ctx_t *ctx)
 {
-  PRINT_TEST_PREFACE("test_parse_method")
+  PRINT_TEST_PREFACE("test_parse_method");
   ctx->indent += PREFACE_INDENT;
 
   struct test_case
@@ -194,7 +194,7 @@ test_parse_method(test_ctx_t *ctx)
 void
 test_parse_version(test_ctx_t *ctx)
 {
-  PRINT_TEST_PREFACE("test_parse_version")
+  PRINT_TEST_PREFACE("test_parse_version");
   ctx->indent += PREFACE_INDENT;
 
   struct test_case
@@ -271,7 +271,7 @@ test_parse_version(test_ctx_t *ctx)
 void
 test_parse_header(test_ctx_t *ctx)
 {
-  PRINT_TEST_PREFACE("test_parse_header")
+  PRINT_TEST_PREFACE("test_parse_header");
   ctx->indent += PREFACE_INDENT;
 
   struct test_case
@@ -368,7 +368,7 @@ test_parse_header(test_ctx_t *ctx)
 void
 test_parse_chunk(test_ctx_t *ctx)
 {
-  PRINT_TEST_PREFACE("test_parse_chunk")
+  PRINT_TEST_PREFACE("test_parse_chunk");
   ctx->indent += PREFACE_INDENT;
 
   test_parse_chunk_state_transition(ctx);
@@ -383,7 +383,7 @@ test_parse_chunk(test_ctx_t *ctx)
 void
 test_parse_chunk_state_transition(test_ctx_t *ctx)
 {
-  PRINT_TEST_PREFACE("test_parse_chunk_state_transition")
+  PRINT_TEST_PREFACE("test_parse_chunk_state_transition");
   ctx->indent += PREFACE_INDENT;
 
   struct test_case
@@ -594,7 +594,7 @@ test_parse_chunk_state_transition(test_ctx_t *ctx)
 void
 test_parse_chunk_parse_method(test_ctx_t *ctx)
 {
-  PRINT_TEST_PREFACE("test_parse_chunk_parse_method")
+  PRINT_TEST_PREFACE("test_parse_chunk_parse_method");
   ctx->indent += PREFACE_INDENT;
 
   struct test_case
@@ -664,7 +664,7 @@ test_parse_chunk_parse_method(test_ctx_t *ctx)
 void
 test_parse_chunk_parse_uri(test_ctx_t *ctx)
 {
-  PRINT_TEST_PREFACE("test_parse_chunk_parse_uri")
+  PRINT_TEST_PREFACE("test_parse_chunk_parse_uri");
   ctx->indent += PREFACE_INDENT;
 
   struct test_case
@@ -764,7 +764,7 @@ test_parse_chunk_parse_uri(test_ctx_t *ctx)
 void
 test_parse_chunk_parse_version(test_ctx_t *ctx)
 {
-  PRINT_TEST_PREFACE("test_parse_chunk_parse_version")
+  PRINT_TEST_PREFACE("test_parse_chunk_parse_version");
   ctx->indent += PREFACE_INDENT;
 
   struct test_case
@@ -837,7 +837,7 @@ test_parse_chunk_parse_version(test_ctx_t *ctx)
 void
 test_parse_chunk_parse_headers(test_ctx_t *ctx)
 {
-  PRINT_TEST_PREFACE("test_parse_chunk_parse_headers")
+  PRINT_TEST_PREFACE("test_parse_chunk_parse_headers");
   ctx->indent += PREFACE_INDENT;
 
 #define TEST_MAX_HEADER_COUNT 10
