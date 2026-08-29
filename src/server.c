@@ -26,12 +26,6 @@
 
 #define MAX_EVENTS 10
 
-static const char RESPONSE[] = "HTTP/1.1 200 OK\r\n"
-                               "Content-Type: text/plain\r\n"
-                               "Content-Length: 13\r\n"
-                               "\r\n"
-                               "Hello, World!";
-
 static int
 set_nonblocking(int sockfd)
 {
@@ -96,7 +90,9 @@ create_server(int port, int max_connections)
     return NULL;
   }
 
-  connection_t listen_conn = {listen_fd, FD_TYPE_LISTEN};
+  connection_t listen_conn = {
+      .fd = listen_fd,
+      .type = FD_TYPE_LISTEN};
 
   int epoll_fd = epoll_create1(0);
   if (srv->epoll_fd < 0)
@@ -300,6 +296,8 @@ client_handler(const server_t *srv, connection_t *conn)
     http_response_internal_server_error(&header_buf, &header_buf_len);
   }
 
+  printf("[HTTP Response] status: %d, header_len: %zu, body_len: %zu\n", response.status, header_buf_len, response.body_len);
+
   conn->iov[0].iov_base = header_buf;
   conn->iov[0].iov_len = header_buf_len;
   conn->iov_count = 1;
@@ -367,7 +365,7 @@ advance_iovec(connection_t *conn, size_t send_bytes)
   {
     struct iovec *cur = &conn->iov[conn->iov_index];
 
-    if (send_bytes <= cur->iov_len)
+    if (send_bytes >= cur->iov_len)
     {
       send_bytes -= cur->iov_len;
       conn->iov_index++;

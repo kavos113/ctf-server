@@ -68,6 +68,7 @@ parse_http_request(connection_t *conn, http_request_t *out_request)
       else if (err.code == ERR_NONE)
       {
         normalize_uri(out_request);
+        return out_response;
       }
       else
       {
@@ -145,6 +146,18 @@ parse_chunk(http_request_t *req, size_t read_bytes, http_response_t *out_respons
   for (size_t i = start_idx; i < end_idx; i++)
   {
     char *cur = &s->buf[i];
+    // if (*cur == '\r')
+    // {
+    //   printf("reading: \\r, state = %d\n", s->state);
+    // }
+    // else if (*cur == '\n')
+    // {
+    //   printf("reading: \\n, state = %d\n", s->state);
+    // }
+    // else
+    // {
+    //   printf("reading: %c, state = %d\n", *cur, s->state);
+    // }
 
     switch (s->state)
     {
@@ -539,11 +552,13 @@ parse_header(http_request_t *req, http_header_t *header)
     {
       req->content_type = header->value;
     }
+    break;
 
   case 'h':
     if (header->name_len == 4 && strncasecmp(header->name, "Host", 4) == 0)
     {
       req->host = header->value;
     }
+    break;
   }
 }

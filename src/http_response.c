@@ -69,6 +69,7 @@ http_response_build_header(http_response_t *res, char **out_buf, size_t *out_buf
                         + strlen(status_str) + 2                // \r\n
                         + 16                                    // "Content-Length: "
                         + resolve_content_length(res->body_len) // Content-Length value
+                        + 2                                     // \r\n
                         + 26                                    // "Content-Type: text/plain\r\n"
                         + 19                                    // "Connection: close\r\n"
                         + 2;                                    // \r\n
@@ -82,11 +83,13 @@ http_response_build_header(http_response_t *res, char **out_buf, size_t *out_buf
     return e;
   }
 
-  size_t offset = snprintf(buf, response_len, "%s %d %s\r\n", version_str, res->status, status_str);
-  offset += snprintf(buf + offset, response_len - offset, "Content-Length: %zu\r\n", res->body_len);
-  offset += snprintf(buf + offset, response_len - offset, "Content-Type: text/plain\r\n");
-  offset += snprintf(buf + offset, response_len - offset, "Connection: close\r\n");
-  offset += snprintf(buf + offset, response_len - offset, "\r\n");
+  snprintf(buf, response_len + 1, // +1 for null terminator
+                           "%s %d %s\r\n"
+                           "Content-Length: %zu\r\n"
+                           "Content-Type: text/plain\r\n"
+                           "Connection: close\r\n"
+                           "\r\n",
+                           version_str, res->status, status_str, res->body_len);
 
   *out_buf = buf;
   *out_buf_len = response_len;
