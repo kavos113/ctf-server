@@ -6,10 +6,10 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -360,7 +360,8 @@ remove_connection(const server_t *server, connection_t *conn)
 }
 
 // return true if send all
-static bool advance_iovec(connection_t *conn, size_t send_bytes)
+static bool
+advance_iovec(connection_t *conn, size_t send_bytes)
 {
   while (conn->iov_index < conn->iov_count && send_bytes > 0)
   {
@@ -382,7 +383,8 @@ static bool advance_iovec(connection_t *conn, size_t send_bytes)
   return conn->iov_index >= conn->iov_count;
 }
 
-int connection_send_buffer(connection_t *conn)
+int
+connection_send_buffer(connection_t *conn)
 {
   while (conn->iov_index < conn->iov_count)
   {
