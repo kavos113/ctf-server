@@ -1,6 +1,10 @@
 #ifndef SERVER_H
 #define SERVER_H
 
+#include <sys/uio.h>
+
+#define MAX_IOV 4
+
 typedef enum
 {
   FD_TYPE_LISTEN,
@@ -13,6 +17,10 @@ typedef struct
 {
   int fd;
   fd_type_t type;
+
+  struct iovec iov[MAX_IOV];
+  int iov_count;
+  int iov_index;
 } connection_t;
 
 struct http_server_t;

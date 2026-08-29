@@ -1,6 +1,7 @@
 #define _POSIX_C_SOURCE 200809L
 
 #include "server.h"
+#include "server_p.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -8,8 +9,9 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
+#include <stdbool.h>
 #include <string.h>
+#include <unistd.h>
 
 #include <arpa/inet.h>
 #include <sys/epoll.h>
@@ -46,14 +48,6 @@ set_nonblocking(int sockfd)
   }
   return 0;
 }
-
-void setup_shutdown(server_t *srv);
-
-void listen_handler(const server_t *srv);
-void client_handler(const server_t *srv, connection_t *conn);
-
-int add_connection(const server_t *server, connection_t *conn, uint32_t event_mask);
-void remove_connection(const server_t *server, connection_t *conn);
 
 server_t *
 create_server(int port, int max_connections)
@@ -157,6 +151,16 @@ serve(server_t *srv)
     for (int i = 0; i < n_fds; i++)
     {
       connection_t *conn = (connection_t *)events[i].data.ptr;
+
+      // handle async writev
+      if (events[i].events & EPOLLOUT)
+      {
+        int res = connection_send_buffer(conn);
+        if (res != 0)
+        {
+          remove_connection(srv, conn);
+        }
+      }
 
       switch (conn->type)
       {
@@ -296,11 +300,25 @@ client_handler(const server_t *srv, connection_t *conn)
     http_response_internal_server_error(&header_buf, &header_buf_len);
   }
 
-  send(conn->fd, header_buf, header_buf_len, 0);
-
+  conn->iov[0].iov_base = header_buf;
+  conn->iov[0].iov_len = header_buf_len;
+  conn->iov_count = 1;
+  conn->iov_index = 0;
   if (response.body_len > 0 && response.body != NULL)
   {
-    send(conn->fd, response.body, response.body_len, 0);
+    conn->iov[1].iov_base = (char *)response.body;
+    conn->iov[1].iov_len = response.body_len;
+    conn->iov_count = 2;
+  }
+
+  int res = connection_send_buffer(conn);
+  if (res == 0)
+  {
+    struct epoll_event event;
+    event.events = EPOLLIN | EPOLLOUT | EPOLLET;
+    event.data.ptr = conn;
+
+    epoll_ctl(conn->fd, EPOLL_CTL_MOD, conn->fd, &event);
   }
 
   destroy_http_request(req);
@@ -329,4 +347,60 @@ remove_connection(const server_t *server, connection_t *conn)
   epoll_ctl(server->epoll_fd, EPOLL_CTL_DEL, conn->fd, NULL);
   close(conn->fd);
   free(conn);
+}
+
+// return true if send all
+static bool advance_iovec(connection_t *conn, size_t send_bytes)
+{
+  while (conn->iov_index < conn->iov_count && send_bytes > 0)
+  {
+    struct iovec *cur = &conn->iov[conn->iov_index];
+
+    if (send_bytes <= cur->iov_len)
+    {
+      send_bytes -= cur->iov_len;
+      conn->iov_index++;
+    }
+    else
+    {
+      cur->iov_base = (char *)cur->iov_base + send_bytes;
+      cur->iov_len -= send_bytes;
+      send_bytes = 0;
+    }
+  }
+
+  return conn->iov_index >= conn->iov_count;
+}
+
+int connection_send_buffer(connection_t *conn)
+{
+  while (conn->iov_index < conn->iov_count)
+  {
+    struct iovec *cur = &conn->iov[conn->iov_index];
+    int cur_count = conn->iov_count - conn->iov_index;
+
+    ssize_t n = writev(conn->fd, cur, cur_count);
+
+    if (n > 0)
+    {
+      if (advance_iovec(conn, (size_t)n))
+      {
+        return 1;
+      }
+    }
+    else if (n < 0)
+    {
+      if (errno == EAGAIN || errno == EWOULDBLOCK)
+      {
+        return 0;
+      }
+      return -1;
+    }
+    else
+    {
+      return 0;
+    }
+  }
+
+  return 1;
 }
