@@ -1,4 +1,4 @@
-SRCS=$(filter-out src/main.c, $(wildcard src/*.c))
+SRCS=$(filter-out src/main.c, $(wildcard src/*.c) $(wildcard src/app/*.c))
 TESTS=$(wildcard test/*.c)
 OBJS=$(SRCS:.c=.o) src/main.o
 TESTOBJS=$(TESTS:.c=.o) $(SRCS:.c=.o)
