@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include <string.h>
+#include <strings.h>
 
 void
 http_server_add_route(http_server_t *server, http_method method, const char *path, http_handler_t handler)
@@ -19,9 +20,12 @@ http_server_add_route(http_server_t *server, http_method method, const char *pat
   route->handler = handler;
 }
 
+// TODO: wildcard path
 http_response_t
 http_server_handle_request(http_server_t *server, http_request_t *req)
 {
+  normalize_uri(req);
+
   for (size_t i = 0; i < server->route_count; i++)
   {
     http_route_t *route = &server->routes[i];
@@ -185,5 +189,55 @@ ssize_t normalize_path(char *path, size_t len)
 int
 normalize_uri(http_request_t *request)
 {
+  const char *path = request->uri;
+  size_t path_len = request->uri_len;
+
+  // asterisk form
+  if (path_len == 1 && path[0] == '*')
+  {
+    return 0;
+  }
+
+  // absolute form
+  if (path_len >= 7 && strncasecmp(path, "http://", 7) == 0)
+  {
+    path += 7;
+    path_len -= 7;
+
+    const char *slash = memchr(path, '/', path_len);
+    if (slash)
+    {
+      path_len = (slash - path);
+      path = slash;
+    }
+    else
+    {
+      path = "/";
+      path_len = 1;
+    }
+  }
+  else if (path_len >= 8 && strncasecmp(path, "https://", 8) == 0)
+  {
+    path += 8;
+    path_len -= 8;
+
+    const char *slash = memchr(path, '/', path_len);
+    if (slash)
+    {
+      path_len = (slash - path);
+      path = slash;
+    }
+    else
+    {
+      path = "/";
+      path_len = 1;
+    }
+  }
+
+  // TODO: authority form
+
+  request->uri = path;
+  request->uri_len = path_len;
+
   return 0;
 }
