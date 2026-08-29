@@ -7,6 +7,8 @@ typedef enum error_code
   ERR_CONNECTION_CLOSED,
   ERR_MORE_DATA_NEEDED,
   ERR_HTTP_PARSE_FAILED,
+  ERR_OUT_OF_MEMORY,
+  ERR_UNKNOWN,
 } error_code;
 
 typedef struct error
