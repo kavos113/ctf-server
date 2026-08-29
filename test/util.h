@@ -89,7 +89,7 @@
     if (!ctx->is_canceled && strncmp((expected), (actual), (n)) != 0)                                                                                                \
     {                                                                                                                                                                \
       ctx->is_canceled = true;                                                                                                                                       \
-      fprintf(stderr, "[FAIL] %s: expected not equal to \"%.*s\", actual \"%.*s\", at %s:%d\n", name, (int)(n), (expected), (int)(n), (actual), __FILE__, __LINE__); \
+      fprintf(stderr, "[FAIL] %s: expected equal to \"%.*s\", actual \"%.*s\", at %s:%d\n", name, (int)(n), (expected), (int)(n), (actual), __FILE__, __LINE__); \
     }                                                                                                                                                                \
   } while (0)
 
@@ -99,7 +99,7 @@
     if (!ctx->is_canceled && strncmp((expected), (actual), (n)) == 0)                                                                                            \
     {                                                                                                                                                            \
       ctx->is_canceled = true;                                                                                                                                   \
-      fprintf(stderr, "[FAIL] %s: expected equal to \"%.*s\", actual \"%.*s\", at %s:%d\n", name, (int)(n), (expected), (int)(n), (actual), __FILE__, __LINE__); \
+      fprintf(stderr, "[FAIL] %s: expected not equal to \"%.*s\", actual \"%.*s\", at %s:%d\n", name, (int)(n), (expected), (int)(n), (actual), __FILE__, __LINE__); \
     }                                                                                                                                                            \
   } while (0)
 

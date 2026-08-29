@@ -1,5 +1,7 @@
 #include "http_request_p.h"
 
+#include <stddef.h>
+#include <stdio.h>
 #include <string.h>
 #include <strings.h>
 
@@ -76,8 +78,6 @@ normalize_path(char *path, size_t len)
 
   while (r < len)
   {
-    path[w++] = '/';
-
     // skip like "////"
     while (r < len && path[r] == '/')
     {
@@ -100,13 +100,11 @@ normalize_path(char *path, size_t len)
     if (seg_len == 1 && path[seg_start] == '.')
     {
       // remove last "/" (because ignore this segment)
-      w--;
       continue;
     }
 
     if (seg_len == 2 && path[seg_start] == '.' && path[seg_start + 1] == '.')
     {
-      w--;
       if (w == 0)
       {
         // directory traversal
@@ -125,6 +123,7 @@ normalize_path(char *path, size_t len)
       continue;
     }
 
+    path[w++] = '/';
     for (size_t i = 0; i < seg_len; i++)
     {
       path[w++] = path[seg_start + i];
@@ -142,14 +141,14 @@ normalize_path(char *path, size_t len)
 int
 normalize_uri(http_request_t *request)
 {
+  parse_query_params(request);
+
   ssize_t new_len = url_decode(request->uri, request->uri_len);
   if (new_len < 0)
   {
     return -1;
   }
   request->uri_len = new_len;
-
-  parse_query_params(request);
 
   char *path = request->uri;
   size_t path_len = request->uri_len;
@@ -169,13 +168,14 @@ normalize_uri(http_request_t *request)
     char *slash = memchr(path, '/', path_len);
     if (slash)
     {
-      path_len = (slash - path);
+      path_len -= (slash - path);
       path = slash;
     }
     else
     {
-      path = "/";
-      path_len = 1;
+      request->uri = "/";
+      request->uri_len = 1;
+      return 0;
     }
   }
   else if (path_len >= 8 && strncasecmp(path, "https://", 8) == 0)
@@ -186,13 +186,14 @@ normalize_uri(http_request_t *request)
     char *slash = memchr(path, '/', path_len);
     if (slash)
     {
-      path_len = (slash - path);
+      path_len -= (slash - path);
       path = slash;
     }
     else
     {
-      path = "/";
-      path_len = 1;
+      request->uri = "/";
+      request->uri_len = 1;
+      return 0;
     }
   }
 
@@ -213,13 +214,18 @@ normalize_uri(http_request_t *request)
 void
 parse_query_params(http_request_t *req)
 {
-  size_t final_uri_len = 0;
+  size_t final_uri_len = req->uri_len;
+  int is_final_uri_len_set = 0;
 
   for (size_t i = 0; i < req->uri_len; i++)
   {
     if (req->uri[i] == '?')
     {
-      final_uri_len = i;
+      if (!is_final_uri_len_set)
+      {
+        final_uri_len = i;
+        is_final_uri_len_set = 1;
+      }
 
       i++;
 
@@ -237,6 +243,7 @@ parse_query_params(http_request_t *req)
         // no value
         if (i >= req->uri_len)
         {
+          req->uri_len = final_uri_len;
           return;
         }
 
@@ -249,6 +256,7 @@ parse_query_params(http_request_t *req)
         // no value
         if (i >= req->uri_len)
         {
+          req->uri_len = final_uri_len;
           return;
         }
 
@@ -264,6 +272,7 @@ parse_query_params(http_request_t *req)
         // no other param
         if (i >= req->uri_len)
         {
+          req->uri_len = final_uri_len;
           return;
         }
 
@@ -272,7 +281,11 @@ parse_query_params(http_request_t *req)
     }
     else if (req->uri[i] == '#')
     {
-      final_uri_len = i;
+      if (!is_final_uri_len_set)
+      {
+        final_uri_len = i;
+        is_final_uri_len_set = 1;
+      }
     }
   }
 
