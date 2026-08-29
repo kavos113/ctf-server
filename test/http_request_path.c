@@ -7,6 +7,7 @@
 
 void test_url_decode(test_ctx_t *ctx);
 void test_normalize_path(test_ctx_t *ctx);
+void test_parse_query_params(test_ctx_t *ctx);
 
 void
 test_http_request_path(test_ctx_t *ctx)
@@ -16,7 +17,7 @@ test_http_request_path(test_ctx_t *ctx)
 
   test_url_decode(ctx);
   test_normalize_path(ctx);
-
+  test_parse_query_params(ctx);
   ctx->indent -= PREFACE_INDENT;
 }
 
@@ -188,6 +189,84 @@ test_normalize_path(test_ctx_t *ctx)
     if (result >= 0)
     {
       ASSERT_STR_N_EQ(tc->name, tc->expected_normalized, buf, (size_t)result);
+    }
+
+    CHECK_TEST(tc->name);
+  }
+
+  ctx->indent -= PREFACE_INDENT;
+}
+
+void
+test_parse_query_params(test_ctx_t *ctx)
+{
+  PRINT_TEST_PREFACE("test_parse_query_params");
+  ctx->indent += PREFACE_INDENT;
+
+  struct test_case
+  {
+    const char *name;
+
+    const char *uri;
+    size_t uri_len;
+    size_t expected_param_count;
+    http_param_t expected_params[4];
+  } test_cases[] = {
+      {
+          .name = "success: single query param",
+          .uri = "/path?param1=value1",
+          .uri_len = 19,
+          .expected_param_count = 1,
+          .expected_params = {
+              {.name = "param1", .name_len = 6, .value = "value1", .value_len = 6},
+          },
+      },
+      {
+          .name = "success: multiple query params",
+          .uri = "/path?param1=value1&param2=value2",
+          .uri_len = 33,
+          .expected_param_count = 2,
+          .expected_params = {
+              {.name = "param1", .name_len = 6, .value = "value1", .value_len = 6},
+              {.name = "param2", .name_len = 6, .value = "value2", .value_len = 6},
+          },
+      },
+      {
+          .name = "success: query param without value",
+          .uri = "/path?param1",
+          .uri_len = 12,
+          .expected_param_count = 0,
+      },
+      {
+          .name = "success: no query params",
+          .uri = "/path",
+          .uri_len = 5,
+          .expected_param_count = 0,
+      },
+  };
+
+  for (size_t i = 0; i < sizeof(test_cases) / sizeof(test_cases[0]); i++)
+  {
+    ctx->is_canceled = false;
+    struct test_case *tc = &test_cases[i];
+
+    http_request_t req;
+    memset(&req, 0, sizeof(req));
+    req.uri = tc->uri;
+    req.uri_len = tc->uri_len;
+
+    parse_query_params(&req);
+
+    ASSERT_EQ(tc->name, tc->expected_param_count, req.query_param_count);
+    for (size_t j = 0; j < tc->expected_param_count; j++)
+    {
+      http_param_t *expected = &tc->expected_params[j];
+      http_param_t *actual = &req.query_params[j];
+
+      ASSERT_STR_N_EQ(tc->name, expected->name, actual->name, expected->name_len);
+      ASSERT_EQ(tc->name, expected->name_len, actual->name_len);
+      ASSERT_STR_N_EQ(tc->name, expected->value, actual->value, expected->value_len);
+      ASSERT_EQ(tc->name, expected->value_len, actual->value_len);
     }
 
     CHECK_TEST(tc->name);
