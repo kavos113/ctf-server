@@ -288,7 +288,20 @@ client_handler(const server_t *srv, connection_t *conn)
     response = http_server_handle_request(srv->http_server, req);
   }
 
-  http_response_send(&response, conn->fd);
+  char *header_buf;
+  size_t header_buf_len;
+  error err = http_response_build_header(&response, &header_buf, &header_buf_len);
+  if (err.code != ERR_NONE)
+  {
+    http_response_internal_server_error(&header_buf, &header_buf_len);
+  }
+
+  send(conn->fd, header_buf, header_buf_len, 0);
+
+  if (response.body_len > 0 && response.body != NULL)
+  {
+    send(conn->fd, response.body, response.body_len, 0);
+  }
 
   destroy_http_request(req);
   remove_connection(srv, conn);

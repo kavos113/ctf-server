@@ -19,6 +19,4 @@ error http_response_build(http_response_t *res, char **out_buf, size_t *out_buf_
 error http_response_build_header(http_response_t *res, char **out_buf, size_t *out_buf_len);
 void http_response_internal_server_error(char **out_buf, size_t *out_buf_len);
 
-void http_response_send(http_response_t *res, int fd);
-
 #endif // HTTP_RESPONSE_H

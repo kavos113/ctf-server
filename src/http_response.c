@@ -107,22 +107,3 @@ http_response_internal_server_error(char **out_buf, size_t *out_buf_len)
 
   http_response_build(&res, out_buf, out_buf_len);
 }
-
-void
-http_response_send(http_response_t *res, int fd)
-{
-  char *header_buf;
-  size_t header_buf_len;
-  error err = http_response_build_header(res, &header_buf, &header_buf_len);
-  if (err.code != ERR_NONE)
-  {
-    http_response_internal_server_error(&header_buf, &header_buf_len);
-  }
-
-  send(fd, header_buf, header_buf_len, 0);
-
-  if (res->body_len > 0 && res->body != NULL)
-  {
-    send(fd, res->body, res->body_len, 0);
-  }
-}
