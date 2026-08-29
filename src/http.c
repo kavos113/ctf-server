@@ -236,9 +236,8 @@ parse_chunk(http_request_t *req, size_t read_bytes)
       {
         s->state = STATE_ERROR;
         error e = {
-          .code = ERR_HTTP_PARSE_FAILED,
-          .msg = "empty field name"
-        };
+            .code = ERR_HTTP_PARSE_FAILED,
+            .msg = "empty field name"};
         return e;
       }
       else
@@ -247,9 +246,8 @@ parse_chunk(http_request_t *req, size_t read_bytes)
         {
           s->state = STATE_ERROR;
           error e = {
-            .code = ERR_HTTP_PARSE_FAILED,
-            .msg = "too many headers"
-          };
+              .code = ERR_HTTP_PARSE_FAILED,
+              .msg = "too many headers"};
           return e;
         }
 
@@ -268,9 +266,24 @@ parse_chunk(http_request_t *req, size_t read_bytes)
       {
         s->state = STATE_ERROR;
         error e = {
-          .code = ERR_HTTP_PARSE_FAILED,
-          .msg = "whitespace is included in field-name"
-        };
+            .code = ERR_HTTP_PARSE_FAILED,
+            .msg = "whitespace is included in field-name"};
+        return e;
+      }
+      else if (*cur == '\r')
+      {
+        s->state = STATE_ERROR;
+        error e = {
+            .code = ERR_HTTP_PARSE_FAILED,
+            .msg = "unexpected CR in header"};
+        return e;
+      }
+      else if (*cur == '\n')
+      {
+        s->state = STATE_ERROR;
+        error e = {
+            .code = ERR_HTTP_PARSE_FAILED,
+            .msg = "unexpected LF in header"};
         return e;
       }
       else if (*cur == ':')
@@ -286,26 +299,25 @@ parse_chunk(http_request_t *req, size_t read_bytes)
     {
       http_header_t *h = &req->headers[req->header_count];
 
-      if (is_whitespace(*cur))
-      {
-        break;
-      }
-
-      if (!h->value)
+      if (!h->value && !is_whitespace(*cur))
       {
         h->value = cur;
+        h->value_len = 0;
       }
 
       if (*cur == '\r')
       {
-        h->value_len = h->value ? (cur - h->value) : 0;
         s->state = STATE_HEADER_LF;
       }
       else if (*cur == '\n')
       {
-        h->value_len = h->value ? (cur - h->value) : 0;
         req->header_count++;
         s->state = STATE_HEADER_KEY;
+      }
+
+      if (!is_whitespace(*cur))
+      {
+        h->value_len = cur - h->value + 1;
       }
 
       break;
@@ -321,9 +333,8 @@ parse_chunk(http_request_t *req, size_t read_bytes)
       {
         s->state = STATE_ERROR;
         error e = {
-          .code = ERR_HTTP_PARSE_FAILED,
-          .msg = "unexpected lf"
-        };
+            .code = ERR_HTTP_PARSE_FAILED,
+            .msg = "unexpected lf"};
         return e;
       }
 

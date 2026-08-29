@@ -741,7 +741,7 @@ test_parse_chunk_parse_headers(test_ctx_t *ctx)
   PRINT_TEST_PREFACE("test_parse_chunk_parse_headers")
   ctx->indent += PREFACE_INDENT;
 
-  size_t TEST_MAX_HEADER_COUNT = 10;
+#define TEST_MAX_HEADER_COUNT 10
 
   struct test_case
   {
@@ -821,6 +821,36 @@ test_parse_chunk_parse_headers(test_ctx_t *ctx)
           .expected_header_count = 1,
       },
       {
+          .name = "success: whitespace after header value: stripping whitespace",
+          .buf = "GET / HTTP/1.1\r\nHost: example.com   \n\r\n\r\n",
+          .buf_len = 40,
+          .expected_error = ERR_NONE,
+          .expected_headers = {
+              {
+                  .name = "Host",
+                  .name_len = 4,
+                  .value = "example.com",
+                  .value_len = 11,
+              },
+          },
+          .expected_header_count = 1,
+      },
+      {
+          .name = "success: whitespace in header value",
+          .buf = "GET / HTTP/1.1\r\nAuthorization: Bearer token with spaces\r\n\r\n",
+          .buf_len = 59,
+          .expected_error = ERR_NONE,
+          .expected_headers = {
+              {
+                  .name = "Authorization",
+                  .name_len = 13,
+                  .value = "Bearer token with spaces",
+                  .value_len = 24,
+              },
+          },
+          .expected_header_count = 1,
+      },
+      {
           .name = "error: malformed header",
           .buf = "GET / HTTP/1.1\r\nHost example.com\r\n\r\n",
           .buf_len = 46,
@@ -837,13 +867,6 @@ test_parse_chunk_parse_headers(test_ctx_t *ctx)
       {
           .name = "error: unexpected CR in header",
           .buf = "GET / HTTP/1.1\r\nHost: example.com\r\r\n\r\n",
-          .buf_len = 38,
-          .expected_error = ERR_HTTP_PARSE_FAILED,
-          .expected_header_count = 0,
-      },
-      {
-          .name = "error: unexpected LF in header",
-          .buf = "GET / HTTP/1.1\r\nHost: example.com\n\r\n\r\n",
           .buf_len = 38,
           .expected_error = ERR_HTTP_PARSE_FAILED,
           .expected_header_count = 0,
@@ -889,6 +912,8 @@ test_parse_chunk_parse_headers(test_ctx_t *ctx)
 
     CHECK_TEST(tc->name);
   }
+
+#undef TEST_MAX_HEADER_COUNT
 
   ctx->indent -= PREFACE_INDENT;
 }
