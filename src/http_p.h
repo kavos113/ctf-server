@@ -39,4 +39,7 @@ error parse_chunk(http_request_t *req, size_t read_bytes);
 int parse_method(http_request_t *req, const char *cur);
 int parse_version(http_request_t *req, const char *cur, size_t len);
 
+// if field name is common such as "Content-Type", store to req
+void parse_header(http_request_t *req, http_header_t *header);
+
 #endif //SRC_HTTP_P_H

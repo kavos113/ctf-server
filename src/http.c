@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 
 #include <sys/socket.h>
 
@@ -83,6 +84,35 @@ parse_http_request(connection_t *conn, http_request_t *out_request)
       }
     }
   }
+}
+
+const http_header_t *
+http_request_get_header(const http_request_t *req, const char *name)
+{
+  size_t name_len = strlen(name);
+
+  for (size_t i = 0; i < req->header_count; i++)
+  {
+    const http_header_t *h = &req->headers[i];
+
+    if (h->name_len != name_len)
+    {
+      continue;
+    }
+
+    // check first char
+    if ((h->name[0] | 0x20) != (name[0] | 0x20))
+    {
+      continue;
+    }
+
+    if (strncasecmp(h->name, name, name_len) == 0)
+    {
+      return h;
+    }
+  }
+
+  return NULL;
 }
 
 error
@@ -308,10 +338,12 @@ parse_chunk(http_request_t *req, size_t read_bytes)
       if (*cur == '\r')
       {
         s->state = STATE_HEADER_LF;
+        parse_header(req, h);
       }
       else if (*cur == '\n')
       {
         req->header_count++;
+        parse_header(req, h);
         s->state = STATE_HEADER_KEY;
       }
 
@@ -468,4 +500,27 @@ parse_version(http_request_t *req, const char *cur, size_t len)
   }
 
   return -1;
+}
+
+void
+parse_header(http_request_t *req, http_header_t *header)
+{
+  switch (header->name[0] | 0x20)
+  {
+  case 'c':
+    if (header->name_len == 14 && strncasecmp(header->name, "Content-Length", 14) == 0)
+    {
+      req->content_length = (size_t)strtoul(header->value, NULL, 10);
+    }
+    else if (header->name_len == 12 && strncasecmp(header->name, "Content-Type", 12) == 0)
+    {
+      req->content_type = header->value;
+    }
+
+  case 'h':
+    if (header->name_len == 4 && strncasecmp(header->name, "Host", 4) == 0)
+    {
+      req->host = header->value;
+    }
+  }
 }
