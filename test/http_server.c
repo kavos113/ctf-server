@@ -30,7 +30,7 @@ test_url_decode(test_ctx_t *ctx)
   {
     const char *name;
 
-    char buf[64];
+    const char *buf;
     size_t buf_len;
     ssize_t expected_result;
     const char *expected_decoded;
@@ -92,7 +92,7 @@ test_url_decode(test_ctx_t *ctx)
 
     if (result >= 0)
     {
-      ASSERT_STR_EQ(tc->name, tc->expected_decoded, buf);
+      ASSERT_STR_N_EQ(tc->name, tc->expected_decoded, buf, (size_t)result);
     }
 
     CHECK_TEST(tc->name);
@@ -111,7 +111,7 @@ test_normalize_path(test_ctx_t *ctx)
   {
     const char *name;
 
-    char buf[64];
+    const char *buf;
     size_t buf_len;
     ssize_t expected_result;
     const char *expected_normalized;
@@ -127,7 +127,7 @@ test_normalize_path(test_ctx_t *ctx)
           .name = "success: with dot segments",
           .buf = "/path/./to/./file",
           .buf_len = 18,
-          .expected_result = 11,
+          .expected_result = 14,
           .expected_normalized = "/path/to/file",
       },
       {
@@ -140,8 +140,8 @@ test_normalize_path(test_ctx_t *ctx)
       {
           .name = "success: remove multiple slashes",
           .buf = "/path//to///file",
-          .buf_len = 18,
-          .expected_result = 13,
+          .buf_len = 17,
+          .expected_result = 14,
           .expected_normalized = "/path/to/file",
       },
       {

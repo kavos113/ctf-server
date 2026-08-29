@@ -147,7 +147,7 @@ ssize_t normalize_path(char *path, size_t len)
       continue;
     }
 
-    if (seg_len == 1 && path[seg_start] == '.' && path[seg_start + 1] == '.')
+    if (seg_len == 2 && path[seg_start] == '.' && path[seg_start + 1] == '.')
     {
       w--;
       if (w == 0)
