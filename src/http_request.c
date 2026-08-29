@@ -1,5 +1,6 @@
+#include "http_request.h"
 #include "http.h"
-#include "http_p.h"
+#include "http_request_p.h"
 
 #include <errno.h>
 #include <stdint.h>

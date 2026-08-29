@@ -3,8 +3,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <http.h>
-#include <http_p.h>
+#include <http_request.h>
+#include <http_request_p.h>
 
 #include "util.h"
 
