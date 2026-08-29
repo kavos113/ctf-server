@@ -84,7 +84,7 @@ const char *http_status_to_string(http_status status);
 
 // if request method is larger than this, discard
 #define HTTP_METHOD_MAX_LEN 7
-#define MAX_HEADERS 32
+#define MAX_HEADERS         32
 
 typedef struct
 {

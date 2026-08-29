@@ -1,5 +1,5 @@
-#ifndef SRC_HTTP_P_H
-#define SRC_HTTP_P_H
+#ifndef HTTP_P_H
+#define HTTP_P_H
 
 #include <stddef.h>
 
@@ -42,4 +42,4 @@ int parse_version(http_request_t *req, const char *cur, size_t len);
 // if field name is common such as "Content-Type", store to req
 void parse_header(http_request_t *req, http_header_t *header);
 
-#endif //SRC_HTTP_P_H
+#endif // HTTP_P_H
