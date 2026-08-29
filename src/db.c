@@ -1,4 +1,4 @@
-#include "mysql.h"
+#include "db.h"
 
 #include <stdlib.h>
 #include <stdio.h>
