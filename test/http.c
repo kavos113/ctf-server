@@ -18,6 +18,7 @@ void test_parse_chunk_state_transition(test_ctx_t *ctx);
 void test_parse_chunk_parse_method(test_ctx_t *ctx);
 void test_parse_chunk_parse_uri(test_ctx_t *ctx);
 void test_parse_chunk_parse_version(test_ctx_t *ctx);
+void test_parse_chunk_parse_headers(test_ctx_t *ctx);
 
 void
 test_http(test_ctx_t *ctx)
@@ -275,6 +276,7 @@ test_parse_chunk(test_ctx_t *ctx)
   test_parse_chunk_parse_method(ctx);
   test_parse_chunk_parse_uri(ctx);
   test_parse_chunk_parse_version(ctx);
+  test_parse_chunk_parse_headers(ctx);
 
   ctx->indent -= PREFACE_INDENT;
 }
@@ -725,6 +727,164 @@ test_parse_chunk_parse_version(test_ctx_t *ctx)
     if (e.code == ERR_NONE)
     {
       ASSERT_EQ(tc->name, tc->expected_version, req.version);
+    }
+
+    CHECK_TEST(tc->name);
+  }
+
+  ctx->indent -= PREFACE_INDENT;
+}
+
+void
+test_parse_chunk_parse_headers(test_ctx_t *ctx)
+{
+  PRINT_TEST_PREFACE("test_parse_chunk_parse_headers")
+  ctx->indent += PREFACE_INDENT;
+
+  size_t TEST_MAX_HEADER_COUNT = 10;
+
+  struct test_case
+  {
+    const char *name;
+
+    const char *buf;
+    size_t buf_len;
+
+    error_code expected_error;
+    http_header_t expected_headers[TEST_MAX_HEADER_COUNT];
+    size_t expected_header_count;
+  } test_cases[] = {
+      {
+          .name = "success: single header",
+          .buf = "GET / HTTP/1.1\r\nHost: example.com\r\n\r\n",
+          .buf_len = 37,
+          .expected_error = ERR_NONE,
+          .expected_headers = {
+              {
+                  .name = "Host",
+                  .name_len = 4,
+                  .value = "example.com",
+                  .value_len = 11,
+              },
+          },
+          .expected_header_count = 1,
+      },
+      {
+          .name = "success: multiple headers",
+          .buf = "GET / HTTP/1.1\r\nHost: example.com\r\nUser-Agent: TestAgent\r\n\r\n",
+          .buf_len = 60,
+          .expected_error = ERR_NONE,
+          .expected_headers = {
+              {
+                  .name = "Host",
+                  .name_len = 4,
+                  .value = "example.com",
+                  .value_len = 11,
+              },
+              {
+                  .name = "User-Agent",
+                  .name_len = 10,
+                  .value = "TestAgent",
+                  .value_len = 9,
+              },
+          },
+          .expected_header_count = 2,
+      },
+      {
+          .name = "success: header with no whitespace after colon",
+          .buf = "GET / HTTP/1.1\r\nHost:example.com\r\n\r\n",
+          .buf_len = 36,
+          .expected_error = ERR_NONE,
+          .expected_headers = {
+              {
+                  .name = "Host",
+                  .name_len = 4,
+                  .value = "example.com",
+                  .value_len = 11,
+              },
+          },
+          .expected_header_count = 1,
+      },
+      {
+          .name = "success: header with whitespace after colon",
+          .buf = "GET / HTTP/1.1\r\nHost:   example.com\r\n\r\n",
+          .buf_len = 40,
+          .expected_error = ERR_NONE,
+          .expected_headers = {
+              {
+                  .name = "Host",
+                  .name_len = 4,
+                  .value = "example.com",
+                  .value_len = 11,
+              },
+          },
+          .expected_header_count = 1,
+      },
+      {
+          .name = "error: malformed header",
+          .buf = "GET / HTTP/1.1\r\nHost example.com\r\n\r\n",
+          .buf_len = 46,
+          .expected_error = ERR_HTTP_PARSE_FAILED,
+          .expected_header_count = 0,
+      },
+      {
+          .name = "error: whitespace in header name",
+          .buf = "GET / HTTP/1.1\r\nHo st: example.com\r\n\r\n",
+          .buf_len = 38,
+          .expected_error = ERR_HTTP_PARSE_FAILED,
+          .expected_header_count = 0,
+      },
+      {
+          .name = "error: unexpected CR in header",
+          .buf = "GET / HTTP/1.1\r\nHost: example.com\r\r\n\r\n",
+          .buf_len = 38,
+          .expected_error = ERR_HTTP_PARSE_FAILED,
+          .expected_header_count = 0,
+      },
+      {
+          .name = "error: unexpected LF in header",
+          .buf = "GET / HTTP/1.1\r\nHost: example.com\n\r\n\r\n",
+          .buf_len = 38,
+          .expected_error = ERR_HTTP_PARSE_FAILED,
+          .expected_header_count = 0,
+      },
+  };
+
+  for (size_t i = 0; i < sizeof(test_cases) / sizeof(test_cases[0]); i++)
+  {
+    ctx->is_canceled = false;
+    struct test_case *tc = &test_cases[i];
+
+    http_request_t req;
+    memset(&req, 0, sizeof(http_request_t));
+
+    http_parser_internal_state s;
+    memset(&s, 0, sizeof(http_parser_internal_state));
+    req.internal = &s;
+
+    memcpy(s.buf, tc->buf, tc->buf_len);
+    s.buf_len = tc->buf_len;
+
+    error e = parse_chunk(&req, tc->buf_len);
+    ASSERT_EQ(tc->name, tc->expected_error, e.code);
+    if (e.code == ERR_NONE)
+    {
+      ASSERT_EQ(tc->name, tc->expected_header_count, req.header_count);
+      for (size_t j = 0; j < tc->expected_header_count; j++)
+      {
+        http_header_t *expected = &tc->expected_headers[j];
+        http_header_t *actual = &req.headers[j];
+
+        ASSERT_STR_N_EQ(tc->name, expected->name, actual->name, expected->name_len);
+        ASSERT_EQ(tc->name, expected->name_len, actual->name_len);
+
+        ASSERT_STR_N_EQ(tc->name, expected->value, actual->value, expected->value_len);
+        ASSERT_EQ(tc->name, expected->value_len, actual->value_len);
+      }
+    }
+    else
+    {
+      ASSERT_EQ(tc->name, 0, req.header_count);
     }
 
     CHECK_TEST(tc->name);
