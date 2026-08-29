@@ -9,7 +9,8 @@ typedef enum
 {
   FD_TYPE_LISTEN,
   FD_TYPE_CLIENT,
-  FD_TYPE_SIGNAL
+  FD_TYPE_SIGNAL,
+  FD_TYPE_DB,
 } fd_type_t;
 
 // connection_t represents event notified from epoll

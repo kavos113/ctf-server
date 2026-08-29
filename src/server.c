@@ -172,6 +172,10 @@ serve(server_t *srv)
         printf("graceful shutdown...\n");
         is_running = 0;
         break;
+
+      case FD_TYPE_DB:
+        // TODO
+        break;
       }
     }
   }

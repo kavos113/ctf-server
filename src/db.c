@@ -8,6 +8,8 @@
 #include <sys/epoll.h>
 #include <mysql/mysql.h>
 
+#include "server.h"
+
 task_queue_t * task_queue_new()
 {
   task_queue_t *q = malloc(sizeof(task_queue_t));
@@ -159,9 +161,13 @@ db_pool_t *db_pool_new(int epoll_fd, int num_threads)
 
   pool->notify_fd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
 
+  connection_t *conn = malloc(sizeof(connection_t));
+  conn->fd = pool->notify_fd;
+  conn->type = FD_TYPE_DB;
+
   struct epoll_event event;
   event.events = EPOLLIN | EPOLLET;
-  event.data.fd = pool->notify_fd;
+  event.data.ptr = conn;
 
   epoll_ctl(epoll_fd, EPOLL_CTL_ADD, pool->notify_fd, &event);
 
