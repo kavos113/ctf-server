@@ -1,0 +1,213 @@
+openapi: 3.0.0
+info:
+  title: CTF Server API
+  version: 1.0.0
+
+paths:
+  /challenges:
+    get:
+      summary: すべての問題
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Challenge"
+    post:
+      summary: 問題を作成
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateChallengeRequest"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Challenge"
+    put:
+      summary: 問題を更新
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateChallengeRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Challenge"
+        "403":
+          description: 自分の問題ではない
+        "404":
+          description: 問題が存在しない
+    delete:
+      summary: 問題を削除
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: OK
+        "403":
+          description: 自分の問題ではない
+        "404":
+          description: 問題が存在しない
+
+  /challenges/me:
+    get:
+      summary: 自分が作った問題
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Challenge"
+
+  /answers:
+    get:
+      summary: すべての解答(正答のみ)
+      parameters:
+        - name: challenge_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CorrectAnswer"
+        "404":
+          description: 問題が存在しない
+    post:
+      summary: 問題に解答
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnswerRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Answer"
+        "404":
+          description: 問題が存在しない
+
+  /answers/me:
+    get:
+      summary: 自分の解答を取得
+      parameters:
+        - name: challenge_id
+          in: query
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Answer"
+        "404":
+          description: 問題が存在しない
+
+components:
+  schemas:
+    Challenge:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        description:
+          type: string
+        flag:
+          type: string
+        genre:
+          type: string
+        creator_id:
+          type: string
+
+    CreateChallengeRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        flag:
+          type: string
+        genre:
+          type: string
+
+    AnswerRequest:
+      type: object
+      properties:
+        challenge_id:
+          type: integer
+          format: int64
+        answer:
+          type: string
+
+    Answer:
+      type: object
+      properties:
+        challenge_id:
+          type: integer
+          format: int64
+        answer:
+          type: string
+        correct:
+          type: boolean
+        user_id:
+          type: string
+        answered_at:
+          type: string
+          format: date-time
+
+    CorrectAnswer:
+      type: object
+      properties:
+        challenge_id:
+          type: integer
+          format: int64
+        user_id:
+          type: string
+        answered_at:
+          type: string
+          format: date-time
