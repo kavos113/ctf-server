@@ -479,7 +479,11 @@ test_parse_chunk_state_transition(test_ctx_t *ctx)
     memcpy(s.buf, tc->buf, tc->buf_len);
     s.buf_len = tc->buf_len;
 
-    error e = parse_chunk(&req, tc->bytes_read);
+    http_response_t out_response = {
+        .status = HTTP_STATUS_OK,
+        .body = NULL,
+        .body_len = 0};
+    error e = parse_chunk(&req, tc->bytes_read, &out_response);
     ASSERT_EQ(tc->name, tc->expected_error, e.code);
     ASSERT_EQ(tc->name, tc->expected_state, s.state);
 
@@ -571,11 +575,16 @@ test_parse_chunk_state_transition(test_ctx_t *ctx)
     memcpy(s.buf, tc->buf, tc->buf_len);
     s.buf_len = 0;
 
+    http_response_t out_response = {
+        .status = HTTP_STATUS_OK,
+        .body = NULL,
+        .body_len = 0};
+
     error e;
     for (size_t j = 0; j < tc->buf_len; j++)
     {
       s.buf_len++;
-      e = parse_chunk(&req, 1);
+      e = parse_chunk(&req, 1, &out_response);
       if (e.code != ERR_MORE_DATA_NEEDED)
       {
         break;
@@ -650,7 +659,11 @@ test_parse_chunk_parse_method(test_ctx_t *ctx)
     memcpy(s.buf, tc->buf, tc->buf_len);
     s.buf_len = tc->buf_len;
 
-    error e = parse_chunk(&req, tc->buf_len);
+    http_response_t out_response = {
+        .status = HTTP_STATUS_OK,
+        .body = NULL,
+        .body_len = 0};
+    error e = parse_chunk(&req, tc->buf_len, &out_response);
     ASSERT_EQ(tc->name, tc->expected_error, e.code);
     ASSERT_EQ(tc->name, tc->expected_method, req.method);
     ASSERT_EQ(tc->name, tc->expected_method_len, s.method_len);
@@ -743,7 +756,11 @@ test_parse_chunk_parse_uri(test_ctx_t *ctx)
     memcpy(s.buf, tc->buf, tc->buf_len);
     s.buf_len = tc->buf_len;
 
-    error e = parse_chunk(&req, tc->buf_len);
+    http_response_t out_response = {
+        .status = HTTP_STATUS_OK,
+        .body = NULL,
+        .body_len = 0};
+    error e = parse_chunk(&req, tc->buf_len, &out_response);
     ASSERT_EQ(tc->name, tc->expected_error, e.code);
     if (e.code == ERR_NONE)
     {
@@ -821,7 +838,11 @@ test_parse_chunk_parse_version(test_ctx_t *ctx)
     memcpy(s.buf, tc->buf, tc->buf_len);
     s.buf_len = tc->buf_len;
 
-    error e = parse_chunk(&req, tc->buf_len);
+    http_response_t out_response = {
+        .status = HTTP_STATUS_OK,
+        .body = NULL,
+        .body_len = 0};
+    error e = parse_chunk(&req, tc->buf_len, &out_response);
     ASSERT_EQ(tc->name, tc->expected_error, e.code);
     if (e.code == ERR_NONE)
     {
@@ -987,7 +1008,11 @@ test_parse_chunk_parse_headers(test_ctx_t *ctx)
     memcpy(s.buf, tc->buf, tc->buf_len);
     s.buf_len = tc->buf_len;
 
-    error e = parse_chunk(&req, tc->buf_len);
+    http_response_t out_response = {
+        .status = HTTP_STATUS_OK,
+        .body = NULL,
+        .body_len = 0};
+    error e = parse_chunk(&req, tc->buf_len, &out_response);
     ASSERT_EQ(tc->name, tc->expected_error, e.code);
     if (e.code == ERR_NONE)
     {
