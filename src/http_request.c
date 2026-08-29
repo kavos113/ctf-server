@@ -32,7 +32,7 @@ destroy_http_request(http_request_t *req)
   free(req);
 }
 
-error
+http_response_t
 parse_http_request(connection_t *conn, http_request_t *out_request)
 {
   memset(out_request, 0, sizeof(http_request_t));
@@ -55,7 +55,12 @@ parse_http_request(connection_t *conn, http_request_t *out_request)
     {
       s->buf_len += bytes_read;
 
-      error err = parse_chunk(out_request, bytes_read);
+      http_response_t out_response = {
+          .status = HTTP_STATUS_OK,
+          .body = NULL,
+          .body_len = 0};
+
+      error err = parse_chunk(out_request, bytes_read, &out_response);
       if (err.code == ERR_MORE_DATA_NEEDED)
       {
         continue;
@@ -66,26 +71,25 @@ parse_http_request(connection_t *conn, http_request_t *out_request)
       }
       else
       {
-        return err;
+        return out_response;
       }
     }
     else if (bytes_read == 0)
     {
-      // TODO: 4096超えたときの処理
-      error e = {
-          .code = ERR_CONNECTION_CLOSED,
-          .msg = "connection closed by client"};
-      return e;
+      return (http_response_t){
+          .status = HTTP_STATUS_BAD_REQUEST,
+          .body = "Connection closed by client",
+          .body_len = 27};
     }
     else
     {
       if (errno != EAGAIN && errno != EWOULDBLOCK)
       {
         perror("recv");
-        error e = {
-            .code = ERR_CONNECTION_CLOSED,
-            .msg = "recv failed"};
-        return e;
+        return (http_response_t){
+            .status = HTTP_STATUS_INTERNAL_SERVER_ERROR,
+            .body = "internal server error",
+            .body_len = 19};
       }
     }
   }
@@ -121,7 +125,7 @@ http_request_get_header(const http_request_t *req, const char *name)
 }
 
 error
-parse_chunk(http_request_t *req, size_t read_bytes)
+parse_chunk(http_request_t *req, size_t read_bytes, http_response_t *out_response)
 {
   http_parser_internal_state *s = req->internal;
 
@@ -134,6 +138,7 @@ parse_chunk(http_request_t *req, size_t read_bytes)
     error e = {
         .code = ERR_HTTP_PARSE_FAILED,
         .msg = "header too large"};
+    out_response->status = HTTP_STATUS_REQUEST_HEADER_FIELDS_TOO_LARGE;
     return e;
   }
 
@@ -167,6 +172,7 @@ parse_chunk(http_request_t *req, size_t read_bytes)
         error e = {
             .code = ERR_HTTP_PARSE_FAILED,
             .msg = "invalid request line: unknown method"};
+        out_response->status = HTTP_STATUS_NOT_IMPLEMENTED;
         return e;
       }
 
@@ -193,6 +199,7 @@ parse_chunk(http_request_t *req, size_t read_bytes)
           error e = {
               .code = ERR_HTTP_PARSE_FAILED,
               .msg = "invalid request line: empty URI"};
+          out_response->status = HTTP_STATUS_BAD_REQUEST;
           return e;
         }
       }
@@ -202,6 +209,7 @@ parse_chunk(http_request_t *req, size_t read_bytes)
         error e = {
             .code = ERR_HTTP_PARSE_FAILED,
             .msg = "invalid request line: unexpected end of line while parsing URI"};
+        out_response->status = HTTP_STATUS_BAD_REQUEST;
         return e;
       }
       break;
@@ -223,6 +231,7 @@ parse_chunk(http_request_t *req, size_t read_bytes)
           error e = {
               .code = ERR_HTTP_PARSE_FAILED,
               .msg = "invalid request line: invalid HTTP version"};
+          out_response->status = HTTP_STATUS_HTTP_VERSION_NOT_SUPPORTED;
           return e;
         }
       }
@@ -237,6 +246,7 @@ parse_chunk(http_request_t *req, size_t read_bytes)
           error e = {
               .code = ERR_HTTP_PARSE_FAILED,
               .msg = "invalid request line: invalid HTTP version"};
+          out_response->status = HTTP_STATUS_HTTP_VERSION_NOT_SUPPORTED;
           return e;
         }
       }
@@ -253,6 +263,7 @@ parse_chunk(http_request_t *req, size_t read_bytes)
         error e = {
             .code = ERR_HTTP_PARSE_FAILED,
             .msg = "invalid request line: expected LF"};
+        out_response->status = HTTP_STATUS_BAD_REQUEST;
         return e;
       }
       break;
@@ -273,6 +284,7 @@ parse_chunk(http_request_t *req, size_t read_bytes)
         error e = {
             .code = ERR_HTTP_PARSE_FAILED,
             .msg = "empty field name"};
+        out_response->status = HTTP_STATUS_BAD_REQUEST;
         return e;
       }
       else
@@ -283,6 +295,7 @@ parse_chunk(http_request_t *req, size_t read_bytes)
           error e = {
               .code = ERR_HTTP_PARSE_FAILED,
               .msg = "too many headers"};
+          out_response->status = HTTP_STATUS_REQUEST_HEADER_FIELDS_TOO_LARGE;
           return e;
         }
 
@@ -303,6 +316,7 @@ parse_chunk(http_request_t *req, size_t read_bytes)
         error e = {
             .code = ERR_HTTP_PARSE_FAILED,
             .msg = "whitespace is included in field-name"};
+        out_response->status = HTTP_STATUS_BAD_REQUEST;
         return e;
       }
       else if (*cur == '\r')
@@ -311,6 +325,7 @@ parse_chunk(http_request_t *req, size_t read_bytes)
         error e = {
             .code = ERR_HTTP_PARSE_FAILED,
             .msg = "unexpected CR in header"};
+        out_response->status = HTTP_STATUS_BAD_REQUEST;
         return e;
       }
       else if (*cur == '\n')
@@ -319,6 +334,7 @@ parse_chunk(http_request_t *req, size_t read_bytes)
         error e = {
             .code = ERR_HTTP_PARSE_FAILED,
             .msg = "unexpected LF in header"};
+        out_response->status = HTTP_STATUS_BAD_REQUEST;
         return e;
       }
       else if (*cur == ':')
@@ -372,6 +388,7 @@ parse_chunk(http_request_t *req, size_t read_bytes)
         error e = {
             .code = ERR_HTTP_PARSE_FAILED,
             .msg = "unexpected lf"};
+        out_response->status = HTTP_STATUS_BAD_REQUEST;
         return e;
       }
 
@@ -385,6 +402,7 @@ parse_chunk(http_request_t *req, size_t read_bytes)
       break;
 
     case STATE_ERROR:
+      out_response->status = HTTP_STATUS_BAD_REQUEST;
       return (error){
           .code = ERR_HTTP_PARSE_FAILED,
           .msg = "parse error"};

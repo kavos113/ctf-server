@@ -5,6 +5,7 @@
 
 #include "error.h"
 #include "http.h"
+#include "http_response.h"
 #include "server.h"
 
 // if request method is larger than this, discard
@@ -62,7 +63,7 @@ typedef struct http_request
   struct http_parser_internal_state *internal;
 } http_request_t;
 
-error parse_http_request(connection_t *conn, http_request_t *out_request);
+http_response_t parse_http_request(connection_t *conn, http_request_t *out_request);
 void destroy_http_request(http_request_t *req);
 
 /**

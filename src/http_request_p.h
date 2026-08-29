@@ -35,7 +35,7 @@ struct http_parser_internal_state
   size_t version_len;
 };
 
-error parse_chunk(http_request_t *req, size_t read_bytes);
+error parse_chunk(http_request_t *req, size_t read_bytes, http_response_t *out_response);
 
 int parse_method(http_request_t *req, const char *cur);
 int parse_version(http_request_t *req, const char *cur, size_t len);

@@ -18,6 +18,7 @@
 
 #include "http.h"
 #include "http_request.h"
+#include "http_response.h"
 
 #define MAX_EVENTS 10
 
@@ -264,11 +265,7 @@ client_handler(const server_t *srv, connection_t *conn)
 {
   http_request_t *req = malloc(sizeof(http_request_t));
 
-  error err = parse_http_request(conn, req);
-  if (err.code != ERR_NONE)
-  {
-    fprintf(stderr, "[HTTP parse fail]: %s\n", err.msg);
-  }
+  http_response_t response = parse_http_request(conn, req);
 
   fprintf(stdout, "[HTTP Request] version: %s, method: %s, uri: ",
           http_version_to_string(req->version), http_method_to_string(req->method));
