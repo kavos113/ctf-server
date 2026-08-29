@@ -12,6 +12,7 @@ typedef struct http_parser_internal_state http_parser_internal_state;
 
 void test_parse_method(test_ctx_t *ctx);
 void test_parse_version(test_ctx_t *ctx);
+void test_parse_header(test_ctx_t *ctx);
 
 void test_parse_chunk(test_ctx_t *ctx);
 void test_parse_chunk_state_transition(test_ctx_t *ctx);
@@ -28,6 +29,7 @@ test_http(test_ctx_t *ctx)
 
   test_parse_method(ctx);
   test_parse_version(ctx);
+  test_parse_header(ctx);
   test_parse_chunk(ctx);
 
   ctx->indent -= PREFACE_INDENT;
@@ -259,6 +261,103 @@ test_parse_version(test_ctx_t *ctx)
 
     ASSERT_EQ(tc->name, tc->expected_result, result);
     ASSERT_EQ(tc->name, tc->expected_version, req.version);
+
+    CHECK_TEST(tc->name);
+  }
+
+  ctx->indent -= PREFACE_INDENT;
+}
+
+void
+test_parse_header(test_ctx_t *ctx)
+{
+  PRINT_TEST_PREFACE("test_parse_header")
+  ctx->indent += PREFACE_INDENT;
+
+  struct test_case
+  {
+    const char *name;
+
+    http_header_t header;
+    size_t expected_content_length;
+    const char *expected_content_type;
+    const char *expected_host;
+  } test_cases[] = {
+      {
+          .name = "success: content-length",
+          .header = {.name = "Content-Length", .name_len = 14, .value = "123", .value_len = 3},
+          .expected_content_length = 123,
+          .expected_content_type = NULL,
+          .expected_host = NULL,
+      },
+      {
+          .name = "success: content-length (case-insensitive)",
+          .header = {.name = "content-length", .name_len = 14, .value = "456", .value_len = 3},
+          .expected_content_length = 456,
+          .expected_content_type = NULL,
+          .expected_host = NULL,
+      },
+      {
+          .name = "success: content-type",
+          .header = {.name = "Content-Type", .name_len = 12, .value = "text/html", .value_len = 9},
+          .expected_content_length = 0,
+          .expected_content_type = "text/html",
+          .expected_host = NULL,
+      },
+      {
+          .name = "success: content-type (case-insensitive)",
+          .header = {.name = "content-type", .name_len = 12, .value = "application/json", .value_len = 16},
+          .expected_content_length = 0,
+          .expected_content_type = "application/json",
+          .expected_host = NULL,
+      },
+      {
+          .name = "success: host",
+          .header = {.name = "Host", .name_len = 4, .value = "example.com", .value_len = 11},
+          .expected_content_length = 0,
+          .expected_content_type = NULL,
+          .expected_host = "example.com",
+      },
+      {
+          .name = "success: host (case-insensitive)",
+          .header = {.name = "host", .name_len = 4, .value = "test.com", .value_len = 8},
+          .expected_content_length = 0,
+          .expected_content_type = NULL,
+          .expected_host = "test.com",
+      },
+      {
+          .name = "success: other header",
+          .header = {.name = "X-Custom-Header", .name_len = 15, .value = "value", .value_len = 5},
+          .expected_content_length = 0,
+          .expected_content_type = NULL,
+          .expected_host = NULL,
+      },
+  };
+
+  for (size_t i = 0; i < sizeof(test_cases) / sizeof(test_cases[0]); i++)
+  {
+    ctx->is_canceled = false;
+    struct test_case *tc = &test_cases[i];
+
+    http_request_t req;
+    memset(&req, 0, sizeof(http_request_t));
+
+    parse_header(&req, &tc->header);
+
+    if (tc->expected_content_length > 0)
+    {
+      ASSERT_EQ(tc->name, tc->expected_content_length, req.content_length);
+    }
+
+    if (tc->expected_content_type)
+    {
+      ASSERT_STR_EQ(tc->name, tc->expected_content_type, req.content_type);
+    }
+
+    if (tc->expected_host)
+    {
+      ASSERT_STR_EQ(tc->name, tc->expected_host, req.host);
+    }
 
     CHECK_TEST(tc->name);
   }
