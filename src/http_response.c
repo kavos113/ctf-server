@@ -1,6 +1,10 @@
 #include "http_response.h"
 
-size_t
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+static size_t
 resolve_content_length(size_t body_len)
 {
   int digits = 0;

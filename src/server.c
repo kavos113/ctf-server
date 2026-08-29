@@ -17,6 +17,7 @@
 #include <sys/types.h>
 
 #include "http.h"
+#include "http_request.h"
 
 #define MAX_EVENTS 10
 

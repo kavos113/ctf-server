@@ -24,6 +24,6 @@ typedef struct
 } http_server_t;
 
 void http_server_add_route(http_server_t *server, http_method method, const char *path, http_handler_t handler);
-http_response_t http_server_handle_request(http_server_t *server, const http_request_t *req);
+http_response_t http_server_handle_request(http_server_t *server, http_request_t *req);
 
 #endif // HTTP_SERVER_H
