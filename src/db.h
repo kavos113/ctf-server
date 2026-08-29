@@ -61,4 +61,6 @@ void *db_worker_thread(void *arg);
 db_pool_t *db_pool_new(int epoll_fd, int num_threads);
 void db_pool_free(db_pool_t *pool);
 
+void db_pool_exec_query(db_pool_t *pool);
+
 #endif // MYSQL_H
