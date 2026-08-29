@@ -321,8 +321,7 @@ client_handler(const server_t *srv, connection_t *conn)
     epoll_ctl(conn->fd, EPOLL_CTL_MOD, conn->fd, &event);
   }
 
-  destroy_http_request(req);
-  remove_connection(srv, conn);
+  http_request_register_dispose(conn, req);
 }
 
 int
@@ -346,6 +345,14 @@ remove_connection(const server_t *server, connection_t *conn)
 {
   epoll_ctl(server->epoll_fd, EPOLL_CTL_DEL, conn->fd, NULL);
   close(conn->fd);
+
+  for (int i = 0; i < conn->owned_count; i++)
+  {
+    if (conn->owned_ptr[i])
+    {
+      free(conn->owned_ptr[i]);
+    }
+  }
   free(conn);
 }
 

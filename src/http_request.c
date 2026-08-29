@@ -26,10 +26,10 @@
 typedef struct http_parser_internal_state http_parser_internal_state;
 
 void
-destroy_http_request(http_request_t *req)
+http_request_register_dispose(connection_t *conn, http_request_t *req)
 {
-  free(req->internal);
-  free(req);
+  conn->owned_ptr[conn->owned_count++] = req->internal;
+  conn->owned_ptr[conn->owned_count++] = req;
 }
 
 http_response_t

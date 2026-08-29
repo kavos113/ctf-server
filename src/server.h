@@ -21,6 +21,9 @@ typedef struct
   struct iovec iov[MAX_IOV];
   int iov_count;
   int iov_index;
+
+  void *owned_ptr[8];
+  int owned_count;
 } connection_t;
 
 struct http_server_t;
