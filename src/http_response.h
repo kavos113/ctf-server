@@ -16,5 +16,9 @@ typedef struct
 // とりあえずbodyを一括で返すことにする
 // out_buf is expected not allocated (allocate inside the function)
 error http_response_build(http_response_t *res, char **out_buf, size_t *out_buf_len);
+error http_response_build_header(http_response_t *res, char **out_buf, size_t *out_buf_len);
+void http_response_internal_server_error(char **out_buf, size_t *out_buf_len);
+
+void http_response_send(http_response_t *res, int fd);
 
 #endif // HTTP_RESPONSE_H

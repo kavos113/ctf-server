@@ -89,7 +89,7 @@ parse_http_request(connection_t *conn, http_request_t *out_request)
         return (http_response_t){
             .status = HTTP_STATUS_INTERNAL_SERVER_ERROR,
             .body = "internal server error",
-            .body_len = 19};
+            .body_len = 21};
       }
     }
   }

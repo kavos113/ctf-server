@@ -17,13 +17,14 @@ typedef struct
 
 #define MAX_ROUTES 64
 
-typedef struct
+struct http_server_t
 {
   http_route_t routes[MAX_ROUTES];
   size_t route_count;
-} http_server_t;
+};
+typedef struct http_server_t http_server_t;
 
 void http_server_add_route(http_server_t *server, http_method method, const char *path, http_handler_t handler);
-http_response_t http_server_handle_request(http_server_t *server, http_request_t *req);
+http_response_t http_server_handle_request(const http_server_t *server, http_request_t *req);
 
 #endif // HTTP_SERVER_H

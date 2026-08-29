@@ -21,11 +21,11 @@ http_server_add_route(http_server_t *server, http_method method, const char *pat
 
 // TODO: wildcard path
 http_response_t
-http_server_handle_request(http_server_t *server, http_request_t *req)
+http_server_handle_request(const http_server_t *server, http_request_t *req)
 {
   for (size_t i = 0; i < server->route_count; i++)
   {
-    http_route_t *route = &server->routes[i];
+    const http_route_t *route = &server->routes[i];
 
     if (route->method != req->method)
     {

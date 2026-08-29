@@ -73,6 +73,8 @@ typedef enum
   HTTP_STATUS_HTTP_VERSION_NOT_SUPPORTED = 505,
 } http_status;
 
+int is_error_status(http_status status);
+
 const char *http_method_to_string(http_method method);
 const char *http_version_to_string(http_version version);
 const char *http_status_to_string(http_status status);

@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 
 #include <arpa/inet.h>
 #include <sys/epoll.h>
@@ -19,6 +20,7 @@
 #include "http.h"
 #include "http_request.h"
 #include "http_response.h"
+#include "http_server.h"
 
 #define MAX_EVENTS 10
 
@@ -115,6 +117,9 @@ create_server(int port, int max_connections)
 
   setup_shutdown(srv);
 
+  srv->http_server = malloc(sizeof(http_server_t));
+  memset(srv->http_server, 0, sizeof(http_server_t));
+
   return srv;
 }
 
@@ -190,6 +195,12 @@ destroy_server(server_t *srv)
   {
     close(srv->listen_conn.fd);
     srv->listen_conn.fd = -1;
+  }
+
+  if (srv->http_server)
+  {
+    free(srv->http_server);
+    srv->http_server = NULL;
   }
 
   free(srv);
@@ -271,6 +282,13 @@ client_handler(const server_t *srv, connection_t *conn)
           http_version_to_string(req->version), http_method_to_string(req->method));
   fwrite(req->uri, sizeof(char), req->uri_len, stdout);
   fprintf(stdout, "\n");
+
+  if (!is_error_status(response.status))
+  {
+    response = http_server_handle_request(srv->http_server, req);
+  }
+
+  http_response_send(&response, conn->fd);
 
   destroy_http_request(req);
   remove_connection(srv, conn);
