@@ -45,7 +45,7 @@ typedef struct http_request
 
   http_version version;
   http_method method;
-  const char *uri;
+  char *uri;
   size_t uri_len;
 
   http_header_t headers[MAX_HEADERS];

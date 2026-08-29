@@ -142,13 +142,22 @@ normalize_path(char *path, size_t len)
 int
 normalize_uri(http_request_t *request)
 {
-  const char *path = request->uri;
+  ssize_t new_len = url_decode(request->uri, request->uri_len);
+  if (new_len < 0)
+  {
+    return -1;
+  }
+  request->uri_len = new_len;
+
+  parse_query_params(request);
+
+  char *path = request->uri;
   size_t path_len = request->uri_len;
 
   // asterisk form
   if (path_len == 1 && path[0] == '*')
   {
-    return 0;
+    return -1; // TODO
   }
 
   // absolute form
@@ -157,7 +166,7 @@ normalize_uri(http_request_t *request)
     path += 7;
     path_len -= 7;
 
-    const char *slash = memchr(path, '/', path_len);
+    char *slash = memchr(path, '/', path_len);
     if (slash)
     {
       path_len = (slash - path);
@@ -174,7 +183,7 @@ normalize_uri(http_request_t *request)
     path += 8;
     path_len -= 8;
 
-    const char *slash = memchr(path, '/', path_len);
+    char *slash = memchr(path, '/', path_len);
     if (slash)
     {
       path_len = (slash - path);
@@ -189,13 +198,20 @@ normalize_uri(http_request_t *request)
 
   // TODO: authority form
 
+  new_len = normalize_path(path, path_len);
+  if (new_len < 0)
+  {
+    return -1;
+  }
+
   request->uri = path;
-  request->uri_len = path_len;
+  request->uri_len = new_len;
 
   return 0;
 }
 
-void parse_query_params(http_request_t *req)
+void
+parse_query_params(http_request_t *req)
 {
   size_t final_uri_len = 0;
 
