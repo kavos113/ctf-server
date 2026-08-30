@@ -102,6 +102,8 @@ db_worker_thread(void *arg)
     return NULL;
   }
 
+  fprintf(stdout, "[MYSQL] connected to db successfully. \n");
+
   while (1)
   {
     db_task_t *task = task_queue_pop(pool->task_queue);
