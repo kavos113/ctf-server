@@ -195,3 +195,22 @@ db_pool_free(db_pool_t *pool)
 
   free(pool);
 }
+
+void db_pool_exec_query(db_pool_t *pool, const char *query, size_t query_len)
+{
+  db_task_t *task = calloc(1, sizeof(db_task_t));
+
+  if (query_len >= DEFAULT_QUERY_SIZE)
+  {
+    return;
+  }
+
+  memcpy(task->query, query, query_len);
+
+  task_queue_push(pool->task_queue, task);
+}
+
+db_task_t * db_pool_get_latest_completed_task(db_pool_t *pool)
+{
+  return task_queue_pop(pool->done_queue);
+}

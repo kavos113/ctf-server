@@ -30,6 +30,7 @@ typedef struct
 } connection_t;
 
 struct http_server_t;
+struct db_pool_t;
 
 typedef struct
 {
@@ -38,6 +39,7 @@ typedef struct
   connection_t listen_conn;
   connection_t signal_conn;
   struct http_server_t *http_server;
+  struct db_pool_t *db_pool;
 } server_t;
 
 server_t *create_server(int port, int max_connections);

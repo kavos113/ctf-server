@@ -28,7 +28,7 @@ http_server_add_route(
 
 // TODO: wildcard path
 http_response_t
-http_server_handle_request(const http_server_t *server, http_request_t *req)
+http_server_handle_request(const http_server_t *server, http_request_t *req, int *is_complete)
 {
   for (size_t i = 0; i < server->route_count; i++)
   {
@@ -46,29 +46,28 @@ http_server_handle_request(const http_server_t *server, http_request_t *req)
 
     if (strncmp(route->path, req->uri, route->path_len) == 0)
     {
+      // do not need db connection
+      if (!route->handler_async)
+      {
+        http_response_t res = route->handler_await(req, NULL);
+
+        *is_complete = 1;
+        return res;
+      }
+
       route->handler_async(req);
 
-      http_server_request_context_t *context = malloc(sizeof(http_server_request_context_t));
-      context->request = req;
-      context->handler_await = route->handler_await;
-
-      req->conn->data = (void *)context;
-
+      *is_complete = 0;
       return (http_response_t){
           .status = HTTP_STATUS_OK,
       };
     }
   }
 
+  *is_complete = 1;
   return (http_response_t){
       .status = HTTP_STATUS_NOT_FOUND,
       .body = "Not Found",
       .body_len = 9};
 }
 
-http_response_t
-http_server_finish_request(const http_server_t *server, connection_t *conn)
-{
-  http_server_request_context_t *ctx = (http_server_request_context_t *)conn->data;
-  return ctx->handler_await(ctx->request, ctx->data);
-}

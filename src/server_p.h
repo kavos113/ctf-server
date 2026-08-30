@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include "server.h"
+#include "http_response.h"
 
 void setup_shutdown(server_t *srv);
 
@@ -16,5 +17,6 @@ void remove_connection(const server_t *server, connection_t *conn);
 
 // 1: success, 0: partial, -1: error
 int connection_send_buffer(connection_t *conn);
+void start_send_http_response(const server_t *server, connection_t *conn, http_response_t response);
 
 #endif // SERVER_P_H

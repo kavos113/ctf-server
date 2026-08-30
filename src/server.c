@@ -23,6 +23,7 @@
 #include "http_request.h"
 #include "http_response.h"
 #include "http_server.h"
+#include "db.h"
 
 #define MAX_EVENTS 10
 
@@ -174,7 +175,7 @@ serve(server_t *srv)
         break;
 
       case FD_TYPE_DB:
-        // TODO
+        db_handler(srv, conn);
         break;
       }
     }
@@ -287,51 +288,31 @@ client_handler(const server_t *srv, connection_t *conn)
   fwrite(req->uri, sizeof(char), req->uri_len, stdout);
   fprintf(stdout, "\n");
 
+  http_request_register_dispose(conn, req);
+
   if (!is_error_status(response.status))
   {
-    response = http_server_handle_request(srv->http_server, req);
+    int is_complete = 0;
+    response = http_server_handle_request(srv->http_server, req, &is_complete);
+
+    if (!is_complete)
+    {
+      return;
+    }
   }
 
-  char *header_buf;
-  size_t header_buf_len;
-  error err = http_response_build_header(&response, &header_buf, &header_buf_len);
-  if (err.code != ERR_NONE)
-  {
-    http_response_internal_server_error(&header_buf, &header_buf_len);
-  }
-
-  printf("[HTTP Response] status: %d, header_len: %zu, body_len: %zu\n", response.status, header_buf_len, response.body_len);
-
-  conn->iov[0].iov_base = header_buf;
-  conn->iov[0].iov_len = header_buf_len;
-  conn->iov_count = 1;
-  conn->iov_index = 0;
-  if (response.body_len > 0 && response.body != NULL)
-  {
-    conn->iov[1].iov_base = (char *)response.body;
-    conn->iov[1].iov_len = response.body_len;
-    conn->iov_count = 2;
-  }
-
-  int res = connection_send_buffer(conn);
-  if (res == 0)
-  {
-    struct epoll_event event;
-    event.events = EPOLLIN | EPOLLOUT | EPOLLET;
-    event.data.ptr = conn;
-
-    epoll_ctl(conn->fd, EPOLL_CTL_MOD, conn->fd, &event);
-
-    http_request_register_dispose(conn, req);
-    return;
-  }
-
-  remove_connection(srv, conn);
+  start_send_http_response(srv, conn, response);
 }
 
 void
 db_handler(const server_t *srv, connection_t *conn)
 {
+  db_task_t *task = db_pool_get_latest_completed_task(srv->db_pool);
+
+  http_server_request_context_t *ctx = (http_server_request_context_t *)task->data;
+  http_response_t response = ctx->handler_await(ctx->request, (void *)task);
+
+  start_send_http_response(srv, ctx->request->conn, response);
 }
 
 int
@@ -422,4 +403,41 @@ connection_send_buffer(connection_t *conn)
   }
 
   return 1;
+}
+
+void start_send_http_response(const server_t *server, connection_t *conn, http_response_t response)
+{
+  char *header_buf;
+  size_t header_buf_len;
+  error err = http_response_build_header(&response, &header_buf, &header_buf_len);
+  if (err.code != ERR_NONE)
+  {
+    http_response_internal_server_error(&header_buf, &header_buf_len);
+  }
+
+  printf("[HTTP Response] status: %d, header_len: %zu, body_len: %zu\n", response.status, header_buf_len, response.body_len);
+
+  conn->iov[0].iov_base = header_buf;
+  conn->iov[0].iov_len = header_buf_len;
+  conn->iov_count = 1;
+  conn->iov_index = 0;
+  if (response.body_len > 0 && response.body != NULL)
+  {
+    conn->iov[1].iov_base = (char *)response.body;
+    conn->iov[1].iov_len = response.body_len;
+    conn->iov_count = 2;
+  }
+
+  int res = connection_send_buffer(conn);
+  if (res == 0)
+  {
+    struct epoll_event event;
+    event.events = EPOLLIN | EPOLLOUT | EPOLLET;
+    event.data.ptr = conn;
+
+    epoll_ctl(conn->fd, EPOLL_CTL_MOD, conn->fd, &event);
+    return;
+  }
+
+  remove_connection(server, conn);
 }

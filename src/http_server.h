@@ -26,6 +26,12 @@ struct http_server_t
 };
 typedef struct http_server_t http_server_t;
 
+typedef struct
+{
+  const http_request_t *request;
+  http_handler_await_t handler_await;
+} http_server_request_context_t;
+
 void http_server_add_route(
     http_server_t *server,
     http_method method,
@@ -33,7 +39,6 @@ void http_server_add_route(
     http_handler_async_t handler_async,
     http_handler_await_t handler_await);
 
-http_response_t http_server_handle_request(const http_server_t *server, http_request_t *req);
-http_response_t http_server_finish_request(const http_server_t *server, connection_t *conn);
+http_response_t http_server_handle_request(const http_server_t *server, http_request_t *req, int *is_complete);
 
 #endif // HTTP_SERVER_H
