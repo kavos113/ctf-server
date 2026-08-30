@@ -4,9 +4,10 @@
 #include "http.h"
 #include "http_request.h"
 #include "http_response.h"
+#include "db.h"
 
-typedef void (*http_handler_async_t)(const http_request_t *request);
-typedef http_response_t (*http_handler_await_t)(const http_request_t *request, void *data); // dataには結果付きdb_task_tなどが入る
+typedef void (*http_handler_async_t)(const http_request_t *request, db_pool_t *db);
+typedef http_response_t (*http_handler_await_t)(const http_request_t *request, db_task_t *task);
 
 typedef struct
 {
@@ -39,6 +40,6 @@ void http_server_add_route(
     http_handler_async_t handler_async,
     http_handler_await_t handler_await);
 
-http_response_t http_server_handle_request(const http_server_t *server, http_request_t *req, int *is_complete);
+http_response_t http_server_handle_request(const http_server_t *server, http_request_t *req, db_pool_t* db, int *is_complete);
 
 #endif // HTTP_SERVER_H

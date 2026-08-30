@@ -300,7 +300,7 @@ client_handler(const server_t *srv, connection_t *conn)
   if (!is_error_status(response.status))
   {
     int is_complete = 0;
-    response = http_server_handle_request(srv->http_server, req, &is_complete);
+    response = http_server_handle_request(srv->http_server, req, srv->db_pool, &is_complete);
 
     if (!is_complete)
     {
@@ -319,7 +319,7 @@ db_handler(const server_t *srv, connection_t *conn)
   fprintf(stderr, "[DEBUG] db response: %*.s", (int)task->result_len, task->result_body);
 
   http_server_request_context_t *ctx = (http_server_request_context_t *)task->data;
-  http_response_t response = ctx->handler_await(ctx->request, (void *)task);
+  http_response_t response = ctx->handler_await(ctx->request, task);
 
   start_send_http_response(srv, ctx->request->conn, response);
 }
