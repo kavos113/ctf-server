@@ -262,7 +262,7 @@ listen_handler(const server_t *srv)
       continue;
     }
 
-    connection_t *client_conn = malloc(sizeof(connection_t));
+    connection_t *client_conn = calloc(1, sizeof(connection_t));
     if (!client_conn)
     {
       perror("malloc");
