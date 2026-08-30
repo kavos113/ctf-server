@@ -1,0 +1,16 @@
+services:
+  db:
+    image: mariadb:12.3.3-noble
+    container_name: ctf-mysql
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MARIA_DB_ROOT_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./migration:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5

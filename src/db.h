@@ -61,7 +61,8 @@ db_task_t *task_queue_pop(task_queue_t *queue);
 // arg: db_pool_t
 void *db_worker_thread(void *arg);
 
-db_pool_t *db_pool_new(int epoll_fd, int num_threads);
+db_pool_t *db_pool_new(db_option_t option, int epoll_fd, int num_threads);
+db_pool_t *db_pool_new_from_env(int epoll_fd, int num_threads);
 void db_pool_free(db_pool_t *pool);
 
 void db_pool_exec_query(db_pool_t *pool, const char *query, size_t query_len);

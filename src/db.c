@@ -154,12 +154,13 @@ db_worker_thread(void *arg)
 }
 
 db_pool_t *
-db_pool_new(int epoll_fd, int num_threads)
+db_pool_new(db_option_t option, int epoll_fd, int num_threads)
 {
   db_pool_t *pool = malloc(sizeof(db_pool_t));
 
   pool->epoll_fd = epoll_fd;
   pool->num_threads = num_threads;
+  pool->db_options = option;
 
   pool->task_queue = task_queue_new();
   pool->done_queue = task_queue_new();
@@ -185,6 +186,56 @@ db_pool_new(int epoll_fd, int num_threads)
   }
 
   return pool;
+}
+
+db_pool_t * db_pool_new_from_env(int epoll_fd, int num_threads)
+{
+  const char *host = getenv("MARIADB_HOST");
+  if (!host)
+  {
+    fprintf(stderr, "[DB FAIL] MARIADB_HOST is null");
+    return NULL;
+  }
+
+  const char *user = getenv("MARIADB_USER");
+  if (!user)
+  {
+    fprintf(stderr, "[DB FAIL] MARIADB_USERNAME is null");
+    return NULL;
+  }
+
+  const char *pass = getenv("MARIADB_PASS");
+  if (!pass)
+  {
+    fprintf(stderr, "[DB_FAIL] MARIADB_PASS is null");
+    return NULL;
+  }
+
+  const char *db = getenv("MARIADB_DB");
+  if (!db)
+  {
+    fprintf(stderr, "[DB FAIL] MARIADB_DB is null"):
+    return NULL;
+  }
+
+  const char *portstr = getenv("MARIADB_PORT");
+  if (!portstr)
+  {
+    fprintf(stderr, "[DB FAIL] MARIADB_POSRT is null");
+    return NULL;
+  }
+
+  int port = (int) strtol(portstr, NULL, 10);
+
+  db_option_t option = {
+    .host = host,
+    .port = port,
+    .user = user,
+    .pass = pass,
+    .db = db,
+  };
+
+  return db_pool_new(option, epoll_fd, num_threads);
 }
 
 void

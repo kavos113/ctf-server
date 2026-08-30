@@ -26,6 +26,7 @@
 #include "db.h"
 
 #define MAX_EVENTS 10
+#define NUM_DB_WORKER_THREADS 1
 
 static int
 set_nonblocking(int sockfd)
@@ -110,6 +111,8 @@ create_server(int port, int max_connections)
 
   srv->http_server = malloc(sizeof(http_server_t));
   memset(srv->http_server, 0, sizeof(http_server_t));
+
+  srv->db_pool = db_pool_new_from_env(srv->epoll_fd, NUM_DB_WORKER_THREADS);
 
   return srv;
 }
