@@ -15,16 +15,7 @@ main()
   }
 
   http_server_add_route(server->http_server, HTTP_METHOD_GET, "/", NULL, handle_root);
-  http_server_add_route(server->http_server, HTTP_METHOD_GET, "/hello", NULL, handle_hello);
-
-  // http_server_add_route(server->http_server, HTTP_METHOD_GET, "/challenges", handle_get_challenges);
-  // http_server_add_route(server->http_server, HTTP_METHOD_POST, "/challenges", handle_post_challenge);
-  // http_server_add_route(server->http_server, HTTP_METHOD_PUT, "/challenges", handle_put_challenge);
-  // http_server_add_route(server->http_server, HTTP_METHOD_DELETE, "/challenges", handle_delete_challenge);
-  // http_server_add_route(server->http_server, HTTP_METHOD_GET, "/challenges/me", handle_get_challenges_me);
-  // http_server_add_route(server->http_server, HTTP_METHOD_GET, "/answers", handle_get_answers);
-  // http_server_add_route(server->http_server, HTTP_METHOD_POST, "/answers", handle_post_answers);
-  // http_server_add_route(server->http_server, HTTP_METHOD_GET, "/answers/me", handle_get_answers_me);
+  http_server_add_route(server->http_server, HTTP_METHOD_GET, "/hello", handle_hello_async, handle_hello);
 
   serve(server);
 
