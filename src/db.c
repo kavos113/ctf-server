@@ -1,3 +1,5 @@
+#define _POSIX_C_SOURCE 200809L // for strdup
+
 #include "db.h"
 
 #include <stdio.h>
@@ -195,35 +197,35 @@ db_pool_t * db_pool_new_from_env(int epoll_fd, int num_threads)
   const char *host = getenv("MARIADB_HOST");
   if (!host)
   {
-    fprintf(stderr, "[DB FAIL] MARIADB_HOST is null");
+    fprintf(stderr, "[DB FAIL] MARIADB_HOST is null\n");
     return NULL;
   }
 
   const char *user = getenv("MARIADB_USER");
   if (!user)
   {
-    fprintf(stderr, "[DB FAIL] MARIADB_USERNAME is null");
+    fprintf(stderr, "[DB FAIL] MARIADB_USERNAME is null\n");
     return NULL;
   }
 
   const char *pass = getenv("MARIADB_PASS");
   if (!pass)
   {
-    fprintf(stderr, "[DB_FAIL] MARIADB_PASS is null");
+    fprintf(stderr, "[DB_FAIL] MARIADB_PASS is null\n");
     return NULL;
   }
 
   const char *db = getenv("MARIADB_DB");
   if (!db)
   {
-    fprintf(stderr, "[DB FAIL] MARIADB_DB is null"):
+    fprintf(stderr, "[DB FAIL] MARIADB_DB is null\n");
     return NULL;
   }
 
   const char *portstr = getenv("MARIADB_PORT");
   if (!portstr)
   {
-    fprintf(stderr, "[DB FAIL] MARIADB_POSRT is null");
+    fprintf(stderr, "[DB FAIL] MARIADB_PORT is null\n");
     return NULL;
   }
 

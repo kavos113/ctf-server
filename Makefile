@@ -10,19 +10,19 @@ CC=gcc
 CFLAGS=-std=c11 -Wall -Wextra -Wno-unused-parameter -Wno-int-to-pointer-cast -g
 
 CFLAGS += $(shell mysql_config --cflags)
-LDFLAGS = $(shell mysql_config --libs) --pthread
+LDFLAGS = $(shell mysql_config --libs) -pthread
 
 all: $(TARGET) test
 
 $(TARGET): $(OBJS)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
+	$(CC) -o $@ $^ $(LDFLAGS)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -Isrc -o $@
 
 .PHONY: test fmt clean
 test: $(TESTOBJS)
-	$(CC) $(CFLAGS) -o $(TESTTARGET) $^
+	$(CC) -o $(TESTTARGET) $^ $(LDFLAGS)
 
 clean:
 	rm -f $(OBJS) $(TESTOBJS) $(TARGET) $(TESTTARGET)

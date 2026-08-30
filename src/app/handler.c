@@ -1,7 +1,7 @@
 #include "handler.h"
 
 http_response_t
-handle_root(const http_request_t *req)
+handle_root(const http_request_t *req, void *data)
 {
   return (http_response_t){
       .status = HTTP_STATUS_OK,
@@ -10,7 +10,7 @@ handle_root(const http_request_t *req)
 }
 
 http_response_t
-handle_hello(const http_request_t *req)
+handle_hello(const http_request_t *req, void *data)
 {
   return (http_response_t){
       .status = HTTP_STATUS_OK,

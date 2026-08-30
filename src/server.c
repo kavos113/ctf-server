@@ -113,6 +113,10 @@ create_server(int port, int max_connections)
   memset(srv->http_server, 0, sizeof(http_server_t));
 
   srv->db_pool = db_pool_new_from_env(srv->epoll_fd, NUM_DB_WORKER_THREADS);
+  if (!srv->db_pool)
+  {
+    return NULL;
+  }
 
   return srv;
 }
