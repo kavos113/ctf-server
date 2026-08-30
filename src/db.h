@@ -3,16 +3,26 @@
 
 #define DEFAULT_QUERY_SIZE 256
 
-#include <pthread.h>
+#include <stdint.h>
 #include <stddef.h>
+#include <pthread.h>
+#include <mysql/mysql.h>
+
+typedef struct
+{
+  int success;
+  MYSQL_RES *res;
+  uint32_t affected;
+
+  char err_msg[256];
+  int err_msg_len;
+} db_result_t;
 
 typedef struct db_task
 {
   char query[DEFAULT_QUERY_SIZE];
 
-  char *result_body;
-  size_t result_len;
-  int status_code;
+  db_result_t *result;
 
   // commonly used for http_request_context_t*
   void *data;
@@ -65,7 +75,7 @@ db_pool_t *db_pool_new(db_option_t option, int epoll_fd, int num_threads);
 db_pool_t *db_pool_new_from_env(int epoll_fd, int num_threads);
 void db_pool_free(db_pool_t *pool);
 
-void db_pool_exec_query(db_pool_t *pool, const char *query, size_t query_len);
+void db_pool_exec_query(db_pool_t *pool, const char *query, size_t query_len, void *data);
 db_task_t *db_pool_get_latest_completed_task(db_pool_t *pool);
 
 #endif // MYSQL_H

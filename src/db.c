@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <mysql/mysql.h>
 #include <sys/epoll.h>
 #include <sys/eventfd.h>
 
@@ -115,34 +114,48 @@ db_worker_thread(void *arg)
     }
 
     int err = mysql_query(conn, task->query);
+    task->result = calloc(1, sizeof(db_result_t));
     if (err == 0)
     {
       MYSQL_RES *res = mysql_store_result(conn);
-      if (res)
-      {
-        MYSQL_ROW row = mysql_fetch_row(res);
-
-        // TODO
-        task->result_body = strdup(row[0]);
-        task->result_len = strlen(row[0]);
-        task->status_code = 200;
-
-        mysql_free_result(res);
-      }
-      else
-      {
-        task->result_body = "affected: 0";
-        task->result_len = strlen(task->result_body);
-        task->status_code = 200;
-      }
+      task->result->res = res;
+      task->result->success = 1;
+      // if (res)
+      // {
+      //   unsigned int num_fields = mysql_num_fields(res);
+      //
+      //   MYSQL_ROW row;
+      //   while ((row = mysql_fetch_row(res)))
+      //   {
+      //     unsigned long *lengths = mysql_fetch_lengths(res);
+      //
+      //     for (int i = 0; i < num_fields; i++)
+      //     {
+      //       if (row[i] == NULL)
+      //       {
+      //         fprintf(stderr, "Column %d: (NULL)\n", i);
+      //       }
+      //       else
+      //       {
+      //         fprintf(stderr, "Column %d: %.*s (len: %lu)\n", i, (int)lengths[i], row[i], lengths[i]);
+      //       }
+      //     }
+      //   }
+      //
+      //   mysql_free_result(res);
+      // }
+      // else
+      // {
+      //   task->result_body = "affected: 0";
+      //   task->result_len = strlen(task->result_body);
+      //   task->status_code = 200;
+      // }
     }
     else
     {
-      char buf[256];
-      int len = snprintf(buf, sizeof(buf), "error: %s", mysql_error(conn));
-      task->result_body = strdup(buf);
-      task->result_len = len;
-      task->status_code = 500;
+      int len = snprintf(task->result->err_msg, sizeof(task->result->err_msg), "error: %s", mysql_error(conn));
+      task->result->err_msg_len = len;
+      task->result->success = 0;
     }
 
     task_queue_push(pool->done_queue, task);
@@ -251,7 +264,7 @@ db_pool_free(db_pool_t *pool)
   free(pool);
 }
 
-void db_pool_exec_query(db_pool_t *pool, const char *query, size_t query_len)
+void db_pool_exec_query(db_pool_t *pool, const char *query, size_t query_len, void *data)
 {
   db_task_t *task = calloc(1, sizeof(db_task_t));
 
@@ -261,6 +274,7 @@ void db_pool_exec_query(db_pool_t *pool, const char *query, size_t query_len)
   }
 
   memcpy(task->query, query, query_len);
+  task->data = data;
 
   task_queue_push(pool->task_queue, task);
 }

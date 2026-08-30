@@ -9,9 +9,9 @@ handle_root(const http_request_t *req, db_task_t *task)
       .body_len = 26};
 }
 
-void handle_hello_async(const http_request_t *req, db_pool_t *db)
+void handle_hello_async(const http_request_context_t *req, db_pool_t *db)
 {
-  db_pool_exec_query(db, "SELECT * FROM challenges;", 26);
+  db_pool_exec_query(db, "SELECT * FROM challenges;", 26, (void *)req);
 }
 
 http_response_t

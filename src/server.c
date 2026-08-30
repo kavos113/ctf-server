@@ -316,10 +316,12 @@ db_handler(const server_t *srv, connection_t *conn)
 {
   db_task_t *task = db_pool_get_latest_completed_task(srv->db_pool);
 
-  fprintf(stderr, "[DEBUG] db response: %*.s", (int)task->result_len, task->result_body);
+  // fprintf(stderr, "[DEBUG] db response: |%*.s|\n", (int)task->result_len, task->result_body);
 
-  http_server_request_context_t *ctx = (http_server_request_context_t *)task->data;
+  http_request_context_t *ctx = (http_request_context_t *)task->data;
   http_response_t response = ctx->handler_await(ctx->request, task);
+
+  fprintf(stderr, "[DEBUG], conn = %p, ctx->request->conn = %p, status = %d", conn, ctx->request->conn, response.status);
 
   start_send_http_response(srv, ctx->request->conn, response);
 }

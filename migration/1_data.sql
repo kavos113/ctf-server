@@ -1,1 +1,1 @@
-INSERT INTO challenges (creator_id, name, description, flag, genre) VALUES (`user1`, `sample-problem`, `sample-problem-description`, `flag{HAPPY}`, 1)
+INSERT INTO challenges (creator_id, name, description, flag, genre) VALUES ('user1', 'sample-problem', 'sample-problem-description', 'flag{HAPPY}', 1);

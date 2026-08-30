@@ -55,7 +55,11 @@ http_server_handle_request(const http_server_t *server, http_request_t *req, db_
         return res;
       }
 
-      route->handler_async(req, db);
+      http_request_context_t *ctx = malloc(sizeof(http_request_context_t));
+      ctx->request = req;
+      ctx->handler_await = route->handler_await;
+
+      route->handler_async(ctx, db);
 
       *is_complete = 0;
       return (http_response_t){

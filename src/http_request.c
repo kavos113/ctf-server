@@ -37,6 +37,7 @@ parse_http_request(connection_t *conn, http_request_t *out_request)
 {
   memset(out_request, 0, sizeof(http_request_t));
 
+  out_request->conn = conn;
   out_request->internal = malloc(sizeof(http_parser_internal_state));
   http_parser_internal_state *s = out_request->internal;
 
