@@ -1,7 +1,7 @@
 services:
   db:
     image: mariadb:12.3.3-noble
-    container_name: ctf-mysql
+    container_name: ctf-mariadb
     environment:
       MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
     ports:
@@ -9,11 +9,34 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
       - ./migration:/docker-entrypoint-initdb.d
+    networks:
+      - ctf-network
     healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      test: [ "CMD", "healthcheck.sh", "--su-mysql", "--connect", "--innodb_initialized" ]
       interval: 10s
       timeout: 5s
       retries: 5
 
+  app:
+    build: .
+    container_name: ctf-server
+    environment:
+      MARIADB_HOST: db
+      MARIADB_PORT: 3306
+      MARIADB_USER: root
+      MARIADB_PASS: ${MARIADB_ROOT_PASSWORD}
+      MARIADB_DB: ctf_server
+    ports:
+      - "8080:8080"
+    networks:
+      - ctf-network
+    depends_on:
+      db:
+        condition: service_healthy
+
 volumes:
   mysql_data:
+
+networks:
+  ctf-network:
+    driver: bridge

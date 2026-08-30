@@ -290,10 +290,10 @@ client_handler(const server_t *srv, connection_t *conn)
 
   http_response_t response = parse_http_request(conn, req);
 
-  fprintf(stdout, "[HTTP Request] version: %s, method: %s, uri: ",
+  fprintf(stderr, "[HTTP Request] version: %s, method: %s, uri: ",
           http_version_to_string(req->version), http_method_to_string(req->method));
-  fwrite(req->uri, sizeof(char), req->uri_len, stdout);
-  fprintf(stdout, "\n");
+  fwrite(req->uri, sizeof(char), req->uri_len, stderr);
+  fprintf(stderr, "\n");
 
   http_request_register_dispose(conn, req);
 

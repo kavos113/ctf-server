@@ -104,7 +104,7 @@ db_worker_thread(void *arg)
     return NULL;
   }
 
-  fprintf(stdout, "[MYSQL] connected to db successfully. \n");
+  fprintf(stderr, "[MYSQL] connected to db successfully. \n");
 
   while (1)
   {
