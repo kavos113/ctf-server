@@ -1,6 +1,6 @@
-#include "server.h"
-#include "http_server.h"
 #include "app/handler.h"
+#include "http_server.h"
+#include "server.h"
 
 #define PORT            8080
 #define MAX_CONNECTIONS 10

@@ -25,6 +25,8 @@ typedef struct
 
   void *owned_ptr[8];
   int owned_count;
+
+  void *data;
 } connection_t;
 
 struct http_server_t;

@@ -3,8 +3,8 @@
 
 #define DEFAULT_QUERY_SIZE 256
 
-#include <stddef.h>
 #include <pthread.h>
+#include <stddef.h>
 
 typedef struct db_task
 {

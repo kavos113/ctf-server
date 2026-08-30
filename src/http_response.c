@@ -84,12 +84,12 @@ http_response_build_header(http_response_t *res, char **out_buf, size_t *out_buf
   }
 
   snprintf(buf, response_len + 1, // +1 for null terminator
-                           "%s %d %s\r\n"
-                           "Content-Length: %zu\r\n"
-                           "Content-Type: text/plain\r\n"
-                           "Connection: close\r\n"
-                           "\r\n",
-                           version_str, res->status, status_str, res->body_len);
+           "%s %d %s\r\n"
+           "Content-Length: %zu\r\n"
+           "Content-Type: text/plain\r\n"
+           "Connection: close\r\n"
+           "\r\n",
+           version_str, res->status, status_str, res->body_len);
 
   *out_buf = buf;
   *out_buf_len = response_len;

@@ -1,16 +1,17 @@
 #include "db.h"
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
-#include <sys/eventfd.h>
-#include <sys/epoll.h>
 #include <mysql/mysql.h>
+#include <sys/epoll.h>
+#include <sys/eventfd.h>
 
 #include "server.h"
 
-task_queue_t * task_queue_new()
+task_queue_t *
+task_queue_new()
 {
   task_queue_t *q = malloc(sizeof(task_queue_t));
 
@@ -22,7 +23,8 @@ task_queue_t * task_queue_new()
   return q;
 }
 
-void task_queue_free(task_queue_t *queue)
+void
+task_queue_free(task_queue_t *queue)
 {
   while (queue->head)
   {
@@ -33,7 +35,8 @@ void task_queue_free(task_queue_t *queue)
   free(queue);
 }
 
-void task_queue_push(task_queue_t *queue, db_task_t *task)
+void
+task_queue_push(task_queue_t *queue, db_task_t *task)
 {
   pthread_mutex_lock(&queue->mtx);
 
@@ -52,7 +55,8 @@ void task_queue_push(task_queue_t *queue, db_task_t *task)
   pthread_mutex_unlock(&queue->mtx);
 }
 
-db_task_t * task_queue_pop(task_queue_t *queue)
+db_task_t *
+task_queue_pop(task_queue_t *queue)
 {
   pthread_mutex_lock(&queue->mtx);
 
@@ -79,20 +83,20 @@ db_task_t * task_queue_pop(task_queue_t *queue)
   return task;
 }
 
-void * db_worker_thread(void *arg)
+void *
+db_worker_thread(void *arg)
 {
   db_pool_t *pool = (db_pool_t *)arg;
 
   MYSQL *conn = mysql_init(NULL);
   if (!mysql_real_connect(
-    conn,
-    pool->db_options.host,
-    pool->db_options.user,
-    pool->db_options.pass,
-    pool->db_options.db,
-    pool->db_options.port,
-    NULL, 0
-  ))
+          conn,
+          pool->db_options.host,
+          pool->db_options.user,
+          pool->db_options.pass,
+          pool->db_options.db,
+          pool->db_options.port,
+          NULL, 0))
   {
     fprintf(stderr, "[MYSQL] mysql connect error: %s\n", mysql_error(conn));
     return NULL;
@@ -149,7 +153,8 @@ void * db_worker_thread(void *arg)
   return NULL;
 }
 
-db_pool_t *db_pool_new(int epoll_fd, int num_threads)
+db_pool_t *
+db_pool_new(int epoll_fd, int num_threads)
 {
   db_pool_t *pool = malloc(sizeof(db_pool_t));
 
@@ -182,7 +187,8 @@ db_pool_t *db_pool_new(int epoll_fd, int num_threads)
   return pool;
 }
 
-void db_pool_free(db_pool_t *pool)
+void
+db_pool_free(db_pool_t *pool)
 {
   task_queue_free(pool->task_queue);
   task_queue_free(pool->done_queue);

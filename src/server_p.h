@@ -9,6 +9,7 @@ void setup_shutdown(server_t *srv);
 
 void listen_handler(const server_t *srv);
 void client_handler(const server_t *srv, connection_t *conn);
+void db_handler(const server_t *srv, connection_t *conn);
 
 int add_connection(const server_t *server, connection_t *conn, uint32_t event_mask);
 void remove_connection(const server_t *server, connection_t *conn);

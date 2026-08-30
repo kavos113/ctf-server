@@ -329,6 +329,11 @@ client_handler(const server_t *srv, connection_t *conn)
   remove_connection(srv, conn);
 }
 
+void
+db_handler(const server_t *srv, connection_t *conn)
+{
+}
+
 int
 add_connection(const server_t *server, connection_t *conn, uint32_t event_mask)
 {
