@@ -3,10 +3,10 @@
 
 #include <stdbool.h>
 
+#include "db.h"
 #include "http.h"
 #include "http_request.h"
 #include "http_response.h"
-#include "db.h"
 
 struct http_handler;
 struct http_request_context;
@@ -53,6 +53,6 @@ void http_server_add_route(
     const char *path,
     http_handler_t *handler);
 
-http_response_t http_server_handle_request(const http_server_t *server, http_request_t *req, db_pool_t* db, bool *is_complete);
+http_response_t http_server_handle_request(const http_server_t *server, http_request_t *req, db_pool_t *db, bool *is_complete);
 
 #endif // HTTP_SERVER_H

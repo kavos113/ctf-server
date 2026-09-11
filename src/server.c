@@ -19,13 +19,13 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
+#include "db.h"
 #include "http.h"
 #include "http_request.h"
 #include "http_response.h"
 #include "http_server.h"
-#include "db.h"
 
-#define MAX_EVENTS 10
+#define MAX_EVENTS            10
 #define NUM_DB_WORKER_THREADS 1
 
 static int
@@ -422,7 +422,8 @@ connection_send_buffer(connection_t *conn)
   return 1;
 }
 
-void start_send_http_response(const server_t *server, connection_t *conn, http_response_t response)
+void
+start_send_http_response(const server_t *server, connection_t *conn, http_response_t response)
 {
   char *header_buf;
   size_t header_buf_len;

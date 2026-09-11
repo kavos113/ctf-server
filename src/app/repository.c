@@ -6,7 +6,8 @@
 
 #include <mysql/mysql.h>
 
-challenge_t * bind_challenges(const db_result_t *result)
+challenge_t *
+bind_challenges(const db_result_t *result)
 {
   MYSQL_RES *res = result->res;
 
@@ -28,12 +29,12 @@ challenge_t * bind_challenges(const db_result_t *result)
   MYSQL_ROW row;
   while ((row = mysql_fetch_row(res)))
   {
-    chals[chal_count].id = (int)strtol(row[0], NULL, 10); // NOT NULL
-    chals[chal_count].creator_id = strdup(row[1]); // NOT NULL
-    chals[chal_count].name = strdup(row[2]); // NOT NULL
-    chals[chal_count].description = strdup(row[3]); // NOT NULL
-    chals[chal_count].flag = strdup(row[4]); // NOT NULL
-    chals[chal_count].genre = (ctf_genre) strtol(row[5], NULL, 10); // NOT NULL
+    chals[chal_count].id = (int)strtol(row[0], NULL, 10);          // NOT NULL
+    chals[chal_count].creator_id = strdup(row[1]);                 // NOT NULL
+    chals[chal_count].name = strdup(row[2]);                       // NOT NULL
+    chals[chal_count].description = strdup(row[3]);                // NOT NULL
+    chals[chal_count].flag = strdup(row[4]);                       // NOT NULL
+    chals[chal_count].genre = (ctf_genre)strtol(row[5], NULL, 10); // NOT NULL
 
     chal_count++;
   }
@@ -41,7 +42,8 @@ challenge_t * bind_challenges(const db_result_t *result)
   return chals;
 }
 
-answer_t * bind_answers(db_result_t *result)
+answer_t *
+bind_answers(db_result_t *result)
 {
   MYSQL_RES *res = result->res;
 

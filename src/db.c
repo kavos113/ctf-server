@@ -178,7 +178,8 @@ db_pool_new(db_option_t option, int epoll_fd, int num_threads)
   return pool;
 }
 
-db_pool_t * db_pool_new_from_env(int epoll_fd, int num_threads)
+db_pool_t *
+db_pool_new_from_env(int epoll_fd, int num_threads)
 {
   const char *host = getenv("MARIADB_HOST");
   if (!host)
@@ -215,14 +216,14 @@ db_pool_t * db_pool_new_from_env(int epoll_fd, int num_threads)
     return NULL;
   }
 
-  int port = (int) strtol(portstr, NULL, 10);
+  int port = (int)strtol(portstr, NULL, 10);
 
   db_option_t option = {
-    .host = host,
-    .port = port,
-    .user = user,
-    .pass = pass,
-    .db = db,
+      .host = host,
+      .port = port,
+      .user = user,
+      .pass = pass,
+      .db = db,
   };
 
   return db_pool_new(option, epoll_fd, num_threads);
@@ -237,7 +238,8 @@ db_pool_free(db_pool_t *pool)
   free(pool);
 }
 
-void db_pool_exec_query(db_pool_t *pool, const char *query, size_t query_len, void *data)
+void
+db_pool_exec_query(db_pool_t *pool, const char *query, size_t query_len, void *data)
 {
   db_task_t *task = calloc(1, sizeof(db_task_t));
 
@@ -252,7 +254,8 @@ void db_pool_exec_query(db_pool_t *pool, const char *query, size_t query_len, vo
   task_queue_push(pool->task_queue, task);
 }
 
-db_task_t * db_pool_get_latest_completed_task(db_pool_t *pool)
+db_task_t *
+db_pool_get_latest_completed_task(db_pool_t *pool)
 {
   return task_queue_pop(pool->done_queue);
 }

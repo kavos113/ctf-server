@@ -3,10 +3,10 @@
 
 #define DEFAULT_QUERY_SIZE 256
 
-#include <stdint.h>
-#include <stddef.h>
-#include <pthread.h>
 #include <mysql/mysql.h>
+#include <pthread.h>
+#include <stddef.h>
+#include <stdint.h>
 
 typedef struct
 {

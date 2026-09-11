@@ -26,7 +26,7 @@ http_server_add_route(
 
 // TODO: wildcard path
 http_response_t
-http_server_handle_request(const http_server_t *server, http_request_t *req, db_pool_t* db, bool *is_complete)
+http_server_handle_request(const http_server_t *server, http_request_t *req, db_pool_t *db, bool *is_complete)
 {
   for (size_t i = 0; i < server->route_count; i++)
   {
@@ -60,7 +60,7 @@ http_server_handle_request(const http_server_t *server, http_request_t *req, db_
       {
         *is_complete = false;
         return (http_response_t){
-          .status = HTTP_STATUS_OK,
+            .status = HTTP_STATUS_OK,
         };
       }
     }
@@ -72,4 +72,3 @@ http_server_handle_request(const http_server_t *server, http_request_t *req, db_
       .body = "Not Found",
       .body_len = 9};
 }
-

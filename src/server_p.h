@@ -3,8 +3,8 @@
 
 #include <stdint.h>
 
-#include "server.h"
 #include "http_response.h"
+#include "server.h"
 
 void setup_shutdown(server_t *srv);
 

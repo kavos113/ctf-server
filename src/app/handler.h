@@ -3,9 +3,9 @@
 
 #include <stdbool.h>
 
+#include "db.h"
 #include "http_response.h"
 #include "http_server.h"
-#include "db.h"
 
 bool handle_root(struct http_request_context *ctx, db_pool_t *db, db_task_t *task, http_response_t *out_response);
 
