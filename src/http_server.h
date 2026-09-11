@@ -12,7 +12,7 @@ struct http_handler;
 struct http_request_context;
 
 // これ以上関数呼び出しが必要ないとき（responseを返すとき）はtrueを返す
-typedef bool (*http_handler_func_t)(const struct http_request_context *ctx, db_pool_t *db, db_task_t *task, http_response_t *out_response);
+typedef bool (*http_handler_func_t)(struct http_request_context *ctx, db_pool_t *db, db_task_t *task, http_response_t *out_response);
 
 typedef struct http_handler
 {

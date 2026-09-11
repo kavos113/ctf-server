@@ -1,24 +1,33 @@
 #include "handler.h"
 
-http_response_t
-handle_root(const http_request_t *req, db_task_t *task)
+#include <assert.h>
+
+bool handle_root(struct http_request_context *ctx, db_pool_t *db, db_task_t *task, http_response_t *out_response)
 {
-  return (http_response_t){
-      .status = HTTP_STATUS_OK,
+  *out_response = (http_response_t){
+    .status = HTTP_STATUS_OK,
       .body = "Welcome to the CTF server!",
-      .body_len = 26};
+      .body_len = 26,
+  };
+
+  return true;
 }
 
-void handle_hello_async(const http_request_context_t *req, db_pool_t *db)
+bool handle_hello_1(struct http_request_context *ctx, db_pool_t *db, db_task_t *task, http_response_t *out_response)
 {
-  db_pool_exec_query(db, "SELECT * FROM challenges;", 26, (void *)req);
+  assert(ctx->current_handler->next != NULL);
+  ctx->current_handler = ctx->current_handler->next;
+
+  db_pool_exec_query(db, "SELECT * FROM challenges;", 26, (void *)ctx);
+  return false;
 }
 
-http_response_t
-handle_hello(const http_request_t *req, db_task_t *task)
+bool handle_hello_2(struct http_request_context *ctx, db_pool_t *db, db_task_t *task, http_response_t *out_response)
 {
-  return (http_response_t){
-      .status = HTTP_STATUS_OK,
-      .body = "Hello, World!",
-      .body_len = 13};
+  *out_response = (http_response_t){
+    .status = HTTP_STATUS_OK,
+    .body = "Hello, World!",
+    .body_len = 13,
+  };
+  return true;
 }
