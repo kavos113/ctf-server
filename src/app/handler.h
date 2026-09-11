@@ -12,4 +12,7 @@ bool handle_root(struct http_request_context *ctx, db_pool_t *db, db_task_t *tas
 bool handle_hello_1(struct http_request_context *ctx, db_pool_t *db, db_task_t *task, http_response_t *out_response);
 bool handle_hello_2(struct http_request_context *ctx, db_pool_t *db, db_task_t *task, http_response_t *out_response);
 
+bool handle_get_challenges_1(struct http_request_context *ctx, db_pool_t *db, db_task_t *task, http_response_t *out_response);
+bool handle_get_challenges_2(struct http_request_context *ctx, db_pool_t *db, db_task_t *task, http_response_t *out_response);
+
 #endif // APP_HANDLER_H

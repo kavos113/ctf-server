@@ -327,7 +327,7 @@ db_handler(const server_t *srv, connection_t *conn)
     return;
   }
 
-  fprintf(stderr, "[DEBUG], conn = %p, ctx->request->conn = %p, status = %d", conn, ctx->request->conn, response.status);
+  // fprintf(stderr, "[DEBUG], conn = %p, ctx->request->conn = %p, status = %d", conn, ctx->request->conn, response.status);
 
   start_send_http_response(srv, ctx->request->conn, response);
 }
