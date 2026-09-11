@@ -120,36 +120,6 @@ db_worker_thread(void *arg)
       MYSQL_RES *res = mysql_store_result(conn);
       task->result->res = res;
       task->result->success = 1;
-      // if (res)
-      // {
-      //   unsigned int num_fields = mysql_num_fields(res);
-      //
-      //   MYSQL_ROW row;
-      //   while ((row = mysql_fetch_row(res)))
-      //   {
-      //     unsigned long *lengths = mysql_fetch_lengths(res);
-      //
-      //     for (int i = 0; i < num_fields; i++)
-      //     {
-      //       if (row[i] == NULL)
-      //       {
-      //         fprintf(stderr, "Column %d: (NULL)\n", i);
-      //       }
-      //       else
-      //       {
-      //         fprintf(stderr, "Column %d: %.*s (len: %lu)\n", i, (int)lengths[i], row[i], lengths[i]);
-      //       }
-      //     }
-      //   }
-      //
-      //   mysql_free_result(res);
-      // }
-      // else
-      // {
-      //   task->result_body = "affected: 0";
-      //   task->result_len = strlen(task->result_body);
-      //   task->status_code = 200;
-      // }
     }
     else
     {
@@ -157,6 +127,9 @@ db_worker_thread(void *arg)
       task->result->err_msg_len = len;
       task->result->success = 0;
     }
+
+    my_ulonglong affected = mysql_affected_rows(conn);
+    task->result->affected = affected;
 
     task_queue_push(pool->done_queue, task);
 

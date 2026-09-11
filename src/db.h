@@ -12,7 +12,7 @@ typedef struct
 {
   int success;
   MYSQL_RES *res;
-  uint32_t affected;
+  uint64_t affected;
 
   char err_msg[256];
   int err_msg_len;
