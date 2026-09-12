@@ -12,6 +12,9 @@ typedef enum
   CTF_GENRE_MISC,
 } ctf_genre;
 
+ctf_genre ctf_genre_from_string(const char *str);
+const char *ctf_genre_to_string(ctf_genre genre);
+
 typedef struct
 {
   int id;
