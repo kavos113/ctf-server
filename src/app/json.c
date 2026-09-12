@@ -4,7 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-int json_to_challenge(const char *json_str, size_t json_len, challenge_t *challenge)
+int
+json_to_challenge(const char *json_str, size_t json_len, challenge_t *challenge)
 {
   if (!json_str || !challenge)
   {
@@ -140,22 +141,23 @@ skip_whitespace(const char *str, const char *end)
 }
 
 const char *
-parse_json_str(const char *str, const char *end, char *out_buf)
+parse_json_str(const char *str, const char *end, string_t *out_str)
 {
   if (str >= end || *str != '"')
   {
     return NULL;
   }
-  str++; // 開始"
+  str++; // 開始"をskip
+  out_str->ptr = str;
 
   size_t idx = 0;
   while (str < end)
   {
     if (*str == '"')
     {
-      if (out_buf)
+      if (out_str)
       {
-        out_buf[idx] = '\0';
+        out_str->len = idx;
       }
       return str + 1;
     }
@@ -199,16 +201,16 @@ parse_json_str(const char *str, const char *end, char *out_buf)
         return NULL;
       }
 
-      if (out_buf)
+      if (out_str)
       {
-        out_buf[idx++] = c;
+        out_str->ptr[idx++] = c;
       }
     }
     else
     {
-      if (out_buf)
+      if (out_str)
       {
-        out_buf[idx++] = *str;
+        out_str->ptr[idx++] = *str;
       }
     }
 

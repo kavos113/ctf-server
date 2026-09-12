@@ -1,6 +1,8 @@
 #ifndef APP_MODEL_H
 #define APP_MODEL_H
 
+#include "str.h"
+
 typedef enum
 {
   CTF_GENRE_WEB,
@@ -18,10 +20,10 @@ const char *ctf_genre_to_string(ctf_genre genre);
 typedef struct
 {
   int id;
-  const char *creator_id;
-  const char *name;
-  const char *description;
-  const char *flag;
+  string_t *creator_id;
+  string_t *name;
+  string_t *description;
+  string_t *flag;
   ctf_genre genre;
 } challenge_t;
 
@@ -29,10 +31,10 @@ typedef struct
 {
   int id;
   int challenge_id;
-  const char *user_id;
-  const char *answer;
+  string_t *user_id;
+  string_t *answer;
   int is_corrected;
-  const char *created_at;
+  string_t *created_at;
 } answer_t;
 
 #endif // APP_MODEL_H
