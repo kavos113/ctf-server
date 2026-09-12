@@ -1,5 +1,7 @@
 #include "json.h"
 
+#include <stdlib.h>
+
 const char *
 skip_whitespace(const char *str, const char *end)
 {
@@ -10,7 +12,6 @@ skip_whitespace(const char *str, const char *end)
   return str;
 }
 
-// 戻り値は終了位置のポインタ
 const char *
 parse_json_str(const char *str, const char *end, char *out_buf)
 {
@@ -78,4 +79,21 @@ parse_json_str(const char *str, const char *end, char *out_buf)
   }
 
   return NULL;
+}
+
+const char *
+parse_json_int(const char *str, const char *end, int *out_value)
+{
+  char *endptr;
+  long value = strtol(str, &endptr, 10);
+  if (endptr == str || endptr > end)
+  {
+    return NULL;
+  }
+
+  if (out_value)
+  {
+    *out_value = (int)value;
+  }
+  return endptr;
 }
