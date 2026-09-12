@@ -7,6 +7,7 @@
 
 void test_skip_whitespace(test_ctx_t *ctx);
 void test_parse_json_str(test_ctx_t *ctx);
+void test_parse_json_int(test_ctx_t *ctx);
 
 void
 test_app_json(test_ctx_t *ctx)
@@ -16,6 +17,7 @@ test_app_json(test_ctx_t *ctx)
 
   test_skip_whitespace(ctx);
   test_parse_json_str(ctx);
+  test_parse_json_int(ctx);
 
   ctx->indent -= PREFACE_INDENT;
 }
@@ -195,6 +197,83 @@ test_parse_json_str(test_ctx_t *ctx)
     {
       ASSERT_NOT_NULL(tc->name, result);
       ASSERT_STR_EQ(tc->name, out_buf, tc->expected_output);
+    }
+
+    CHECK_TEST(tc->name);
+  }
+
+  ctx->indent -= PREFACE_INDENT;
+}
+
+void
+test_parse_json_int(test_ctx_t *ctx)
+{
+  PRINT_TEST_PREFACE("test_parse_json_int");
+  ctx->indent += PREFACE_INDENT;
+
+  struct test_case
+  {
+    const char *name;
+
+    const char *input;
+    size_t input_len;
+    int expected_output;
+    bool expect_null;
+  } test_cases[] = {
+      {
+          .name = "success: simple integer",
+          .input = "123",
+          .input_len = 3,
+          .expected_output = 123,
+          .expect_null = false,
+      },
+      {
+          .name = "success: negative integer",
+          .input = "-456",
+          .input_len = 4,
+          .expected_output = -456,
+          .expect_null = false,
+      },
+      {
+          .name = "success: integer with trailing backquote",
+          .input = "123\"",
+          .input_len = 4,
+          .expected_output = 123,
+          .expect_null = false,
+      },
+      {
+          .name = "failure: non-integer input",
+          .input = "abc",
+          .input_len = 3,
+          .expected_output = 0,
+          .expect_null = true,
+      },
+      {
+          .name = "failure: empty input",
+          .input = "",
+          .input_len = 0,
+          .expected_output = 0,
+          .expect_null = true,
+      },
+  };
+
+  for (size_t i = 0; i < sizeof(test_cases) / sizeof(test_cases[0]); i++)
+  {
+    ctx->is_canceled = false;
+    struct test_case *tc = &test_cases[i];
+
+    const char *end = tc->input + tc->input_len;
+    int out_value = 0;
+    const char *result = parse_json_int(tc->input, end, &out_value);
+
+    if (tc->expect_null)
+    {
+      ASSERT_NULL(tc->name, result);
+    }
+    else
+    {
+      ASSERT_NOT_NULL(tc->name, result);
+      ASSERT_EQ(tc->name, out_value, tc->expected_output);
     }
 
     CHECK_TEST(tc->name);
