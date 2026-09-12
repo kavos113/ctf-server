@@ -76,3 +76,129 @@ test_skip_whitespace(test_ctx_t *ctx)
 
   ctx->indent -= PREFACE_INDENT;
 }
+
+void
+test_parse_json_str(test_ctx_t *ctx)
+{
+  PRINT_TEST_PREFACE("test_parse_json_str");
+  ctx->indent += PREFACE_INDENT;
+
+  struct test_case
+  {
+    const char *name;
+
+    const char *input;
+    size_t input_len;
+    const char *expected_output;
+    bool expect_null;
+  } test_cases[] = {
+      {
+          .name = "success: simple string",
+          .input = "\"hello\"",
+          .input_len = 7,
+          .expected_output = "hello",
+          .expect_null = false,
+      },
+      {
+          .name = "success: escaped quote",
+          .input = "\"he\\\"llo\"",
+          .input_len = 10,
+          .expected_output = "he\"llo",
+          .expect_null = false,
+      },
+      {
+          .name = "success: escaped backslash",
+          .input = "\"he\\\\llo\"",
+          .input_len = 10,
+          .expected_output = "he\\llo",
+          .expect_null = false,
+      },
+      {
+          .name = "success: escaped forward slash",
+          .input = "\"he\\/llo\"",
+          .input_len = 10,
+          .expected_output = "he/llo",
+          .expect_null = false,
+      },
+      {
+          .name = "success: escaped backspace",
+          .input = "\"he\\bllo\"",
+          .input_len = 9,
+          .expected_output = "he\bllo",
+          .expect_null = false,
+      },
+      {
+          .name = "success: escaped form feed",
+          .input = "\"he\\fllo\"",
+          .input_len = 9,
+          .expected_output = "he\fllo",
+          .expect_null = false,
+      },
+      {
+          .name = "success: escaped newline",
+          .input = "\"he\\nllo\"",
+          .input_len = 9,
+          .expected_output = "he\nllo",
+          .expect_null = false,
+      },
+      {
+          .name = "success: escaped carriage return",
+          .input = "\"he\\rllo\"",
+          .input_len = 9,
+          .expected_output = "he\rllo",
+          .expect_null = false,
+      },
+      {
+          .name = "success: empty string",
+          .input = "\"\"",
+          .input_len = 2,
+          .expected_output = "",
+          .expect_null = false,
+      },
+      {
+          .name = "success: complex string with multiple escapes",
+          .input = "\"he\\\"llo\\\\\\/\\b\\f\\n\\r\"",
+          .input_len = 24,
+          .expected_output = "he\"llo\\/\b\f\n\r",
+          .expect_null = false,
+      },
+      {
+          .name = "failure: missing closing quote",
+          .input = "\"hello",
+          .input_len = 6,
+          .expected_output = NULL,
+          .expect_null = true,
+      },
+      {
+          .name = "failure: invalid escape sequence",
+          .input = "\"he\\xllo\"",
+          .input_len = 10,
+          .expected_output = NULL,
+          .expect_null = true,
+      },
+  };
+
+  for (size_t i = 0; i < sizeof(test_cases) / sizeof(test_cases[0]); i++)
+  {
+    ctx->is_canceled = false;
+    struct test_case *tc = &test_cases[i];
+
+    const char *end = tc->input + tc->input_len;
+    char out_buf[256] = {0};
+    const char *result = parse_json_str(tc->input, end, out_buf);
+
+    if (tc->expect_null)
+    {
+      ASSERT_NULL(tc->name, result);
+    }
+    else
+    {
+      ASSERT_NOT_NULL(tc->name, result);
+      ASSERT_STR_EQ(tc->name, out_buf, tc->expected_output);
+    }
+
+    CHECK_TEST(tc->name);
+  }
+
+  ctx->indent -= PREFACE_INDENT;
+}
