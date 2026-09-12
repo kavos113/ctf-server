@@ -9,6 +9,7 @@ void test_skip_whitespace(test_ctx_t *ctx);
 void test_parse_json_str(test_ctx_t *ctx);
 void test_parse_json_int(test_ctx_t *ctx);
 void test_skip_json_value(test_ctx_t *ctx);
+void test_json_to_challenge(test_ctx_t *ctx);
 
 void
 test_app_json(test_ctx_t *ctx)
@@ -20,6 +21,7 @@ test_app_json(test_ctx_t *ctx)
   test_parse_json_str(ctx);
   test_parse_json_int(ctx);
   test_skip_json_value(ctx);
+  test_json_to_challenge(ctx);
 
   ctx->indent -= PREFACE_INDENT;
 }
@@ -346,6 +348,73 @@ test_skip_json_value(test_ctx_t *ctx)
     {
       ASSERT_NOT_NULL(tc->name, result);
       ASSERT_STR_EQ(tc->name, result, ",");
+    }
+
+    CHECK_TEST(tc->name);
+  }
+
+  ctx->indent -= PREFACE_INDENT;
+}
+
+void
+test_json_to_challenge(test_ctx_t *ctx)
+{
+  PRINT_TEST_PREFACE("test_json_to_challenge");
+  ctx->indent += PREFACE_INDENT;
+
+  struct test_case
+  {
+    const char *name;
+
+    const char *input;
+    size_t input_len;
+    challenge_t expected_output;
+    bool expect_failure;
+  } test_cases[] = {
+      {
+          .name = "success: valid challenge JSON",
+          .input = "{\"id\": 1, \"creator_id\": \"user123\", \"name\": \"Challenge 1\", \"description\": \"This is a test challenge.\", \"flag\": \"flag{test}\", \"genre\": \"web\"}",
+          .input_len = 128,
+          .expected_output = {
+              .id = 1,
+              .creator_id = "user123",
+              .name = "Challenge 1",
+              .description = "This is a test challenge.",
+              .flag = "flag{test}",
+              .genre = CTF_GENRE_WEB,
+          },
+          .expect_failure = false,
+      },
+      {
+          .name = "failure: invalid JSON",
+          .input = "{\"id\": 1, \"creator_id\": \"user123\", \"name\": \"Challenge 1\", \"description\": \"This is a test challenge.\", \"flag\": \"flag{test}\", \"genre\": \"web\"",
+          .input_len = 127,
+          .expected_output = {0},
+          .expect_failure = true,
+      },
+  };
+
+  for (size_t i = 0; i < sizeof(test_cases) / sizeof(test_cases[0]); i++)
+  {
+    ctx->is_canceled = false;
+    struct test_case *tc = &test_cases[i];
+
+    challenge_t challenge;
+    int result = json_to_challenge(tc->input, tc->input_len, &challenge);
+
+    if (tc->expect_failure)
+    {
+      ASSERT_NEQ("json_to_challenge", result, 0);
+    }
+    else
+    {
+      ASSERT_EQ("json_to_challenge", result, 0);
+      ASSERT_EQ("challenge.id", challenge.id, tc->expected_output.id);
+      ASSERT_STR_EQ("challenge.creator_id", challenge.creator_id, tc->expected_output.creator_id);
+      ASSERT_STR_EQ("challenge.name", challenge.name, tc->expected_output.name);
+      ASSERT_STR_EQ("challenge.description", challenge.description, tc->expected_output.description);
+      ASSERT_STR_EQ("challenge.flag", challenge.flag, tc->expected_output.flag);
+      ASSERT_EQ("challenge.genre", challenge.genre, tc->expected_output.genre);
     }
 
     CHECK_TEST(tc->name);
