@@ -76,14 +76,14 @@ parse_json_str(const char *str, const char *end, char *out_buf)
 
       if (out_buf)
       {
-        out_buf[idx] = c;
+        out_buf[idx++] = c;
       }
     }
     else
     {
       if (out_buf)
       {
-        out_buf[idx] = *str;
+        out_buf[idx++] = *str;
       }
     }
 

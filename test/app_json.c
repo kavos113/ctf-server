@@ -8,6 +8,7 @@
 void test_skip_whitespace(test_ctx_t *ctx);
 void test_parse_json_str(test_ctx_t *ctx);
 void test_parse_json_int(test_ctx_t *ctx);
+void test_skip_json_value(test_ctx_t *ctx);
 
 void
 test_app_json(test_ctx_t *ctx)
@@ -18,6 +19,7 @@ test_app_json(test_ctx_t *ctx)
   test_skip_whitespace(ctx);
   test_parse_json_str(ctx);
   test_parse_json_int(ctx);
+  test_skip_json_value(ctx);
 
   ctx->indent -= PREFACE_INDENT;
 }
@@ -196,7 +198,7 @@ test_parse_json_str(test_ctx_t *ctx)
     else
     {
       ASSERT_NOT_NULL(tc->name, result);
-      ASSERT_STR_EQ(tc->name, out_buf, tc->expected_output);
+      ASSERT_STR_EQ(tc->name, tc->expected_output, out_buf);
     }
 
     CHECK_TEST(tc->name);
@@ -274,6 +276,76 @@ test_parse_json_int(test_ctx_t *ctx)
     {
       ASSERT_NOT_NULL(tc->name, result);
       ASSERT_EQ(tc->name, out_value, tc->expected_output);
+    }
+
+    CHECK_TEST(tc->name);
+  }
+
+  ctx->indent -= PREFACE_INDENT;
+}
+
+void
+test_skip_json_value(test_ctx_t *ctx)
+{
+  PRINT_TEST_PREFACE("test_skip_json_value");
+  ctx->indent += PREFACE_INDENT;
+
+  struct test_case
+  {
+    const char *name;
+
+    const char *input;
+    size_t input_len;
+    bool expect_null;
+  } test_cases[] = {
+      {
+          .name = "success: skip string value",
+          .input = "\"hello\",",
+          .input_len = 8,
+          .expect_null = false,
+      },
+      {
+          .name = "success: skip integer value",
+          .input = "123,",
+          .input_len = 4,
+          .expect_null = false,
+      },
+      {
+          .name = "success: skip object value",
+          .input = "{\"key\": \"value\"},",
+          .input_len = 17,
+          .expect_null = false,
+      },
+      {
+          .name = "success: skip array value",
+          .input = "[1, 2, 3],",
+          .input_len = 10,
+          .expect_null = false,
+      },
+      {
+          .name = "success: skip nested object value",
+          .input = "{\"outer\": {\"inner\": 42}},",
+          .input_len = 25,
+          .expect_null = false,
+      },
+  };
+
+  for (size_t i = 0; i < sizeof(test_cases) / sizeof(test_cases[0]); i++)
+  {
+    ctx->is_canceled = false;
+    struct test_case *tc = &test_cases[i];
+
+    const char *end = tc->input + tc->input_len;
+    const char *result = skip_json_value(tc->input, end);
+
+    if (tc->expect_null)
+    {
+      ASSERT_NULL(tc->name, result);
+    }
+    else
+    {
+      ASSERT_NOT_NULL(tc->name, result);
+      ASSERT_STR_EQ(tc->name, result, ",");
     }
 
     CHECK_TEST(tc->name);
