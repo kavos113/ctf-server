@@ -4,6 +4,131 @@
 #include <stdlib.h>
 #include <string.h>
 
+int json_to_challenge(const char *json_str, size_t json_len, challenge_t *challenge)
+{
+  if (!json_str || !challenge)
+  {
+    return -1;
+  }
+
+  memset(challenge, 0, sizeof(challenge_t));
+
+  const char *ptr = json_str;
+  const char *end = json_str + json_len;
+
+  ptr = skip_whitespace(ptr, end);
+  if (ptr >= end || *ptr != '{')
+  {
+    return -1;
+  }
+  ptr++; // Skip '{'
+
+  char key_buf[64];
+
+  while (ptr < end)
+  {
+    ptr = skip_whitespace(ptr, end);
+    if (ptr >= end)
+    {
+      return -1;
+    }
+
+    if (*ptr == '}')
+    {
+      ptr++; // Skip '}'
+      return 0;
+    }
+
+    // parse key
+    ptr = parse_json_str(ptr, end, key_buf);
+    if (!ptr)
+    {
+      return -1;
+    }
+
+    ptr = skip_whitespace(ptr, end);
+    if (ptr >= end || *ptr != ':')
+    {
+      return -1;
+    }
+    ptr++; // Skip ':'
+    ptr = skip_whitespace(ptr, end);
+
+    // parse value
+    if (strcmp(key_buf, "id") == 0)
+    {
+      int value;
+      ptr = parse_json_int(ptr, end, &value);
+      if (!ptr)
+      {
+        return -1;
+      }
+      challenge->id = value;
+    }
+    else if (strcmp(key_buf, "creator_id") == 0)
+    {
+      char value_buf[64];
+      ptr = parse_json_str(ptr, end, value_buf);
+      if (!ptr)
+      {
+        return -1;
+      }
+      challenge->creator_id = strdup(value_buf);
+    }
+    else if (strcmp(key_buf, "name") == 0)
+    {
+      char value_buf[64];
+      ptr = parse_json_str(ptr, end, value_buf);
+      if (!ptr)
+      {
+        return -1;
+      }
+      challenge->name = strdup(value_buf);
+    }
+    else if (strcmp(key_buf, "description") == 0)
+    {
+      char value_buf[256];
+      ptr = parse_json_str(ptr, end, value_buf);
+      if (!ptr)
+      {
+        return -1;
+      }
+      challenge->description = strdup(value_buf);
+    }
+    else if (strcmp(key_buf, "flag") == 0)
+    {
+      char value_buf[64];
+      ptr = parse_json_str(ptr, end, value_buf);
+      if (!ptr)
+      {
+        return -1;
+      }
+      challenge->flag = strdup(value_buf);
+    }
+    else if (strcmp(key_buf, "genre") == 0)
+    {
+      char value_buf[32];
+      ptr = parse_json_str(ptr, end, value_buf);
+      if (!ptr)
+      {
+        return -1;
+      }
+      challenge->genre = ctf_genre_from_string(value_buf);
+    }
+    else
+    {
+      // Skip unknown key-value pair
+      ptr = skip_json_value(ptr, end);
+      if (!ptr)
+      {
+        return -1;
+      }
+    }
+  }
+
+  return 0;
+}
+
 const char *
 skip_whitespace(const char *str, const char *end)
 {
