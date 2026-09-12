@@ -1,6 +1,8 @@
 #include "json.h"
 
+#include <ctype.h>
 #include <stdlib.h>
+#include <string.h>
 
 const char *
 skip_whitespace(const char *str, const char *end)
@@ -40,39 +42,49 @@ parse_json_str(const char *str, const char *end, char *out_buf)
       {
         return NULL;
       }
+
+      char c = *str;
       switch (*str)
       {
       case '"':
-        out_buf[idx++] = '"';
+        c = '"';
         break;
       case '\\':
-        out_buf[idx++] = '\\';
+        c = '\\';
         break;
       case '/':
-        out_buf[idx++] = '/';
+        c = '/';
         break;
       case 'b':
-        out_buf[idx++] = '\b';
+        c = '\b';
         break;
       case 'f':
-        out_buf[idx++] = '\f';
+        c = '\f';
         break;
       case 'n':
-        out_buf[idx++] = '\n';
+        c = '\n';
         break;
       case 'r':
-        out_buf[idx++] = '\r';
+        c = '\r';
         break;
       case 't':
-        out_buf[idx++] = '\t';
+        c = '\t';
         break;
       default:
         return NULL;
       }
+
+      if (out_buf)
+      {
+        out_buf[idx] = c;
+      }
     }
     else
     {
-      out_buf[idx++] = *str;
+      if (out_buf)
+      {
+        out_buf[idx] = *str;
+      }
     }
 
     str++;
@@ -96,4 +108,48 @@ parse_json_int(const char *str, const char *end, int *out_value)
     *out_value = (int)value;
   }
   return endptr;
+}
+
+const char *
+skip_json_value(const char *str, const char *end)
+{
+  str = skip_whitespace(str, end);
+  if (str >= end)
+  {
+    return NULL;
+  }
+
+  if (*str == '"')
+  {
+    return parse_json_str(str, end, NULL);
+  }
+
+  if (*str == '{' || *str == '[')
+  {
+    char open = *str;
+    char close = (open == '{') ? '}' : ']';
+    int depth = 1;
+    str++;
+
+    while (str < end && depth > 0)
+    {
+      if (*str == open)
+      {
+        depth++;
+      }
+      else if (*str == close)
+      {
+        depth--;
+      }
+      str++;
+    }
+    return (depth == 0) ? str : NULL;
+  }
+
+  while (str < end && *str != ',' && *str != '}' && !isspace((unsigned char)*str))
+  {
+    str++;
+  }
+
+  return str;
 }
