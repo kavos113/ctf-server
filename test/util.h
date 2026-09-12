@@ -63,6 +63,26 @@
     }                                                                                                  \
   } while (0)
 
+#define ASSERT_NULL(name, ptr)                                                                                     \
+  do                                                                                                               \
+  {                                                                                                                \
+    if (!ctx->is_canceled && (ptr) != NULL)                                                                        \
+    {                                                                                                              \
+      ctx->is_canceled = true;                                                                                     \
+      fprintf(stderr, "[FAIL] %s: expected NULL, actual %p, at %s:%d\n", name, (void *)(ptr), __FILE__, __LINE__); \
+    }                                                                                                              \
+  } while (0)
+
+#define ASSERT_NOT_NULL(name, ptr)                                                                        \
+  do                                                                                                      \
+  {                                                                                                       \
+    if (!ctx->is_canceled && (ptr) == NULL)                                                               \
+    {                                                                                                     \
+      ctx->is_canceled = true;                                                                            \
+      fprintf(stderr, "[FAIL] %s: expected not NULL, actual NULL, at %s:%d\n", name, __FILE__, __LINE__); \
+    }                                                                                                     \
+  } while (0)
+
 #define ASSERT_STR_EQ(name, expected, actual)                                                                                   \
   do                                                                                                                            \
   {                                                                                                                             \

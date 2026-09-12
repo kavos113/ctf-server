@@ -19,6 +19,7 @@ typedef struct test_ctx
 
 void test_http_request(test_ctx_t *ctx);
 void test_http_request_path(test_ctx_t *ctx);
+void test_app_json(test_ctx_t *ctx);
 
 #define PRINT_TEST_PREFACE(name)                             \
   do                                                         \
