@@ -2,30 +2,31 @@
 
 #include <string.h>
 
+// TODO: byte compare
 ctf_genre
-ctf_genre_from_string(const char *str)
+ctf_genre_from_string(string_t str)
 {
-  if (strcmp(str, "web") == 0)
+  if (str.len == 3 && strncmp(str.ptr, "web", 3) == 0)
   {
     return CTF_GENRE_WEB;
   }
-  else if (strcmp(str, "crypto") == 0)
+  else if (str.len == 6 && strncmp(str.ptr, "crypto", 6) == 0)
   {
     return CTF_GENRE_CRYPTO;
   }
-  else if (strcmp(str, "pwn") == 0)
+  else if (str.len == 3 && strncmp(str.ptr, "pwn", 3) == 0)
   {
     return CTF_GENRE_PWN;
   }
-  else if (strcmp(str, "rev") == 0)
+  else if (str.len == 3 && strncmp(str.ptr, "rev", 3) == 0)
   {
     return CTF_GENRE_REV;
   }
-  else if (strcmp(str, "forensics") == 0)
+  else if (str.len == 8 && strncmp(str.ptr, "forensics", 8) == 0)
   {
     return CTF_GENRE_FORENSICS;
   }
-  else if (strcmp(str, "osint") == 0)
+  else if (str.len == 5 && strncmp(str.ptr, "osint", 5) == 0)
   {
     return CTF_GENRE_OSINT;
   }
@@ -35,25 +36,24 @@ ctf_genre_from_string(const char *str)
   }
 }
 
-const char *
+string_t
 ctf_genre_to_string(ctf_genre genre)
 {
   switch (genre)
   {
   case CTF_GENRE_WEB:
-    return "web";
+    return (string_t){"web", 3};
   case CTF_GENRE_CRYPTO:
-    return "crypto";
+    return (string_t){"crypto", 6};
   case CTF_GENRE_PWN:
-    return "pwn";
+    return (string_t){"pwn", 3};
   case CTF_GENRE_REV:
-    return "rev";
+    return (string_t){"rev", 3};
   case CTF_GENRE_FORENSICS:
-    return "forensics";
+    return (string_t){"forensics", 8};
   case CTF_GENRE_OSINT:
-    return "osint";
-  case CTF_GENRE_MISC:
+    return (string_t){"osint", 5};
   default:
-    return "misc";
+    return (string_t){"misc", 4};
   }
 }

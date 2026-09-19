@@ -1,4 +1,5 @@
 #include "json.h"
+#include "json_p.h"
 
 #include <ctype.h>
 #include <stdlib.h>
@@ -68,53 +69,53 @@ json_to_challenge(const char *json_str, size_t json_len, challenge_t *challenge)
     }
     else if (strcmp(key_buf, "creator_id") == 0)
     {
-      char value_buf[64];
-      ptr = parse_json_str(ptr, end, value_buf);
+      string_t value_str;
+      ptr = parse_json_str(ptr, end, &value_str);
       if (!ptr)
       {
         return -1;
       }
-      challenge->creator_id = strdup(value_buf);
+      challenge->creator_id = value_str;
     }
     else if (strcmp(key_buf, "name") == 0)
     {
-      char value_buf[64];
-      ptr = parse_json_str(ptr, end, value_buf);
+      string_t value_str;
+      ptr = parse_json_str(ptr, end, &value_str);
       if (!ptr)
       {
         return -1;
       }
-      challenge->name = strdup(value_buf);
+      challenge->name = value_str;
     }
     else if (strcmp(key_buf, "description") == 0)
     {
-      char value_buf[256];
-      ptr = parse_json_str(ptr, end, value_buf);
+      string_t value_str;
+      ptr = parse_json_str(ptr, end, &value_str);
       if (!ptr)
       {
         return -1;
       }
-      challenge->description = strdup(value_buf);
+      challenge->description = value_str;
     }
     else if (strcmp(key_buf, "flag") == 0)
     {
-      char value_buf[64];
-      ptr = parse_json_str(ptr, end, value_buf);
+      string_t value_str;
+      ptr = parse_json_str(ptr, end, &value_str);
       if (!ptr)
       {
         return -1;
       }
-      challenge->flag = strdup(value_buf);
+      challenge->flag = value_str;
     }
     else if (strcmp(key_buf, "genre") == 0)
     {
-      char value_buf[32];
-      ptr = parse_json_str(ptr, end, value_buf);
+      string_t value_str;
+      ptr = parse_json_str(ptr, end, &value_str);
       if (!ptr)
       {
         return -1;
       }
-      challenge->genre = ctf_genre_from_string(value_buf);
+      challenge->genre = ctf_genre_from_string(value_str);
     }
     else
     {

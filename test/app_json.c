@@ -191,7 +191,8 @@ test_parse_json_str(test_ctx_t *ctx)
 
     const char *end = tc->input + tc->input_len;
     char out_buf[256] = {0};
-    const char *result = parse_json_str(tc->input, end, out_buf);
+    string_t out_str = {out_buf, sizeof(out_buf) - 1};
+    const char *result = parse_json_str(tc->input, end, &out_str);
 
     if (tc->expect_null)
     {
@@ -200,7 +201,7 @@ test_parse_json_str(test_ctx_t *ctx)
     else
     {
       ASSERT_NOT_NULL(tc->name, result);
-      ASSERT_STR_EQ(tc->name, tc->expected_output, out_buf);
+      ASSERT_STR_EQ(tc->name, tc->expected_output, out_str.ptr);
     }
 
     CHECK_TEST(tc->name);
