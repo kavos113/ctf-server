@@ -5,6 +5,100 @@
 #include <stdlib.h>
 #include <string.h>
 
+void
+challenge_to_json(const challenge_t *challenge, string_t *json_str, bool only_size)
+{
+  if (!challenge || !json_str)
+  {
+    return;
+  }
+
+  string_t genre_str = ctf_genre_to_string(challenge->genre);
+
+  size_t buffer_suze = 1                                     // "{"
+                       + 6 + challenge->creator_id.len + 3   // "id": "<id>",
+                       + 14 + challenge->creator_id.len + 3  // "creator_id": "<creator_id>",
+                       + 8 + challenge->name.len + 3         // "name": "<name>",
+                       + 15 + challenge->description.len + 3 // "description": "<description>",
+                       + 8 + challenge->flag.len + 3         // "flag": "<flag>",
+                       + 9 + genre_str.len + 4;              // "genre": "<genre>"}\0
+
+  if (only_size)
+  {
+    json_str->ptr = NULL;
+    json_str->len = buffer_suze - 1; // Exclude null terminator
+    return;
+  }
+
+  char *buffer = malloc(buffer_suze);
+  if (!buffer)
+  {
+    return;
+  }
+
+  snprintf(buffer, buffer_suze,
+           "{\"id\": %d, \"creator_id\": \"%.*s\", \"name\": \"%.*s\", \"description\": \"%.*s\", \"flag\": \"%.*s\", \"genre\": \"%.*s\"}",
+           challenge->id,
+           (int)challenge->creator_id.len, challenge->creator_id.ptr,
+           (int)challenge->name.len, challenge->name.ptr,
+           (int)challenge->description.len, challenge->description.ptr,
+           (int)challenge->flag.len, challenge->flag.ptr,
+           (int)genre_str.len, genre_str.ptr);
+
+  json_str->ptr = buffer;
+  json_str->len = buffer_suze - 1; // Exclude null terminator
+}
+
+void
+challenges_to_json(const challenge_t *challenges, size_t count, string_t *json_str, bool only_size)
+{
+  if (!challenges || !json_str)
+  {
+    return;
+  }
+
+  if (only_size)
+  {
+    json_str->ptr = NULL;
+    json_str->len = 0;
+    return;
+  }
+
+  size_t total_size = 1; // [
+  for (size_t i = 0; i < count; i++)
+  {
+    string_t challenge_json;
+    challenge_to_json(&challenges[i], &challenge_json, true);
+    total_size += challenge_json.len + 1; // , or ]
+  }
+
+  char *buffer = malloc(total_size);
+  if (!buffer)
+  {
+    return;
+  }
+
+  snprintf(buffer, total_size, "[");
+  size_t offset = 1;
+
+  for (size_t i = 0; i < count; i++)
+  {
+    string_t challenge_json;
+    challenge_to_json(&challenges[i], &challenge_json, false);
+    offset += snprintf(buffer + offset, total_size - offset, "%s", challenge_json.ptr);
+    if (i < count - 1)
+    {
+      buffer[offset++] = ',';
+    }
+  }
+
+  buffer[offset] = ']';
+  buffer[offset + 1] = '\0';
+
+  json_str->ptr = buffer;
+  json_str->len = total_size - 1; // Exclude null terminator
+}
+
 int
 json_to_challenge(const char *json_str, size_t json_len, challenge_t *challenge)
 {
