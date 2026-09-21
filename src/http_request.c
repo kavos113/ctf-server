@@ -68,7 +68,15 @@ parse_http_request(connection_t *conn, http_request_t *out_request)
       }
       else if (err.code == ERR_NONE)
       {
-        normalize_uri(out_request);
+        int normalize_result = normalize_uri(out_request);
+        if (normalize_result == NORMALIZE_URI_TOO_MANY_QUERY_PARAMS)
+        {
+          out_response.status = HTTP_STATUS_URI_TOO_LONG;
+        }
+        else if (normalize_result < 0)
+        {
+          out_response.status = HTTP_STATUS_BAD_REQUEST;
+        }
         return out_response;
       }
       else

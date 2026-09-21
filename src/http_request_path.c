@@ -141,7 +141,10 @@ normalize_path(char *path, size_t len)
 int
 normalize_uri(http_request_t *request)
 {
-  parse_query_params(request);
+  if (parse_query_params(request) < 0)
+  {
+    return NORMALIZE_URI_TOO_MANY_QUERY_PARAMS;
+  }
 
   ssize_t new_len = url_decode(request->uri, request->uri_len);
   if (new_len < 0)
@@ -211,7 +214,7 @@ normalize_uri(http_request_t *request)
   return 0;
 }
 
-void
+int
 parse_query_params(http_request_t *req)
 {
   size_t final_uri_len = req->uri_len;
@@ -231,8 +234,6 @@ parse_query_params(http_request_t *req)
 
       while (1)
       {
-        http_param_t *param = &req->query_params[req->query_param_count];
-        param->name = &req->uri[i];
         size_t name_start_idx = i;
 
         while (i < req->uri_len && req->uri[i] != '=')
@@ -244,20 +245,26 @@ parse_query_params(http_request_t *req)
         if (i >= req->uri_len)
         {
           req->uri_len = final_uri_len;
-          return;
+          return 0;
         }
 
-        // query param is valid below
+        if (req->query_param_count >= MAX_QUERY_PARAMS)
+        {
+          return -1;
+        }
+
+        http_param_t *param = &req->query_params[req->query_param_count];
+        param->name = &req->uri[name_start_idx];
+        param->name_len = i - name_start_idx;
         req->query_param_count++;
 
-        param->name_len = i - name_start_idx;
         i++;
 
         // no value
         if (i >= req->uri_len)
         {
           req->uri_len = final_uri_len;
-          return;
+          return 0;
         }
 
         param->value = &req->uri[i];
@@ -273,7 +280,7 @@ parse_query_params(http_request_t *req)
         if (i >= req->uri_len)
         {
           req->uri_len = final_uri_len;
-          return;
+          return 0;
         }
 
         i++;
@@ -290,4 +297,5 @@ parse_query_params(http_request_t *req)
   }
 
   req->uri_len = final_uri_len;
+  return 0;
 }
