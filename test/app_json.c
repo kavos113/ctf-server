@@ -378,10 +378,10 @@ test_json_to_challenge(test_ctx_t *ctx)
           .input_len = 128,
           .expected_output = {
               .id = 1,
-              .creator_id = "user123",
-              .name = "Challenge 1",
-              .description = "This is a test challenge.",
-              .flag = "flag{test}",
+              .creator_id = (string_t){"user123", 7},
+              .name = (string_t){"Challenge 1", 11},
+              .description = (string_t){"This is a test challenge.", 27},
+              .flag = (string_t){"flag{test}", 10},
               .genre = CTF_GENRE_WEB,
           },
           .expect_failure = false,
@@ -405,17 +405,21 @@ test_json_to_challenge(test_ctx_t *ctx)
 
     if (tc->expect_failure)
     {
-      ASSERT_NEQ("json_to_challenge", result, 0);
+      ASSERT_NEQ(tc->name, result, 0);
     }
     else
     {
-      ASSERT_EQ("json_to_challenge", result, 0);
-      ASSERT_EQ("challenge.id", challenge.id, tc->expected_output.id);
-      ASSERT_STR_EQ("challenge.creator_id", challenge.creator_id, tc->expected_output.creator_id);
-      ASSERT_STR_EQ("challenge.name", challenge.name, tc->expected_output.name);
-      ASSERT_STR_EQ("challenge.description", challenge.description, tc->expected_output.description);
-      ASSERT_STR_EQ("challenge.flag", challenge.flag, tc->expected_output.flag);
-      ASSERT_EQ("challenge.genre", challenge.genre, tc->expected_output.genre);
+      ASSERT_EQ(tc->name, result, 0);
+      ASSERT_EQ(tc->name, challenge.id, tc->expected_output.id);
+      ASSERT_EQ(tc->name, challenge.creator_id.len, tc->expected_output.creator_id.len);
+      ASSERT_STR_N_EQ(tc->name, challenge.creator_id.ptr, tc->expected_output.creator_id.ptr, challenge.creator_id.len);
+      ASSERT_EQ(tc->name, challenge.name.len, tc->expected_output.name.len);
+      ASSERT_STR_N_EQ(tc->name, challenge.name.ptr, tc->expected_output.name.ptr, challenge.name.len);
+      ASSERT_EQ(tc->name, challenge.description.len, tc->expected_output.description.len);
+      ASSERT_STR_N_EQ(tc->name, challenge.description.ptr, tc->expected_output.description.ptr, challenge.description.len);
+      ASSERT_EQ(tc->name, challenge.flag.len, tc->expected_output.flag.len);
+      ASSERT_STR_N_EQ(tc->name, challenge.flag.ptr, tc->expected_output.flag.ptr, challenge.flag.len);
+      ASSERT_EQ(tc->name, challenge.genre, tc->expected_output.genre);
     }
 
     CHECK_TEST(tc->name);
