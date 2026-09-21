@@ -36,6 +36,8 @@ bind_challenges(const db_result_t *result)
     chals[chal_count].flag = string_from_cstr_dup(row[4]);
     chals[chal_count].genre = (ctf_genre)strtol(row[5], NULL, 10);
 
+    chals[chal_count].is_string_allocated = true;
+
     chal_count++;
   }
 
@@ -71,6 +73,8 @@ bind_answers(db_result_t *result)
     answers[answer_count].answer = string_from_cstr_dup(row[3]);
     answers[answer_count].is_corrected = (row[4][0] == '1');
     answers[answer_count].created_at = string_from_cstr_dup(row[5]);
+
+    answers[answer_count].is_string_allocated = true;
 
     answer_count++;
   }

@@ -1,6 +1,8 @@
 #ifndef APP_MODEL_H
 #define APP_MODEL_H
 
+#include <stdbool.h>
+
 #include "str.h"
 
 typedef enum
@@ -25,6 +27,8 @@ typedef struct
   string_t description;
   string_t flag;
   ctf_genre genre;
+
+  bool is_string_allocated;
 } challenge_t;
 
 typedef struct
@@ -35,6 +39,8 @@ typedef struct
   string_t answer;
   int is_corrected;
   string_t created_at;
+
+  bool is_string_allocated;
 } answer_t;
 
 #endif // APP_MODEL_H

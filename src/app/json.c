@@ -128,6 +128,9 @@ json_to_challenge(const char *json_str, size_t json_len, challenge_t *challenge)
     }
   }
 
+  // ここではrequestのポインタのみを使用しているため
+  challenge->is_string_allocated = false;
+
   return 0;
 }
 
