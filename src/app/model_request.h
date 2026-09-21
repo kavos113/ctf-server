@@ -1,13 +1,22 @@
 #ifndef APP_MODEL_REQUEST_H
 #define APP_MODEL_REQUEST_H
 
-#include <stddef.h>
+#include "model.h"
+#include "str.h"
 
 typedef struct
 {
-  const char *name;
-  size_t name_len;
-};
+  string_t name;
+  string_t description;
+  string_t flag;
+  ctf_genre genre;
+} create_challenge_request_t;
+
+typedef struct
+{
+  int challenge_id;
+  string_t answer;
+} submit_answer_request_t;
 
 // string作ったほうがよいよね
 

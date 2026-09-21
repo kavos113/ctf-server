@@ -43,4 +43,11 @@ typedef struct
   bool is_string_allocated;
 } answer_t;
 
+typedef struct
+{
+  int challenge_id;
+  string_t user_id;
+  string_t answered_at;
+} corrected_answer_t;
+
 #endif // APP_MODEL_H
