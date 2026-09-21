@@ -1,5 +1,8 @@
 #include "str.h"
 
+#include <stdlib.h>
+#include <string.h>
+
 bool
 string_equals(string_t a, string_t b)
 {
@@ -19,17 +22,7 @@ string_from_cstr(const char *cstr)
 string_t
 string_from_cstr_n(const char *cstr, size_t n)
 {
-  string_t s;
-  s.ptr = malloc(n + 1);
-  if (!s.ptr)
-  {
-    s.len = 0;
-    return s;
-  }
-  memcpy(s.ptr, cstr, n);
-  s.ptr[n] = '\0';
-  s.len = n;
-  return s;
+  return (string_t){(char *)cstr, n};
 }
 
 string_t

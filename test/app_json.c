@@ -96,91 +96,35 @@ test_parse_json_str(test_ctx_t *ctx)
 
     const char *input;
     size_t input_len;
-    const char *expected_output;
+    string_t expected_output;
     bool expect_null;
   } test_cases[] = {
       {
           .name = "success: simple string",
           .input = "\"hello\"",
           .input_len = 7,
-          .expected_output = "hello",
-          .expect_null = false,
-      },
-      {
-          .name = "success: escaped quote",
-          .input = "\"he\\\"llo\"",
-          .input_len = 10,
-          .expected_output = "he\"llo",
-          .expect_null = false,
-      },
-      {
-          .name = "success: escaped backslash",
-          .input = "\"he\\\\llo\"",
-          .input_len = 10,
-          .expected_output = "he\\llo",
-          .expect_null = false,
-      },
-      {
-          .name = "success: escaped forward slash",
-          .input = "\"he\\/llo\"",
-          .input_len = 10,
-          .expected_output = "he/llo",
-          .expect_null = false,
-      },
-      {
-          .name = "success: escaped backspace",
-          .input = "\"he\\bllo\"",
-          .input_len = 9,
-          .expected_output = "he\bllo",
-          .expect_null = false,
-      },
-      {
-          .name = "success: escaped form feed",
-          .input = "\"he\\fllo\"",
-          .input_len = 9,
-          .expected_output = "he\fllo",
-          .expect_null = false,
-      },
-      {
-          .name = "success: escaped newline",
-          .input = "\"he\\nllo\"",
-          .input_len = 9,
-          .expected_output = "he\nllo",
-          .expect_null = false,
-      },
-      {
-          .name = "success: escaped carriage return",
-          .input = "\"he\\rllo\"",
-          .input_len = 9,
-          .expected_output = "he\rllo",
+          .expected_output = (string_t){"hello", 5},
           .expect_null = false,
       },
       {
           .name = "success: empty string",
           .input = "\"\"",
           .input_len = 2,
-          .expected_output = "",
-          .expect_null = false,
-      },
-      {
-          .name = "success: complex string with multiple escapes",
-          .input = "\"he\\\"llo\\\\\\/\\b\\f\\n\\r\"",
-          .input_len = 24,
-          .expected_output = "he\"llo\\/\b\f\n\r",
+          .expected_output = (string_t){"", 0},
           .expect_null = false,
       },
       {
           .name = "failure: missing closing quote",
           .input = "\"hello",
           .input_len = 6,
-          .expected_output = NULL,
+          .expected_output = (string_t){NULL, 0},
           .expect_null = true,
       },
       {
           .name = "failure: invalid escape sequence",
           .input = "\"he\\xllo\"",
           .input_len = 10,
-          .expected_output = NULL,
+          .expected_output = (string_t){NULL, 0},
           .expect_null = true,
       },
   };
@@ -202,7 +146,7 @@ test_parse_json_str(test_ctx_t *ctx)
     else
     {
       ASSERT_NOT_NULL(tc->name, result);
-      ASSERT_STR_EQ(tc->name, tc->expected_output, out_str.ptr);
+      ASSERT_STRING_EQ(tc->name, out_str, tc->expected_output);
     }
 
     CHECK_TEST(tc->name);

@@ -166,58 +166,6 @@ parse_json_str(const char *str, const char *end, string_t *out_str)
       return str + 1;
     }
 
-    if (*str == '\\')
-    {
-      str++;
-      if (str >= end)
-      {
-        return NULL;
-      }
-
-      char c = *str;
-      switch (*str)
-      {
-      case '"':
-        c = '"';
-        break;
-      case '\\':
-        c = '\\';
-        break;
-      case '/':
-        c = '/';
-        break;
-      case 'b':
-        c = '\b';
-        break;
-      case 'f':
-        c = '\f';
-        break;
-      case 'n':
-        c = '\n';
-        break;
-      case 'r':
-        c = '\r';
-        break;
-      case 't':
-        c = '\t';
-        break;
-      default:
-        return NULL;
-      }
-
-      if (out_str)
-      {
-        out_str->ptr[idx++] = c;
-      }
-    }
-    else
-    {
-      if (out_str)
-      {
-        out_str->ptr[idx++] = *str;
-      }
-    }
-
     str++;
   }
 
