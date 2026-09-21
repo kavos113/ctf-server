@@ -5,19 +5,48 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define PRINT_ASSERT(x, name, file, line, exp, act) _Generic((x),                                                                                                     \
-    int: fprintf(stderr, "[FAIL] %s: expected %d, actual %d, at %s:%d\n", name, (int)(exp), (int)(act), file, line),                                                  \
-    long: fprintf(stderr, "[FAIL] %s: expected %ld, actual %ld, at %s:%d\n", name, (long)(exp), (long)(act), file, line),                                             \
-    long long: fprintf(stderr, "[FAIL] %s: expected %lld, actual %lld, at %s:%d\n", name, (long long)(exp), (long long)(act), file, line),                            \
-    unsigned int: fprintf(stderr, "[FAIL] %s: expected %u, actual %u, at %s:%d\n", name, (unsigned int)(exp), (unsigned int)(act), file, line),                       \
-    unsigned long: fprintf(stderr, "[FAIL] %s: expected %lu, actual %lu, at %s:%d\n", name, (unsigned long)(exp), (unsigned long)(act), file, line),                  \
-    unsigned long long: fprintf(stderr, "[FAIL] %s: expected %llu, actual %llu, at %s:%d\n", name, (unsigned long long)(exp), (unsigned long long)(act), file, line), \
-    double: fprintf(stderr, "[FAIL] %s: expected %f, actual %f, at %s:%d\n", name, (double)(exp), (double)(act), file, line),                                         \
-    float: fprintf(stderr, "[FAIL] %s: expected %f, actual %f, at %s:%d\n", name, (float)(exp), (float)(act), file, line),                                            \
-    char: fprintf(stderr, "[FAIL] %s: expected '%c', actual '%c', at %s:%d\n", name, (char)(exp), (char)(act), file, line),                                           \
-    char *: fprintf(stderr, "[FAIL] %s: expected \"%s\", actual \"%s\", at %s:%d\n", name, (char *)(exp), (char *)(act), file, line),                                 \
-    const char *: fprintf(stderr, "[FAIL] %s: expected \"%s\", actual \"%s\", at %s:%d\n", name, (const char *)(exp), (const char *)(act), file, line),               \
-    default: fprintf(stderr, "[FAIL] %s: expected %p, actual %p, at %s:%d\n", name, (void *)(exp), (void *)(act), file, line))
+static inline void
+print_fail_int(const char *name, const char *file, int line, long long expected, long long actual)
+{
+  fprintf(stderr, "[FAIL] %s: expected %lld, actual %lld, at %s:%d\n", name, expected, actual, file, line);
+}
+
+static inline void
+print_fail_uint(const char *name, const char *file, int line, unsigned long long expected, unsigned long long actual)
+{
+  fprintf(stderr, "[FAIL] %s: expected %llu, actual %llu, at %s:%d\n", name, expected, actual, file, line);
+}
+
+static inline void
+print_fail_double(const char *name, const char *file, int line, double expected, double actual)
+{
+  fprintf(stderr, "[FAIL] %s: expected %f, actual %f, at %s:%d\n", name, expected, actual, file, line);
+}
+
+static inline void
+print_fail_str(const char *name, const char *file, int line, const char *expected, const char *actual)
+{
+  fprintf(stderr, "[FAIL] %s: expected \"%s\", actual \"%s\", at %s:%d\n", name, expected, actual, file, line);
+}
+
+static inline void
+print_fail_ptr(const char *name, const char *file, int line, const void *expected, const void *actual)
+{
+  fprintf(stderr, "[FAIL] %s: expected %p, actual %p, at %s:%d\n", name, expected, actual, file, line);
+}
+
+#define PRINT_ASSERT(x, name, file, line, exp, act) _Generic((x), \
+    int: print_fail_int,                                          \
+    long: print_fail_int,                                         \
+    long long: print_fail_int,                                    \
+    unsigned int: print_fail_uint,                                \
+    unsigned long: print_fail_uint,                               \
+    unsigned long long: print_fail_uint,                          \
+    float: print_fail_double,                                     \
+    double: print_fail_double,                                    \
+    const char *: print_fail_str,                                 \
+    char *: print_fail_str,                                       \
+    void *: print_fail_ptr)(name, file, line, exp, act)
 
 #define ASSERT_EQ(name, expected, actual)                       \
   do                                                            \
