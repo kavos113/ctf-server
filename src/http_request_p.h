@@ -6,7 +6,7 @@
 
 #include "http_request.h"
 
-#define MAX_HEADER_BYTES 4096
+#define MAX_HEADER_BYTES                    4096
 #define NORMALIZE_URI_TOO_MANY_QUERY_PARAMS -2
 
 typedef enum

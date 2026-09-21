@@ -37,13 +37,13 @@ challenge_to_json_impl(const challenge_t *challenge, string_t *json_str, bool on
 
   string_t genre_str = ctf_genre_to_string(challenge->genre);
 
-  size_t buffer_suze = 1                                          // "{"
-                       + 5 + int_string_length(challenge->id) + 1 // "id":<id>,
-                       + 13 + challenge->creator_id.len + 3       // "creator_id":"<creator_id>",
-                       + 7 + challenge->name.len + 3              // "name":"<name>",
-                       + 14 + challenge->description.len + 3      // "description":"<description>",
+  size_t buffer_suze = 1                                                  // "{"
+                       + 5 + int_string_length(challenge->id) + 1         // "id":<id>,
+                       + 13 + challenge->creator_id.len + 3               // "creator_id":"<creator_id>",
+                       + 7 + challenge->name.len + 3                      // "name":"<name>",
+                       + 14 + challenge->description.len + 3              // "description":"<description>",
                        + (include_flag ? 7 + challenge->flag.len + 3 : 0) // "flag":"<flag>",
-                       + 8 + genre_str.len + 4;                   // "genre":"<genre>"}\0
+                       + 8 + genre_str.len + 4;                           // "genre":"<genre>"}\0
 
   if (only_size)
   {
