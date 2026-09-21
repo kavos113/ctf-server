@@ -13,6 +13,17 @@ string_equals(string_t a, string_t b)
   return (memcmp(a.ptr, b.ptr, a.len) == 0);
 }
 
+bool
+string_equals_cstr(string_t a, const char *cstr)
+{
+  size_t cstr_len = strlen(cstr);
+  if (a.len != cstr_len)
+  {
+    return false;
+  }
+  return (memcmp(a.ptr, cstr, a.len) == 0);
+}
+
 string_t
 string_from_cstr(const char *cstr)
 {

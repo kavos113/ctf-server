@@ -11,6 +11,7 @@ typedef struct
 } string_t;
 
 bool string_equals(string_t a, string_t b);
+bool string_equals_cstr(string_t a, const char *cstr);
 
 string_t string_from_cstr(const char *cstr);
 string_t string_from_cstr_n(const char *cstr, size_t n);

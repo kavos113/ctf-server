@@ -6,6 +6,7 @@
 #include "util_app.h"
 
 void test_string_equals(test_ctx_t *ctx);
+void test_string_equals_cstr(test_ctx_t *ctx);
 void test_string_from_cstr(test_ctx_t *ctx);
 void test_string_from_cstr_n(test_ctx_t *ctx);
 void test_string_from_cstr_dup(test_ctx_t *ctx);
@@ -18,6 +19,7 @@ test_app_str(test_ctx_t *ctx)
   ctx->indent += PREFACE_INDENT;
 
   test_string_equals(ctx);
+  test_string_equals_cstr(ctx);
   test_string_from_cstr(ctx);
   test_string_from_cstr_n(ctx);
   test_string_from_cstr_dup(ctx);
@@ -75,6 +77,54 @@ test_string_equals(test_ctx_t *ctx)
 }
 
 void
+test_string_equals_cstr(test_ctx_t *ctx)
+{
+  PRINT_TEST_PREFACE("test_string_equals_cstr");
+  ctx->indent += PREFACE_INDENT;
+
+  struct test_case
+  {
+    const char *name;
+
+    string_t a;
+    const char *b;
+    bool expected_output;
+  } test_cases[] = {
+      {
+          .name = "equal",
+          .a = (string_t){"hello", 5},
+          .b = "hello",
+          .expected_output = true,
+      },
+      {
+          .name = "different lengths",
+          .a = (string_t){"hello", 5},
+          .b = "hello!",
+          .expected_output = false,
+      },
+      {
+          .name = "different contents",
+          .a = (string_t){"hello", 5},
+          .b = "world",
+          .expected_output = false,
+      },
+  };
+
+  for (size_t i = 0; i < sizeof(test_cases) / sizeof(test_cases[0]); i++)
+  {
+    ctx->is_canceled = false;
+    struct test_case *tc = &test_cases[i];
+
+    bool result = string_equals_cstr(tc->a, tc->b);
+    ASSERT_EQ(tc->name, result, tc->expected_output);
+
+    CHECK_TEST(tc->name);
+  }
+
+  ctx->indent -= PREFACE_INDENT;
+}
+
+void
 test_string_from_cstr(test_ctx_t *ctx)
 {
   PRINT_TEST_PREFACE("test_string_from_cstr");
@@ -108,7 +158,7 @@ test_string_from_cstr(test_ctx_t *ctx)
     ASSERT_STRING_EQ(tc->name, tc->expected_output, result);
 
     // should same memory
-    ASSERT_EQ(tc->name, (void*)tc->input, (void*)result.ptr);
+    ASSERT_EQ(tc->name, (void *)tc->input, (void *)result.ptr);
 
     CHECK_TEST(tc->name);
   }
@@ -159,7 +209,7 @@ test_string_from_cstr_n(test_ctx_t *ctx)
     ASSERT_STRING_EQ(tc->name, tc->expected_output, result);
 
     // should same memory
-    ASSERT_EQ(tc->name, (void*)tc->input, (void*)result.ptr);
+    ASSERT_EQ(tc->name, (void *)tc->input, (void *)result.ptr);
 
     CHECK_TEST(tc->name);
   }
@@ -201,7 +251,7 @@ test_string_from_cstr_dup(test_ctx_t *ctx)
     ASSERT_STRING_EQ(tc->name, tc->expected_output, result);
 
     // should different memory
-    ASSERT_NE(tc->name, (void*)tc->input, (void*)result.ptr);
+    ASSERT_NE(tc->name, (void *)tc->input, (void *)result.ptr);
 
     CHECK_TEST(tc->name);
   }
@@ -252,7 +302,7 @@ test_string_from_cstr_dup_n(test_ctx_t *ctx)
     ASSERT_STRING_EQ(tc->name, tc->expected_output, result);
 
     // should different memory
-    ASSERT_NE(tc->name, (void*)tc->input, (void*)result.ptr);
+    ASSERT_NE(tc->name, (void *)tc->input, (void *)result.ptr);
 
     CHECK_TEST(tc->name);
   }
