@@ -108,7 +108,7 @@ test_string_from_cstr(test_ctx_t *ctx)
     ASSERT_STRING_EQ(tc->name, tc->expected_output, result);
 
     // should same memory
-    ASSERT_EQ(tc->name, result.ptr, tc->expected_output.ptr);
+    ASSERT_EQ(tc->name, (void*)tc->input, (void*)result.ptr);
 
     CHECK_TEST(tc->name);
   }
@@ -158,6 +158,9 @@ test_string_from_cstr_n(test_ctx_t *ctx)
     string_t result = string_from_cstr_n(tc->input, tc->n);
     ASSERT_STRING_EQ(tc->name, tc->expected_output, result);
 
+    // should same memory
+    ASSERT_EQ(tc->name, (void*)tc->input, (void*)result.ptr);
+
     CHECK_TEST(tc->name);
   }
 
@@ -198,7 +201,7 @@ test_string_from_cstr_dup(test_ctx_t *ctx)
     ASSERT_STRING_EQ(tc->name, tc->expected_output, result);
 
     // should different memory
-    // ASSERT_NE(tc->name, result.ptr, tc->expected_output.ptr);
+    ASSERT_NE(tc->name, (void*)tc->input, (void*)result.ptr);
 
     CHECK_TEST(tc->name);
   }
@@ -249,7 +252,7 @@ test_string_from_cstr_dup_n(test_ctx_t *ctx)
     ASSERT_STRING_EQ(tc->name, tc->expected_output, result);
 
     // should different memory
-    // ASSERT_NE(tc->name, result.ptr, tc->expected_output.ptr);
+    ASSERT_NE(tc->name, (void*)tc->input, (void*)result.ptr);
 
     CHECK_TEST(tc->name);
   }

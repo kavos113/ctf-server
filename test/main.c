@@ -33,6 +33,7 @@ main(int argc, char **argv)
 
   test_http_request(&ctx);
   test_http_request_path(&ctx);
+  test_app_str(&ctx);
   test_app_json(&ctx);
 
   timespec_get(&end_time, TIME_UTC);
