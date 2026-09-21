@@ -1,6 +1,7 @@
 #ifndef TEST_UTIL_H
 #define TEST_UTIL_H
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -35,6 +36,12 @@ print_fail_ptr(const char *name, const char *file, int line, const void *expecte
   fprintf(stderr, "[FAIL] %s: expected %p, actual %p, at %s:%d\n", name, expected, actual, file, line);
 }
 
+static inline void
+print_fail_bool(const char *name, const char *file, int line, bool expected, bool actual)
+{
+  fprintf(stderr, "[FAIL] %s: expected %s, actual %s, at %s:%d\n", name, expected ? "true" : "false", actual ? "true" : "false", file, line);
+}
+
 #define PRINT_ASSERT(x, name, file, line, exp, act) _Generic((x), \
     int: print_fail_int,                                          \
     long: print_fail_int,                                         \
@@ -46,6 +53,7 @@ print_fail_ptr(const char *name, const char *file, int line, const void *expecte
     double: print_fail_double,                                    \
     const char *: print_fail_str,                                 \
     char *: print_fail_str,                                       \
+    bool: print_fail_bool,                                        \
     void *: print_fail_ptr)(name, file, line, exp, act)
 
 #define ASSERT_EQ(name, expected, actual)                       \
