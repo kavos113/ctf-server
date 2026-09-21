@@ -7,6 +7,4 @@ test-ctf-server
 
 AGENTS.md
 docs_p
-package.json
-pnpm-lock.yaml
 node_modules
