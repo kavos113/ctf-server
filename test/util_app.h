@@ -14,15 +14,15 @@
     }                                                                                                                                      \
   } while (0)
 
-#define ASSERT_CHALLENGE_EQ(test_name, expected, actual)                                  \
-  do                                                                                      \
-  {                                                                                       \
-    ASSERT_EQ(test_name, expected.id, actual.id);                                   \
-    ASSERT_STRING_EQ(test_name, expected.creator_id, actual.creator_id);    \
-    ASSERT_STRING_EQ(test_name, expected.name, actual.name);                      \
+#define ASSERT_CHALLENGE_EQ(test_name, expected, actual)                   \
+  do                                                                       \
+  {                                                                        \
+    ASSERT_EQ(test_name, expected.id, actual.id);                          \
+    ASSERT_STRING_EQ(test_name, expected.creator_id, actual.creator_id);   \
+    ASSERT_STRING_EQ(test_name, expected.name, actual.name);               \
     ASSERT_STRING_EQ(test_name, expected.description, actual.description); \
-    ASSERT_STRING_EQ(test_name, expected.flag, actual.flag);                      \
-    ASSERT_EQ(test_name, expected.genre, actual.genre);                          \
+    ASSERT_STRING_EQ(test_name, expected.flag, actual.flag);               \
+    ASSERT_EQ(test_name, expected.genre, actual.genre);                    \
   } while (0)
 
 #endif // TEST_UTIL_APP_H

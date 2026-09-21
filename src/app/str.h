@@ -1,8 +1,8 @@
 #ifndef APP_STR_H
 #define APP_STR_H
 
-#include <stddef.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 typedef struct
 {

@@ -35,7 +35,8 @@ handle_hello_2(struct http_request_context *ctx, db_pool_t *db, db_task_t *task,
   return true;
 }
 
-bool handle_get_challenges_1(struct http_request_context *ctx, db_pool_t *db, db_task_t *task, http_response_t *out_response)
+bool
+handle_get_challenges_1(struct http_request_context *ctx, db_pool_t *db, db_task_t *task, http_response_t *out_response)
 {
   assert(ctx->current_handler->next != NULL);
   ctx->current_handler = ctx->current_handler->next;
@@ -44,7 +45,8 @@ bool handle_get_challenges_1(struct http_request_context *ctx, db_pool_t *db, db
   return false;
 }
 
-bool handle_get_challenges_2(struct http_request_context *ctx, db_pool_t *db, db_task_t *task, http_response_t *out_response)
+bool
+handle_get_challenges_2(struct http_request_context *ctx, db_pool_t *db, db_task_t *task, http_response_t *out_response)
 {
   return true;
 }
