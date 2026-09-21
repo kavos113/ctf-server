@@ -13,7 +13,9 @@ void test_skip_json_value(test_ctx_t *ctx);
 void test_json_to_challenge(test_ctx_t *ctx);
 void test_json_to_challenges(test_ctx_t *ctx);
 void test_challenge_to_json(test_ctx_t *ctx);
+void test_challenge_to_json_without_flag(test_ctx_t *ctx);
 void test_challenges_to_json(test_ctx_t *ctx);
+void test_challenges_to_json_without_flag(test_ctx_t *ctx);
 
 void
 test_app_json(test_ctx_t *ctx)
@@ -28,7 +30,9 @@ test_app_json(test_ctx_t *ctx)
   test_json_to_challenge(ctx);
   test_json_to_challenges(ctx);
   test_challenge_to_json(ctx);
+  test_challenge_to_json_without_flag(ctx);
   test_challenges_to_json(ctx);
+  test_challenges_to_json_without_flag(ctx);
 
   ctx->indent -= PREFACE_INDENT;
 }
@@ -554,6 +558,105 @@ test_challenges_to_json(test_ctx_t *ctx)
     challenges_to_json(tc->input, tc->input_count, &result, false);
 
     ASSERT_STRING_EQ(tc->name, tc->expected_output, result);
+
+    free(result.ptr);
+    CHECK_TEST(tc->name);
+  }
+
+  ctx->indent -= PREFACE_INDENT;
+}
+
+void
+test_challenge_to_json_without_flag(test_ctx_t *ctx)
+{
+  PRINT_TEST_PREFACE("test_challenge_to_json_without_flag");
+  ctx->indent += PREFACE_INDENT;
+
+  struct test_case
+  {
+    const char *name;
+    challenge_t input;
+    const char *expected_output;
+  } test_cases[] = {
+      {
+          .name = "success: flag omitted from challenge",
+          .input = {
+              .id = 1,
+              .creator_id = (string_t){"user123", 7},
+              .name = (string_t){"Challenge 1", 11},
+              .description = (string_t){"This is a test challenge.", 25},
+              .flag = (string_t){"flag{test}", 10},
+              .genre = CTF_GENRE_WEB,
+          },
+          .expected_output = "{\"id\":1,\"creator_id\":\"user123\",\"name\":\"Challenge 1\",\"description\":\"This is a test challenge.\",\"genre\":\"web\"}",
+      },
+  };
+
+  for (size_t i = 0; i < sizeof(test_cases) / sizeof(test_cases[0]); i++)
+  {
+    ctx->is_canceled = false;
+    struct test_case *tc = &test_cases[i];
+
+    string_t result = {0};
+    challenge_to_json_without_flag(&tc->input, &result, false);
+
+    ASSERT_STRING_EQ(tc->name, string_from_cstr(tc->expected_output), result);
+
+    free(result.ptr);
+    CHECK_TEST(tc->name);
+  }
+
+  ctx->indent -= PREFACE_INDENT;
+}
+
+void
+test_challenges_to_json_without_flag(test_ctx_t *ctx)
+{
+  PRINT_TEST_PREFACE("test_challenges_to_json_without_flag");
+  ctx->indent += PREFACE_INDENT;
+
+  struct test_case
+  {
+    const char *name;
+    challenge_t *input;
+    size_t input_count;
+    const char *expected_output;
+  } test_cases[] = {
+      {
+          .name = "success: flags omitted from challenge list",
+          .input = (challenge_t[]){
+              {
+                  .id = 1,
+                  .creator_id = (string_t){"user123", 7},
+                  .name = (string_t){"Challenge 1", 11},
+                  .description = (string_t){"This is a test challenge.", 25},
+                  .flag = (string_t){"flag{test}", 10},
+                  .genre = CTF_GENRE_WEB,
+              },
+              {
+                  .id = 2,
+                  .creator_id = (string_t){"user456", 7},
+                  .name = (string_t){"Challenge 2", 11},
+                  .description = (string_t){"Another test challenge.", 23},
+                  .flag = (string_t){"flag{test2}", 11},
+                  .genre = CTF_GENRE_CRYPTO,
+              },
+          },
+          .input_count = 2,
+          .expected_output = "[{\"id\":1,\"creator_id\":\"user123\",\"name\":\"Challenge 1\",\"description\":\"This is a test challenge.\",\"genre\":\"web\"},"
+                             "{\"id\":2,\"creator_id\":\"user456\",\"name\":\"Challenge 2\",\"description\":\"Another test challenge.\",\"genre\":\"crypto\"}]",
+      },
+  };
+
+  for (size_t i = 0; i < sizeof(test_cases) / sizeof(test_cases[0]); i++)
+  {
+    ctx->is_canceled = false;
+    struct test_case *tc = &test_cases[i];
+
+    string_t result = {0};
+    challenges_to_json_without_flag(tc->input, tc->input_count, &result, false);
+
+    ASSERT_STRING_EQ(tc->name, string_from_cstr(tc->expected_output), result);
 
     free(result.ptr);
     CHECK_TEST(tc->name);

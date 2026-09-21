@@ -6,8 +6,8 @@
 
 #include <mysql/mysql.h>
 
-challenge_t *
-bind_challenges(const db_result_t *result, size_t *out_count)
+static challenge_t *
+bind_challenges_impl(const db_result_t *result, size_t *out_count, bool include_flag)
 {
   MYSQL_RES *res = result->res;
 
@@ -17,15 +17,19 @@ bind_challenges(const db_result_t *result, size_t *out_count)
     return NULL;
   }
 
-  challenge_t *chals = malloc(sizeof(challenge_t) * rows);
-  size_t chal_count = 0;
-
   unsigned int num_fields = mysql_num_fields(res);
-  if (num_fields != 6)
+  if (num_fields != (include_flag ? 6U : 5U))
   {
     return NULL;
   }
 
+  challenge_t *chals = calloc(rows, sizeof(challenge_t));
+  if (!chals)
+  {
+    return NULL;
+  }
+
+  size_t chal_count = 0;
   MYSQL_ROW row;
   while ((row = mysql_fetch_row(res)))
   {
@@ -33,8 +37,11 @@ bind_challenges(const db_result_t *result, size_t *out_count)
     chals[chal_count].creator_id = string_from_cstr_dup(row[1]);
     chals[chal_count].name = string_from_cstr_dup(row[2]);
     chals[chal_count].description = string_from_cstr_dup(row[3]);
-    chals[chal_count].flag = string_from_cstr_dup(row[4]);
-    chals[chal_count].genre = (ctf_genre)strtol(row[5], NULL, 10);
+    if (include_flag)
+    {
+      chals[chal_count].flag = string_from_cstr_dup(row[4]);
+    }
+    chals[chal_count].genre = (ctf_genre)strtol(row[include_flag ? 5 : 4], NULL, 10);
 
     chals[chal_count].is_string_allocated = true;
 
@@ -46,6 +53,18 @@ bind_challenges(const db_result_t *result, size_t *out_count)
     *out_count = chal_count;
   }
   return chals;
+}
+
+challenge_t *
+bind_challenges(const db_result_t *result, size_t *out_count)
+{
+  return bind_challenges_impl(result, out_count, true);
+}
+
+challenge_t *
+bind_challenges_without_flag(const db_result_t *result, size_t *out_count)
+{
+  return bind_challenges_impl(result, out_count, false);
 }
 
 answer_t *

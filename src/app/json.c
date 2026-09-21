@@ -27,8 +27,8 @@ int_string_length(int value)
   return length;
 }
 
-void
-challenge_to_json(const challenge_t *challenge, string_t *json_str, bool only_size)
+static void
+challenge_to_json_impl(const challenge_t *challenge, string_t *json_str, bool only_size, bool include_flag)
 {
   if (!challenge || !json_str)
   {
@@ -42,7 +42,7 @@ challenge_to_json(const challenge_t *challenge, string_t *json_str, bool only_si
                        + 13 + challenge->creator_id.len + 3       // "creator_id":"<creator_id>",
                        + 7 + challenge->name.len + 3              // "name":"<name>",
                        + 14 + challenge->description.len + 3      // "description":"<description>",
-                       + 7 + challenge->flag.len + 3              // "flag":"<flag>",
+                       + (include_flag ? 7 + challenge->flag.len + 3 : 0) // "flag":"<flag>",
                        + 8 + genre_str.len + 4;                   // "genre":"<genre>"}\0
 
   if (only_size)
@@ -55,24 +55,51 @@ challenge_to_json(const challenge_t *challenge, string_t *json_str, bool only_si
   char *buffer = malloc(buffer_suze);
   if (!buffer)
   {
+    json_str->ptr = NULL;
+    json_str->len = 0;
     return;
   }
 
-  snprintf(buffer, buffer_suze,
-           "{\"id\":%d,\"creator_id\":\"%.*s\",\"name\":\"%.*s\",\"description\":\"%.*s\",\"flag\":\"%.*s\",\"genre\":\"%.*s\"}",
-           challenge->id,
-           (int)challenge->creator_id.len, challenge->creator_id.ptr,
-           (int)challenge->name.len, challenge->name.ptr,
-           (int)challenge->description.len, challenge->description.ptr,
-           (int)challenge->flag.len, challenge->flag.ptr,
-           (int)genre_str.len, genre_str.ptr);
+  if (include_flag)
+  {
+    snprintf(buffer, buffer_suze,
+             "{\"id\":%d,\"creator_id\":\"%.*s\",\"name\":\"%.*s\",\"description\":\"%.*s\",\"flag\":\"%.*s\",\"genre\":\"%.*s\"}",
+             challenge->id,
+             (int)challenge->creator_id.len, challenge->creator_id.ptr,
+             (int)challenge->name.len, challenge->name.ptr,
+             (int)challenge->description.len, challenge->description.ptr,
+             (int)challenge->flag.len, challenge->flag.ptr,
+             (int)genre_str.len, genre_str.ptr);
+  }
+  else
+  {
+    snprintf(buffer, buffer_suze,
+             "{\"id\":%d,\"creator_id\":\"%.*s\",\"name\":\"%.*s\",\"description\":\"%.*s\",\"genre\":\"%.*s\"}",
+             challenge->id,
+             (int)challenge->creator_id.len, challenge->creator_id.ptr,
+             (int)challenge->name.len, challenge->name.ptr,
+             (int)challenge->description.len, challenge->description.ptr,
+             (int)genre_str.len, genre_str.ptr);
+  }
 
   json_str->ptr = buffer;
   json_str->len = buffer_suze - 1; // Exclude null terminator
 }
 
 void
-challenges_to_json(const challenge_t *challenges, size_t count, string_t *json_str, bool only_size)
+challenge_to_json(const challenge_t *challenge, string_t *json_str, bool only_size)
+{
+  challenge_to_json_impl(challenge, json_str, only_size, true);
+}
+
+void
+challenge_to_json_without_flag(const challenge_t *challenge, string_t *json_str, bool only_size)
+{
+  challenge_to_json_impl(challenge, json_str, only_size, false);
+}
+
+static void
+challenges_to_json_impl(const challenge_t *challenges, size_t count, string_t *json_str, bool only_size, bool include_flag)
 {
   if (!challenges || !json_str)
   {
@@ -90,7 +117,7 @@ challenges_to_json(const challenge_t *challenges, size_t count, string_t *json_s
   for (size_t i = 0; i < count; i++)
   {
     string_t challenge_json;
-    challenge_to_json(&challenges[i], &challenge_json, true);
+    challenge_to_json_impl(&challenges[i], &challenge_json, true, include_flag);
     total_size += challenge_json.len + 1; // , or ]
   }
   total_size += 1; // null terminator
@@ -98,6 +125,8 @@ challenges_to_json(const challenge_t *challenges, size_t count, string_t *json_s
   char *buffer = malloc(total_size);
   if (!buffer)
   {
+    json_str->ptr = NULL;
+    json_str->len = 0;
     return;
   }
 
@@ -107,8 +136,16 @@ challenges_to_json(const challenge_t *challenges, size_t count, string_t *json_s
   for (size_t i = 0; i < count; i++)
   {
     string_t challenge_json;
-    challenge_to_json(&challenges[i], &challenge_json, false);
+    challenge_to_json_impl(&challenges[i], &challenge_json, false, include_flag);
+    if (!challenge_json.ptr)
+    {
+      free(buffer);
+      json_str->ptr = NULL;
+      json_str->len = 0;
+      return;
+    }
     offset += snprintf(buffer + offset, total_size - offset, "%s", challenge_json.ptr);
+    free(challenge_json.ptr);
     if (i < count - 1)
     {
       buffer[offset++] = ',';
@@ -120,6 +157,18 @@ challenges_to_json(const challenge_t *challenges, size_t count, string_t *json_s
 
   json_str->ptr = buffer;
   json_str->len = total_size - 1; // Exclude null terminator
+}
+
+void
+challenges_to_json(const challenge_t *challenges, size_t count, string_t *json_str, bool only_size)
+{
+  challenges_to_json_impl(challenges, count, json_str, only_size, true);
+}
+
+void
+challenges_to_json_without_flag(const challenge_t *challenges, size_t count, string_t *json_str, bool only_size)
+{
+  challenges_to_json_impl(challenges, count, json_str, only_size, false);
 }
 
 int

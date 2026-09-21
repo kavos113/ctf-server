@@ -46,7 +46,7 @@ handle_get_challenges_1(struct http_request_context *ctx, db_pool_t *db, db_task
   assert(ctx->current_handler->next != NULL);
   ctx->current_handler = ctx->current_handler->next;
 
-  db_pool_exec_query(db, "SELECT * FROM challenges;", 26, (void *)ctx);
+  db_pool_exec_query(db, "SELECT id, creator_id, name, description, genre FROM challenges;", 64, (void *)ctx);
   return false;
 }
 
@@ -71,7 +71,7 @@ handle_get_challenges_2(struct http_request_context *ctx, db_pool_t *db, db_task
   MYSQL_RES *res = task->result->res;
 
   size_t rows;
-  challenge_t *challenges = bind_challenges(task->result, &rows);
+  challenge_t *challenges = bind_challenges_without_flag(task->result, &rows);
   if (!challenges)
   {
     *out_response = (http_response_t){
@@ -85,7 +85,7 @@ handle_get_challenges_2(struct http_request_context *ctx, db_pool_t *db, db_task
   }
 
   string_t json_str;
-  challenges_to_json(challenges, rows, &json_str, false);
+  challenges_to_json_without_flag(challenges, rows, &json_str, false);
   if (!json_str.ptr)
   {
     *out_response = (http_response_t){

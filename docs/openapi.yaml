@@ -6,7 +6,7 @@ info:
 paths:
   /challenges:
     get:
-      summary: すべての問題
+      summary: すべての問題（フラグを除く）
       responses:
         "200":
           description: OK
@@ -15,7 +15,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/Challenge"
+                  $ref: "#/components/schemas/ChallengeWithoutFlag"
     post:
       summary: 問題を作成
       requestBody:
@@ -146,6 +146,21 @@ paths:
 
 components:
   schemas:
+    ChallengeWithoutFlag:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        description:
+          type: string
+        genre:
+          type: string
+        creator_id:
+          type: string
+
     Challenge:
       type: object
       properties:

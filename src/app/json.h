@@ -10,6 +10,8 @@ int json_to_challenge(const char *json_str, size_t json_len, challenge_t *challe
 void json_to_challenges(const char *json_str, size_t json_len, challenge_t **challenges, size_t *count);
 
 void challenge_to_json(const challenge_t *challenge, string_t *json_str, bool only_size);
+void challenge_to_json_without_flag(const challenge_t *challenge, string_t *json_str, bool only_size);
 void challenges_to_json(const challenge_t *challenges, size_t count, string_t *json_str, bool only_size);
+void challenges_to_json_without_flag(const challenge_t *challenges, size_t count, string_t *json_str, bool only_size);
 
 #endif // APP_JSON_H

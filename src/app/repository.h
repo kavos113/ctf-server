@@ -7,6 +7,8 @@
 
 // convert result of "SELECT * FROM challenges"
 challenge_t *bind_challenges(const db_result_t *result, size_t *out_count);
+// convert result of "SELECT id, creator_id, name, description, genre FROM challenges"
+challenge_t *bind_challenges_without_flag(const db_result_t *result, size_t *out_count);
 
 // convert result of "SELECT * FROM answers"
 answer_t *bind_answers(db_result_t *result, size_t *out_count);
