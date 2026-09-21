@@ -32,6 +32,7 @@
     "lint:js": "eslint \"src/**/*.{js,ts}\" \"test/**/*.{js,ts}\"",
     "lint:css": "stylelint \"src/**/*.css\"",
     "lint": "npm run lint:js && npm run lint:css",
+    "fmt": "prettier --write \"src/**/*.{js,ts,css,html}\" \"test/**/*.{js,ts,css,html}\"",
     "pretest": "npm run lint",
     "start": "vite",
     "build": "vite build",
