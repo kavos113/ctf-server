@@ -45,14 +45,6 @@ challenge_to_json(const challenge_t *challenge, string_t *json_str, bool only_si
                        + 7 + challenge->flag.len + 3              // "flag":"<flag>",
                        + 8 + genre_str.len + 4;                   // "genre":"<genre>"}\0
 
-  printf("length: id: %zu, creator_id: %zu, name: %zu, description: %zu, flag: %zu, genre: %zu\n",
-         5 + int_string_length(challenge->id) + 1,
-         13 + challenge->creator_id.len + 3,
-         7 + challenge->name.len + 3,
-         14 + challenge->description.len + 3,
-         7 + challenge->flag.len + 3,
-         8 + genre_str.len + 4);
-
   if (only_size)
   {
     json_str->ptr = NULL;

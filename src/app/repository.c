@@ -7,7 +7,7 @@
 #include <mysql/mysql.h>
 
 challenge_t *
-bind_challenges(const db_result_t *result)
+bind_challenges(const db_result_t *result, size_t *out_count)
 {
   MYSQL_RES *res = result->res;
 
@@ -41,11 +41,15 @@ bind_challenges(const db_result_t *result)
     chal_count++;
   }
 
+  if (out_count)
+  {
+    *out_count = chal_count;
+  }
   return chals;
 }
 
 answer_t *
-bind_answers(db_result_t *result)
+bind_answers(db_result_t *result, size_t *out_count)
 {
   MYSQL_RES *res = result->res;
 
@@ -79,5 +83,9 @@ bind_answers(db_result_t *result)
     answer_count++;
   }
 
+  if (out_count)
+  {
+    *out_count = answer_count;
+  }
   return answers;
 }

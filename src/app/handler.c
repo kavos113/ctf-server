@@ -5,6 +5,7 @@
 #include <stdio.h>
 
 #include "json.h"
+#include "repository.h"
 
 bool
 handle_root(struct http_request_context *ctx, db_pool_t *db, db_task_t *task, http_response_t *out_response)
@@ -68,25 +69,15 @@ handle_get_challenges_2(struct http_request_context *ctx, db_pool_t *db, db_task
   }
 
   MYSQL_RES *res = task->result->res;
-  uint64_t rows = mysql_num_rows(res);
-  if (rows == 0)
+
+  size_t rows;
+  challenge_t *challenges = bind_challenges(task->result, &rows);
+  if (!challenges)
   {
     *out_response = (http_response_t){
         .status = HTTP_STATUS_OK,
         .body = "[]",
         .body_len = 2,
-    };
-    mysql_free_result(res);
-    return true;
-  }
-
-  challenge_t *challenges = bind_challenges(task->result);
-  if (!challenges)
-  {
-    *out_response = (http_response_t){
-        .status = HTTP_STATUS_INTERNAL_SERVER_ERROR,
-        .body = "db error",
-        .body_len = 8,
     };
     mysql_free_result(res);
     fprintf(stderr, "Failed to bind challenges from database result\n");
