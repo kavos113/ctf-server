@@ -25,8 +25,6 @@ json_to_challenge(const char *json_str, size_t json_len, challenge_t *challenge)
   }
   ptr++; // Skip '{'
 
-  char key_buf[64];
-
   while (ptr < end)
   {
     ptr = skip_whitespace(ptr, end);
@@ -42,7 +40,8 @@ json_to_challenge(const char *json_str, size_t json_len, challenge_t *challenge)
     }
 
     // parse key
-    ptr = parse_json_str(ptr, end, key_buf);
+    string_t key;
+    ptr = parse_json_str(ptr, end, &key);
     if (!ptr)
     {
       return -1;
@@ -57,7 +56,7 @@ json_to_challenge(const char *json_str, size_t json_len, challenge_t *challenge)
     ptr = skip_whitespace(ptr, end);
 
     // parse value
-    if (strcmp(key_buf, "id") == 0)
+    if (string_equals_cstr(key, "id"))
     {
       int value;
       ptr = parse_json_int(ptr, end, &value);
@@ -67,7 +66,7 @@ json_to_challenge(const char *json_str, size_t json_len, challenge_t *challenge)
       }
       challenge->id = value;
     }
-    else if (strcmp(key_buf, "creator_id") == 0)
+    else if (string_equals_cstr(key, "creator_id") == 0)
     {
       string_t value_str;
       ptr = parse_json_str(ptr, end, &value_str);
@@ -77,7 +76,7 @@ json_to_challenge(const char *json_str, size_t json_len, challenge_t *challenge)
       }
       challenge->creator_id = value_str;
     }
-    else if (strcmp(key_buf, "name") == 0)
+    else if (string_equals_cstr(key, "name") == 0)
     {
       string_t value_str;
       ptr = parse_json_str(ptr, end, &value_str);
@@ -87,7 +86,7 @@ json_to_challenge(const char *json_str, size_t json_len, challenge_t *challenge)
       }
       challenge->name = value_str;
     }
-    else if (strcmp(key_buf, "description") == 0)
+    else if (string_equals_cstr(key, "description") == 0)
     {
       string_t value_str;
       ptr = parse_json_str(ptr, end, &value_str);
@@ -97,7 +96,7 @@ json_to_challenge(const char *json_str, size_t json_len, challenge_t *challenge)
       }
       challenge->description = value_str;
     }
-    else if (strcmp(key_buf, "flag") == 0)
+    else if (string_equals_cstr(key, "flag") == 0)
     {
       string_t value_str;
       ptr = parse_json_str(ptr, end, &value_str);
@@ -107,7 +106,7 @@ json_to_challenge(const char *json_str, size_t json_len, challenge_t *challenge)
       }
       challenge->flag = value_str;
     }
-    else if (strcmp(key_buf, "genre") == 0)
+    else if (string_equals_cstr(key, "genre") == 0)
     {
       string_t value_str;
       ptr = parse_json_str(ptr, end, &value_str);
@@ -152,7 +151,11 @@ parse_json_str(const char *str, const char *end, string_t *out_str)
     return NULL;
   }
   str++; // 開始"をskip
-  out_str->ptr = str;
+  if (out_str)
+  {
+    out_str->ptr = str;
+    out_str->len = 0;
+  }
 
   size_t idx = 0;
   while (str < end)
@@ -167,6 +170,7 @@ parse_json_str(const char *str, const char *end, string_t *out_str)
     }
 
     str++;
+    idx++;
   }
 
   return NULL;
