@@ -3,6 +3,9 @@
 #include <http_request.h>
 #include <http_request_p.h>
 
+#include <stdio.h>
+#include <string.h>
+
 #include "util.h"
 
 void test_url_decode(test_ctx_t *ctx);
@@ -206,20 +209,40 @@ test_parse_query_params(test_ctx_t *ctx)
   PRINT_TEST_PREFACE("test_parse_query_params");
   ctx->indent += PREFACE_INDENT;
 
+  char limit_uri[256] = "/?";
+  size_t limit_uri_len = 2;
+  size_t max_uri_len = 0;
+  for (size_t i = 0; i < MAX_QUERY_PARAMS + 1; i++)
+  {
+    limit_uri_len += snprintf(limit_uri + limit_uri_len, sizeof(limit_uri) - limit_uri_len,
+                              "%sa=1", i ? "&" : "");
+    if (i + 1 == MAX_QUERY_PARAMS)
+    {
+      max_uri_len = limit_uri_len;
+    }
+  }
+
   struct test_case
   {
     const char *name;
 
     const char *uri;
     size_t uri_len;
+    int expected_result;
+    size_t expected_uri_len;
     size_t expected_param_count;
+    size_t expected_param_checks;
+    bool check_repeated_params;
     http_param_t expected_params[4];
   } test_cases[] = {
       {
           .name = "success: single query param",
           .uri = "/path?param1=value1",
           .uri_len = 19,
+          .expected_result = 0,
+          .expected_uri_len = 5,
           .expected_param_count = 1,
+          .expected_param_checks = 1,
           .expected_params = {
               {.name = "param1", .name_len = 6, .value = "value1", .value_len = 6},
           },
@@ -228,7 +251,10 @@ test_parse_query_params(test_ctx_t *ctx)
           .name = "success: multiple query params",
           .uri = "/path?param1=value1&param2=value2",
           .uri_len = 33,
+          .expected_result = 0,
+          .expected_uri_len = 5,
           .expected_param_count = 2,
+          .expected_param_checks = 2,
           .expected_params = {
               {.name = "param1", .name_len = 6, .value = "value1", .value_len = 6},
               {.name = "param2", .name_len = 6, .value = "value2", .value_len = 6},
@@ -238,13 +264,35 @@ test_parse_query_params(test_ctx_t *ctx)
           .name = "success: query param without value",
           .uri = "/path?param1",
           .uri_len = 12,
+          .expected_result = 0,
+          .expected_uri_len = 5,
           .expected_param_count = 0,
       },
       {
           .name = "success: no query params",
           .uri = "/path",
           .uri_len = 5,
+          .expected_result = 0,
+          .expected_uri_len = 5,
           .expected_param_count = 0,
+      },
+      {
+          .name = "success: maximum query params",
+          .uri = limit_uri,
+          .uri_len = max_uri_len,
+          .expected_result = 0,
+          .expected_uri_len = 1,
+          .expected_param_count = MAX_QUERY_PARAMS,
+          .check_repeated_params = true,
+      },
+      {
+          .name = "error: too many query params",
+          .uri = limit_uri,
+          .uri_len = limit_uri_len,
+          .expected_result = -1,
+          .expected_uri_len = limit_uri_len,
+          .expected_param_count = MAX_QUERY_PARAMS,
+          .check_repeated_params = true,
       },
   };
 
@@ -258,10 +306,12 @@ test_parse_query_params(test_ctx_t *ctx)
     req.uri = tc->uri;
     req.uri_len = tc->uri_len;
 
-    parse_query_params(&req);
+    int result = parse_query_params(&req);
 
+    ASSERT_EQ(tc->name, tc->expected_result, result);
+    ASSERT_EQ(tc->name, tc->expected_uri_len, req.uri_len);
     ASSERT_EQ(tc->name, tc->expected_param_count, req.query_param_count);
-    for (size_t j = 0; j < tc->expected_param_count; j++)
+    for (size_t j = 0; j < tc->expected_param_checks; j++)
     {
       http_param_t *expected = &tc->expected_params[j];
       http_param_t *actual = &req.query_params[j];
@@ -270,6 +320,18 @@ test_parse_query_params(test_ctx_t *ctx)
       ASSERT_EQ(tc->name, expected->name_len, actual->name_len);
       ASSERT_STR_N_EQ(tc->name, expected->value, actual->value, expected->value_len);
       ASSERT_EQ(tc->name, expected->value_len, actual->value_len);
+    }
+
+    if (tc->check_repeated_params)
+    {
+      for (size_t j = 0; j < tc->expected_param_count; j++)
+      {
+        http_param_t *actual = &req.query_params[j];
+        ASSERT_EQ(tc->name, (size_t)1, actual->name_len);
+        ASSERT_STR_N_EQ(tc->name, "a", actual->name, 1);
+        ASSERT_EQ(tc->name, (size_t)1, actual->value_len);
+        ASSERT_STR_N_EQ(tc->name, "1", actual->value, 1);
+      }
     }
 
     CHECK_TEST(tc->name);
@@ -283,6 +345,14 @@ test_normalize_uri(test_ctx_t *ctx)
 {
   PRINT_TEST_PREFACE("test_normalize_uri");
   ctx->indent += PREFACE_INDENT;
+
+  char limit_uri[256] = "/?";
+  size_t limit_uri_len = 2;
+  for (size_t i = 0; i < MAX_QUERY_PARAMS + 1; i++)
+  {
+    limit_uri_len += snprintf(limit_uri + limit_uri_len, sizeof(limit_uri) - limit_uri_len,
+                              "%sa=1", i ? "&" : "");
+  }
 
   struct test_case
   {
@@ -412,6 +482,15 @@ test_normalize_uri(test_ctx_t *ctx)
           .expected_normalized_len = 0,
           .expected_query_param_count = 0,
       },
+      {
+          .name = "error: too many query params",
+          .uri = limit_uri,
+          .uri_len = limit_uri_len,
+          .expected_result = NORMALIZE_URI_TOO_MANY_QUERY_PARAMS,
+          .expected_normalized = NULL,
+          .expected_normalized_len = 0,
+          .expected_query_param_count = MAX_QUERY_PARAMS,
+      },
   };
 
   for (size_t i = 0; i < sizeof(test_cases) / sizeof(test_cases[0]); i++)
@@ -419,7 +498,7 @@ test_normalize_uri(test_ctx_t *ctx)
     ctx->is_canceled = false;
     struct test_case *tc = &test_cases[i];
 
-    char buf[64];
+    char buf[256];
     sprintf(buf, "GET %.*s HTTP/1.1\r\n", (int)tc->uri_len, tc->uri);
 
     http_request_t req;
@@ -429,6 +508,7 @@ test_normalize_uri(test_ctx_t *ctx)
 
     int result = normalize_uri(&req);
     ASSERT_EQ(tc->name, tc->expected_result, result);
+    ASSERT_EQ(tc->name, tc->expected_query_param_count, req.query_param_count);
     if (result < 0)
     {
       CHECK_TEST(tc->name);
@@ -437,7 +517,6 @@ test_normalize_uri(test_ctx_t *ctx)
 
     ASSERT_EQ(tc->name, tc->expected_normalized_len, req.uri_len);
     ASSERT_STR_N_EQ(tc->name, tc->expected_normalized, req.uri, tc->expected_normalized_len);
-    ASSERT_EQ(tc->name, tc->expected_query_param_count, req.query_param_count);
 
     CHECK_TEST(tc->name);
   }
