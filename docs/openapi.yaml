@@ -205,6 +205,19 @@ paths:
         "404":
           description: 問題が存在しない
 
+  /users:
+    get:
+      summary: すべてのユーザー（ランキング含む）
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+
 components:
   schemas:
     ChallengeWithoutFlag:
@@ -287,3 +300,13 @@ components:
         answered_at:
           type: string
           format: date-time
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        score:
+          type: integer
