@@ -4,6 +4,7 @@
 #include <app/json_p.h>
 
 #include "util.h"
+#include "util_app.h"
 
 void test_skip_whitespace(test_ctx_t *ctx);
 void test_parse_json_str(test_ctx_t *ctx);
@@ -405,21 +406,12 @@ test_json_to_challenge(test_ctx_t *ctx)
 
     if (tc->expect_failure)
     {
-      ASSERT_NEQ(tc->name, result, 0);
+      ASSERT_NE(tc->name, result, 0);
     }
     else
     {
       ASSERT_EQ(tc->name, result, 0);
-      ASSERT_EQ(tc->name, challenge.id, tc->expected_output.id);
-      ASSERT_EQ(tc->name, challenge.creator_id.len, tc->expected_output.creator_id.len);
-      ASSERT_STR_N_EQ(tc->name, challenge.creator_id.ptr, tc->expected_output.creator_id.ptr, challenge.creator_id.len);
-      ASSERT_EQ(tc->name, challenge.name.len, tc->expected_output.name.len);
-      ASSERT_STR_N_EQ(tc->name, challenge.name.ptr, tc->expected_output.name.ptr, challenge.name.len);
-      ASSERT_EQ(tc->name, challenge.description.len, tc->expected_output.description.len);
-      ASSERT_STR_N_EQ(tc->name, challenge.description.ptr, tc->expected_output.description.ptr, challenge.description.len);
-      ASSERT_EQ(tc->name, challenge.flag.len, tc->expected_output.flag.len);
-      ASSERT_STR_N_EQ(tc->name, challenge.flag.ptr, tc->expected_output.flag.ptr, challenge.flag.len);
-      ASSERT_EQ(tc->name, challenge.genre, tc->expected_output.genre);
+      ASSERT_CHALLENGE_EQ(tc->name, tc->expected_output, challenge);
     }
 
     CHECK_TEST(tc->name);
