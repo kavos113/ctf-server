@@ -23,6 +23,7 @@ typedef enum
   STATE_ERROR,
 } parse_state;
 
+// char*はbufの中のポインタを指す（allocされていない）
 struct http_parser_internal_state
 {
   char buf[MAX_HEADER_BYTES];

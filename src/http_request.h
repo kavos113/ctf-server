@@ -39,7 +39,7 @@ struct http_parser_internal_state;
 
 typedef struct http_request
 {
-  connection_t *conn;
+  connection_t *conn; // weak ref
 
   size_t body_bytes_read;
   int tmp_file_fd;
@@ -64,7 +64,7 @@ typedef struct http_request
 } http_request_t;
 
 http_response_t parse_http_request(connection_t *conn, http_request_t *out_request);
-void http_request_register_dispose(connection_t *conn, http_request_t *req);
+void http_request_dispose(http_request_t *req);
 
 /**
  * search request header by fied name (CASE-INSENSITIVE)

@@ -13,20 +13,26 @@ typedef enum
   FD_TYPE_DB,
 } fd_type_t;
 
+typedef struct
+{
+  struct iovec iov[MAX_IOV];
+  int iov_count;
+  int iov_index;
+
+  struct http_request *request;
+} client_connection_state_t;
+
 // connection_t represents event notified from epoll
 typedef struct
 {
   int fd;
   fd_type_t type;
 
-  struct iovec iov[MAX_IOV];
-  int iov_count;
-  int iov_index;
-
-  void *owned_ptr[8];
-  int owned_count;
-
-  void *data;
+  union
+  {
+    client_connection_state_t client;
+    struct db_pool_t *db;
+  } state;
 } connection_t;
 
 struct http_server_t;

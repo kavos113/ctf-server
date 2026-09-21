@@ -287,6 +287,7 @@ void
 client_handler(const server_t *srv, connection_t *conn)
 {
   http_request_t *req = malloc(sizeof(http_request_t));
+  conn->state.client.request = req;
 
   http_response_t response = parse_http_request(conn, req);
 
@@ -354,11 +355,12 @@ remove_connection(const server_t *server, connection_t *conn)
   epoll_ctl(server->epoll_fd, EPOLL_CTL_DEL, conn->fd, NULL);
   close(conn->fd);
 
-  for (int i = 0; i < conn->owned_count; i++)
+  if (conn->type == FD_TYPE_CLIENT)
   {
-    if (conn->owned_ptr[i])
+    http_request_t *req = (http_request_t *)conn->state.client.request;
+    if (req)
     {
-      free(conn->owned_ptr[i]);
+      http_request_dispose(req);
     }
   }
   free(conn);
@@ -366,7 +368,7 @@ remove_connection(const server_t *server, connection_t *conn)
 
 // return true if send all
 static bool
-advance_iovec(connection_t *conn, size_t send_bytes)
+advance_iovec(client_connection_state_t *conn, size_t send_bytes)
 {
   while (conn->iov_index < conn->iov_count && send_bytes > 0)
   {
@@ -391,16 +393,18 @@ advance_iovec(connection_t *conn, size_t send_bytes)
 int
 connection_send_buffer(connection_t *conn)
 {
-  while (conn->iov_index < conn->iov_count)
+  client_connection_state_t *client_state = &conn->state.client;
+
+  while (client_state->iov_index < client_state->iov_count)
   {
-    struct iovec *cur = &conn->iov[conn->iov_index];
-    int cur_count = conn->iov_count - conn->iov_index;
+    struct iovec *cur = &client_state->iov[client_state->iov_index];
+    int cur_count = client_state->iov_count - client_state->iov_index;
 
     ssize_t n = writev(conn->fd, cur, cur_count);
 
     if (n > 0)
     {
-      if (advance_iovec(conn, (size_t)n))
+      if (advance_iovec(client_state, (size_t)n))
       {
         return 1;
       }
@@ -435,15 +439,17 @@ start_send_http_response(const server_t *server, connection_t *conn, http_respon
 
   printf("[HTTP Response] status: %d, header_len: %zu, body_len: %zu\n", response.status, header_buf_len, response.body_len);
 
-  conn->iov[0].iov_base = header_buf;
-  conn->iov[0].iov_len = header_buf_len;
-  conn->iov_count = 1;
-  conn->iov_index = 0;
+  client_connection_state_t *client_state = &conn->state.client;
+
+  client_state->iov[0].iov_base = header_buf;
+  client_state->iov[0].iov_len = header_buf_len;
+  client_state->iov_count = 1;
+  client_state->iov_index = 0;
   if (response.body_len > 0 && response.body != NULL)
   {
-    conn->iov[1].iov_base = (char *)response.body;
-    conn->iov[1].iov_len = response.body_len;
-    conn->iov_count = 2;
+    client_state->iov[1].iov_base = (char *)response.body;
+    client_state->iov[1].iov_len = response.body_len;
+    client_state->iov_count = 2;
   }
 
   int res = connection_send_buffer(conn);
