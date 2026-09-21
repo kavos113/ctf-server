@@ -127,7 +127,7 @@ paths:
 
   /answers/me:
     get:
-      summary: 自分の解答を取得
+      summary: 自分の解答一覧を取得
       parameters:
         - name: challenge_id
           in: query
@@ -140,7 +140,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Answer"
+                type: array
+                items:
+                  $ref: "#/components/schemas/Answer"
         "404":
           description: 問題が存在しない
 
