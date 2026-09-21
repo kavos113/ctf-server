@@ -30,7 +30,6 @@ json_to_challenge(const char *json_str, size_t json_len, challenge_t *challenge)
     ptr = skip_whitespace(ptr, end);
     if (ptr >= end)
     {
-      printf("Unexpected end of JSON string\n");
       return -1;
     }
 
@@ -51,14 +50,12 @@ json_to_challenge(const char *json_str, size_t json_len, challenge_t *challenge)
     ptr = parse_json_str(ptr, end, &key);
     if (!ptr)
     {
-      printf("Failed to parse JSON key\n");
       return -1;
     }
 
     ptr = skip_whitespace(ptr, end);
     if (ptr >= end || *ptr != ':')
     {
-      printf("Expected ':' after JSON key\n");
       return -1;
     }
     ptr++; // Skip ':'
@@ -71,62 +68,56 @@ json_to_challenge(const char *json_str, size_t json_len, challenge_t *challenge)
       ptr = parse_json_int(ptr, end, &value);
       if (!ptr)
       {
-        printf("Failed to parse JSON integer value for key 'id'\n");
         return -1;
       }
       challenge->id = value;
     }
-    else if (string_equals_cstr(key, "creator_id") == 0)
+    else if (string_equals_cstr(key, "creator_id"))
     {
       string_t value_str;
       ptr = parse_json_str(ptr, end, &value_str);
       if (!ptr)
       {
-        printf("Failed to parse JSON string value for key 'creator_id'\n");
         return -1;
       }
       challenge->creator_id = value_str;
     }
-    else if (string_equals_cstr(key, "name") == 0)
+    else if (string_equals_cstr(key, "name"))
     {
       string_t value_str;
       ptr = parse_json_str(ptr, end, &value_str);
       if (!ptr)
       {
-        printf("Failed to parse JSON string value for key 'name'\n");
         return -1;
       }
       challenge->name = value_str;
     }
-    else if (string_equals_cstr(key, "description") == 0)
+    else if (string_equals_cstr(key, "description"))
     {
       string_t value_str;
       ptr = parse_json_str(ptr, end, &value_str);
       if (!ptr)
       {
-        printf("Failed to parse JSON string value for key 'description'\n");
         return -1;
       }
       challenge->description = value_str;
     }
-    else if (string_equals_cstr(key, "flag") == 0)
+    else if (string_equals_cstr(key, "flag"))
     {
       string_t value_str;
       ptr = parse_json_str(ptr, end, &value_str);
       if (!ptr)
       {
-        printf("Failed to parse JSON string value for key 'flag'\n");
         return -1;
       }
       challenge->flag = value_str;
     }
-    else if (string_equals_cstr(key, "genre") == 0)
+    else if (string_equals_cstr(key, "genre"))
     {
       string_t value_str;
       ptr = parse_json_str(ptr, end, &value_str);
       if (!ptr)
       {
-        printf("Failed to parse JSON string value for key 'genre'\n");
         return -1;
       }
       challenge->genre = ctf_genre_from_string(value_str);
@@ -137,7 +128,6 @@ json_to_challenge(const char *json_str, size_t json_len, challenge_t *challenge)
       ptr = skip_json_value(ptr, end);
       if (!ptr)
       {
-        printf("Failed to skip unknown JSON value for key '%.*s'\n", (int)key.len, key.ptr);
         return -1;
       }
     }
