@@ -284,6 +284,27 @@ listen_handler(const server_t *srv)
 }
 
 void
+db_handler(const server_t *srv, connection_t *conn)
+{
+  db_task_t *task = db_pool_get_latest_completed_task(srv->db_pool);
+
+  // fprintf(stderr, "[DEBUG] db response: |%*.s|\n", (int)task->result_len, task->result_body);
+
+  http_request_context_t *ctx = (http_request_context_t *)task->data;
+  http_response_t response;
+  bool is_complete = ctx->current_handler->func(ctx, srv->db_pool, task, &response);
+
+  if (!is_complete)
+  {
+    return;
+  }
+
+  // fprintf(stderr, "[DEBUG], conn = %p, ctx->request->conn = %p, status = %d", conn, ctx->request->conn, response.status);
+
+  start_send_http_response(srv, ctx->request->conn, response);
+}
+
+void
 client_handler(const server_t *srv, connection_t *conn)
 {
   http_request_t *req = malloc(sizeof(http_request_t));
@@ -310,60 +331,6 @@ client_handler(const server_t *srv, connection_t *conn)
   }
 
   start_send_http_response(srv, conn, response);
-}
-
-void
-db_handler(const server_t *srv, connection_t *conn)
-{
-  db_task_t *task = db_pool_get_latest_completed_task(srv->db_pool);
-
-  // fprintf(stderr, "[DEBUG] db response: |%*.s|\n", (int)task->result_len, task->result_body);
-
-  http_request_context_t *ctx = (http_request_context_t *)task->data;
-  http_response_t response;
-  bool is_complete = ctx->current_handler->func(ctx, srv->db_pool, task, &response);
-
-  if (!is_complete)
-  {
-    return;
-  }
-
-  // fprintf(stderr, "[DEBUG], conn = %p, ctx->request->conn = %p, status = %d", conn, ctx->request->conn, response.status);
-
-  start_send_http_response(srv, ctx->request->conn, response);
-}
-
-int
-add_connection(const server_t *server, connection_t *conn, uint32_t event_mask)
-{
-  struct epoll_event event;
-  event.events = event_mask;
-  event.data.ptr = conn;
-
-  if (epoll_ctl(server->epoll_fd, EPOLL_CTL_ADD, conn->fd, &event) < 0)
-  {
-    perror("epoll_ctl");
-    return -1;
-  }
-
-  return 0;
-}
-
-void
-remove_connection(const server_t *server, connection_t *conn)
-{
-  epoll_ctl(server->epoll_fd, EPOLL_CTL_DEL, conn->fd, NULL);
-  close(conn->fd);
-
-  if (conn->type == FD_TYPE_CLIENT)
-  {
-    http_request_t *req = (http_request_t *)conn->state.client.request;
-    if (req)
-    {
-      http_request_dispose(req);
-    }
-  }
-  free(conn);
 }
 
 // return true if send all
