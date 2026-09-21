@@ -139,6 +139,87 @@ json_to_challenge(const char *json_str, size_t json_len, challenge_t *challenge)
   return 0;
 }
 
+void
+json_to_challenges(const char *json_str, size_t json_len, challenge_t **challenges, size_t *count)
+{
+  if (!json_str || !challenges || !count)
+  {
+    return;
+  }
+
+  const char *ptr = json_str;
+  const char *end = json_str + json_len;
+
+  ptr = skip_whitespace(ptr, end);
+  if (ptr >= end || *ptr != '[')
+  {
+    return;
+  }
+  ptr++; // Skip '['
+
+  size_t capacity = 4; // default
+  size_t num_challenges = 0;
+  challenge_t *challenge_array = malloc(capacity * sizeof(challenge_t));
+  if (!challenge_array)
+  {
+    return;
+  }
+
+  while (ptr < end)
+  {
+    ptr = skip_whitespace(ptr, end);
+    if (ptr >= end)
+    {
+      break;
+    }
+
+    if (*ptr == ']')
+    {
+      ptr++; // Skip ']'
+      break;
+    }
+
+    if (*ptr == ',')
+    {
+      ptr++; // Skip ','
+      continue;
+    }
+
+    if (num_challenges >= capacity)
+    {
+      capacity *= 2;
+      challenge_t *new_array = realloc(challenge_array, capacity * sizeof(challenge_t));
+      if (!new_array)
+      {
+        free(challenge_array);
+        return;
+      }
+      challenge_array = new_array;
+    }
+
+    challenge_t challenge;
+    int result = json_to_challenge(ptr, end - ptr, &challenge);
+    if (result != 0)
+    {
+      free(challenge_array);
+      return;
+    }
+
+    challenge_array[num_challenges++] = challenge;
+
+    // Move the pointer to the next value
+    ptr = skip_json_value(ptr, end);
+    if (!ptr)
+    {
+      free(challenge_array);
+      return;
+    }
+  }
+
+  *challenges = challenge_array;
+  *count = num_challenges;
+}
+
 const char *
 skip_whitespace(const char *str, const char *end)
 {

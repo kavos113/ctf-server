@@ -11,6 +11,7 @@ void test_parse_json_str(test_ctx_t *ctx);
 void test_parse_json_int(test_ctx_t *ctx);
 void test_skip_json_value(test_ctx_t *ctx);
 void test_json_to_challenge(test_ctx_t *ctx);
+void test_json_to_challenges(test_ctx_t *ctx);
 
 void
 test_app_json(test_ctx_t *ctx)
@@ -23,6 +24,7 @@ test_app_json(test_ctx_t *ctx)
   test_parse_json_int(ctx);
   test_skip_json_value(ctx);
   test_json_to_challenge(ctx);
+  test_json_to_challenges(ctx);
 
   ctx->indent -= PREFACE_INDENT;
 }
@@ -369,4 +371,87 @@ test_json_to_challenge(test_ctx_t *ctx)
   }
 
   ctx->indent -= PREFACE_INDENT;
+}
+
+void
+test_json_to_challenges(test_ctx_t *ctx)
+{
+  PRINT_TEST_PREFACE("test_json_to_challenges");
+  ctx->indent += PREFACE_INDENT;
+
+  struct test_case
+  {
+    const char *name;
+
+    const char *input;
+    size_t input_len;
+    challenge_t *expected_output;
+    size_t expected_count;
+    bool expect_failure;
+  } test_cases[] = {
+      {
+          .name = "success: valid challenges JSON array",
+          .input = "["
+                   "{\"id\": 1, \"creator_id\": \"user123\", \"name\": \"Challenge 1\", \"description\": \"This is a test challenge.\", \"flag\": \"flag{test}\", \"genre\": \"web\"},"
+                   "{\"id\": 2, \"creator_id\": \"user456\", \"name\": \"Challenge 2\", \"description\": \"Another test challenge.\", \"flag\": \"flag{test2}\", \"genre\": \"crypto\"}]",
+          .input_len = 283,
+          .expected_output = (challenge_t[]){
+              {
+                  .id = 1,
+                  .creator_id = (string_t){"user123", 7},
+                  .name = (string_t){"Challenge 1", 11},
+                  .description = (string_t){"This is a test challenge.", 25},
+                  .flag = (string_t){"flag{test}", 10},
+                  .genre = CTF_GENRE_WEB,
+              },
+              {
+                  .id = 2,
+                  .creator_id = (string_t){"user456", 7},
+                  .name = (string_t){"Challenge 2", 11},
+                  .description = (string_t){"Another test challenge.", 23},
+                  .flag = (string_t){"flag{test2}", 11},
+                  .genre = CTF_GENRE_CRYPTO,
+              },
+          },
+          .expected_count = 2,
+          .expect_failure = false,
+      },
+      {
+          .name = "failure: invalid JSON array",
+          .input = "["
+                   "{\"id\": 1, \"creator_id\": \"user123\", \"name\": \"Challenge 1\", \"description\": \"This is a test challenge.\", \"flag\": \"flag{test}\", \"genre\": \"web\"},"
+                   "{\"id\": 2, \"creator_id\": \"user456\", \"name\": \"Challenge 2\", \"description\": \"Another test challenge.\", \"flag\": \"flag{test2}\", \"genre\": \"crypto\"]",
+          .input_len = 282,
+          .expected_output = NULL,
+          .expected_count = 0,
+          .expect_failure = true,
+      },
+  };
+
+  for (size_t i = 0; i < sizeof(test_cases) / sizeof(test_cases[0]); i++)
+  {
+    ctx->is_canceled = false;
+    struct test_case *tc = &test_cases[i];
+
+    challenge_t *challenges = NULL;
+    size_t count = 0;
+    json_to_challenges(tc->input, tc->input_len, &challenges, &count);
+
+    if (tc->expect_failure)
+    {
+      ASSERT_EQ(tc->name, count, 0);
+      ASSERT_NULL(tc->name, challenges);
+    }
+    else
+    {
+      ASSERT_EQ(tc->name, count, tc->expected_count);
+      for (size_t j = 0; j < count; j++)
+      {
+        ASSERT_CHALLENGE_EQ(tc->name, tc->expected_output[j], challenges[j]);
+      }
+    }
+
+    free(challenges);
+    CHECK_TEST(tc->name);
+  }
 }
