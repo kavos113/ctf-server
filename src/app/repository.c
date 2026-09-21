@@ -29,12 +29,12 @@ bind_challenges(const db_result_t *result)
   MYSQL_ROW row;
   while ((row = mysql_fetch_row(res)))
   {
-    chals[chal_count].id = (int)strtol(row[0], NULL, 10);          // NOT NULL
-    chals[chal_count].creator_id = strdup(row[1]);                 // NOT NULL
-    chals[chal_count].name = strdup(row[2]);                       // NOT NULL
-    chals[chal_count].description = strdup(row[3]);                // NOT NULL
-    chals[chal_count].flag = strdup(row[4]);                       // NOT NULL
-    chals[chal_count].genre = (ctf_genre)strtol(row[5], NULL, 10); // NOT NULL
+    chals[chal_count].id = (int)strtol(row[0], NULL, 10);
+    chals[chal_count].creator_id = string_from_cstr_dup(row[1]);
+    chals[chal_count].name = string_from_cstr_dup(row[2]);
+    chals[chal_count].description = string_from_cstr_dup(row[3]);
+    chals[chal_count].flag = string_from_cstr_dup(row[4]);
+    chals[chal_count].genre = (ctf_genre)strtol(row[5], NULL, 10);
 
     chal_count++;
   }
@@ -67,10 +67,10 @@ bind_answers(db_result_t *result)
   {
     answers[answer_count].id = (int)strtol(row[0], NULL, 10);
     answers[answer_count].challenge_id = (int)strtol(row[1], NULL, 10);
-    answers[answer_count].user_id = strdup(row[2]);
-    answers[answer_count].answer = strdup(row[3]);
+    answers[answer_count].user_id = string_from_cstr_dup(row[2]);
+    answers[answer_count].answer = string_from_cstr_dup(row[3]);
     answers[answer_count].is_corrected = (row[4][0] == '1');
-    answers[answer_count].created_at = strdup(row[5]);
+    answers[answer_count].created_at = string_from_cstr_dup(row[5]);
 
     answer_count++;
   }
