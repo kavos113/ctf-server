@@ -48,6 +48,12 @@ typedef struct
   int challenge_id;
   string_t user_id;
   string_t answered_at;
+
+  bool is_string_allocated;
 } corrected_answer_t;
+
+void free_challenge(challenge_t *challenge);
+void free_answer(answer_t *answer);
+void free_corrected_answer(corrected_answer_t *corrected_answer);
 
 #endif // APP_MODEL_H

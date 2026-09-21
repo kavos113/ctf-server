@@ -57,3 +57,57 @@ ctf_genre_to_string(ctf_genre genre)
     return (string_t){"misc", 4};
   }
 }
+
+void
+free_challenge(challenge_t *challenge)
+{
+  if (!challenge)
+  {
+    return;
+  }
+
+  if (challenge->is_string_allocated)
+  {
+    free(challenge->creator_id.ptr);
+    free(challenge->name.ptr);
+    free(challenge->description.ptr);
+    free(challenge->flag.ptr);
+  }
+
+  free(challenge);
+}
+
+void
+free_answer(answer_t *answer)
+{
+  if (!answer)
+  {
+    return;
+  }
+
+  if (answer->is_string_allocated)
+  {
+    free(answer->user_id.ptr);
+    free(answer->answer.ptr);
+    free(answer->created_at.ptr);
+  }
+
+  free(answer);
+}
+
+void
+free_corrected_answer(corrected_answer_t *corrected_answer)
+{
+  if (!corrected_answer)
+  {
+    return;
+  }
+
+  if (corrected_answer->is_string_allocated)
+  {
+    free(corrected_answer->user_id.ptr);
+    free(corrected_answer->answered_at.ptr);
+  }
+
+  free(corrected_answer);
+}
