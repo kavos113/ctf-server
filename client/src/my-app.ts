@@ -20,7 +20,6 @@ export class MyApp {
     { path: 'signup', component: AuthPage, data: { signup: true }, title: 'ユーザー登録' },
     { path: 'challenges', component: ChallengesPage, title: '問題一覧' },
     { path: 'challenges/:id', component: DetailPage, title: '問題' },
-    { path: 'answers', component: HistoryPage, title: '正答履歴' },
     { path: 'me/answers', component: HistoryPage, data: { mine: true }, title: '自分の解答' },
     { path: 'ranking', component: RankingPage, title: 'ランキング' },
     { path: 'me/challenges', component: MyChallengesPage, title: '自分の問題' },
