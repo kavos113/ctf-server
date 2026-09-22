@@ -419,7 +419,10 @@ export interface paths {
             };
         };
         put?: never;
-        /** 問題に解答 */
+        /**
+         * 問題に解答
+         * @description コンテスト終了後も受け付け、正誤を返して履歴に保存する。終了時刻以降の正解は得点に含めない。
+         */
         post: {
             parameters: {
                 query?: never;
@@ -513,7 +516,7 @@ export interface paths {
         };
         /**
          * すべてのユーザー（ランキング含む）
-         * @description 認証不要。開始時刻による制限なし。正解した異なる問題数×100点（自作問題を含む）。未回答者は0点。得点降順、同点はユーザーID昇順。ユーザーなしは空配列。
+         * @description 認証不要。開始時刻による制限なし。正解した異なる問題数×100点（自作問題を含む）。CONTEST_END_AT指定時は回答の保存時刻が終了時刻より前の正解だけを集計する。未回答者は0点。得点降順、同点はユーザーID昇順。ユーザーなしは空配列。
          */
         get: {
             parameters: {
@@ -612,7 +615,7 @@ export interface components {
             username?: string;
             /**
              * Format: int64
-             * @description 現存する正解回答から集計する。重複正解は加点しない。問題削除に伴い回答が削除された場合は得点も減る。
+             * @description 現存する正解回答から集計する。CONTEST_END_AT指定時はUTCの保存時刻が終了時刻未満のものに限る。終了時刻ちょうどから対象外。重複正解は加点しない。問題削除に伴い回答が削除された場合は得点も減る。
              */
             score?: number;
         };
