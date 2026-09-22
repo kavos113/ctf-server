@@ -1,5 +1,7 @@
 #include "model_request.h"
 
+#include <stdlib.h>
+
 void
 free_create_challenge_request(create_challenge_request_t *request)
 {
