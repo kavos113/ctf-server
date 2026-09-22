@@ -10,6 +10,8 @@ static const struct response_case
   const char *name;
   const char *content_type;
   const char *body;
+  bool bearer_challenge;
+  bool no_store;
   const char *expected_header;
 } cases[] = {
     {
@@ -33,6 +35,33 @@ static const struct response_case
         .expected_header = "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n"
                            "Content-Type: text/plain\r\nConnection: close\r\n\r\n",
     },
+    {
+        .name = "Bearer challenge",
+        .body = "",
+        .bearer_challenge = true,
+        .no_store = false,
+        .expected_header = "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n"
+                           "Content-Type: text/plain\r\nConnection: close\r\n"
+                           "WWW-Authenticate: Bearer\r\n\r\n",
+    },
+    {
+        .name = "uncacheable token",
+        .body = "",
+        .bearer_challenge = false,
+        .no_store = true,
+        .expected_header = "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n"
+                           "Content-Type: text/plain\r\nConnection: close\r\n"
+                           "Cache-Control: no-store\r\n\r\n",
+    },
+    {
+        .name = "uncacheable challenge",
+        .body = "",
+        .bearer_challenge = true,
+        .no_store = true,
+        .expected_header = "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n"
+                           "Content-Type: text/plain\r\nConnection: close\r\n"
+                           "WWW-Authenticate: Bearer\r\nCache-Control: no-store\r\n\r\n",
+    },
 };
 
 static void
@@ -47,6 +76,8 @@ test_http_response_build(test_ctx_t *ctx)
         .body = tc->body,
         .body_len = strlen(tc->body),
         .content_type = tc->content_type,
+        .bearer_challenge = tc->bearer_challenge,
+        .no_store = tc->no_store,
     };
     char *buffer = NULL;
     size_t len = 0;
@@ -87,6 +118,8 @@ test_http_response_build_header(test_ctx_t *ctx)
         .body = tc->body,
         .body_len = strlen(tc->body),
         .content_type = tc->content_type,
+        .bearer_challenge = tc->bearer_challenge,
+        .no_store = tc->no_store,
     };
     char *buffer = NULL;
     size_t len = 0;

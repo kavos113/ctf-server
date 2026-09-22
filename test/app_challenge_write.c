@@ -2,6 +2,7 @@
 #include "util.h"
 
 #include <app/handler.h>
+#include <app/handler_auth.h>
 #include <app/json.h>
 #include <limits.h>
 
@@ -63,7 +64,7 @@ make_result(result_kind kind)
 
     if (kind != RESULT_NULL_OWNER)
     {
-      rows->rows[1][1] = string_from_cstr_dup(kind == RESULT_OTHER ? "other" : "dummy").ptr;
+      rows->rows[1][1] = string_from_cstr_dup(kind == RESULT_OTHER ? "other" : "0123456789abcdef0123456789abcdef").ptr;
     }
   }
 
@@ -112,13 +113,13 @@ check_queued_write(test_ctx_t *ctx, const char *name, db_task_t *task, bool put)
     ASSERT_STR_EQ(name, "flag\\n", task->params[2].value.string.ptr);
     ASSERT_EQ(name, (int64_t)CTF_GENRE_WEB, task->params[3].value.integer);
     ASSERT_EQ(name, (int64_t)1, task->params[4].value.integer);
-    ASSERT_STR_EQ(name, "dummy", task->params[5].value.string.ptr);
+    ASSERT_STR_EQ(name, "0123456789abcdef0123456789abcdef", task->params[5].value.string.ptr);
   }
   else
   {
     ASSERT_STR_EQ(name, "DELETE FROM challenges WHERE id = ? AND creator_id = ?", task->query);
     ASSERT_EQ(name, (int64_t)1, task->params[0].value.integer);
-    ASSERT_STR_EQ(name, "dummy", task->params[1].value.string.ptr);
+    ASSERT_STR_EQ(name, "0123456789abcdef0123456789abcdef", task->params[1].value.string.ptr);
   }
 }
 
@@ -143,6 +144,8 @@ run_write_cases(test_ctx_t *ctx, bool put, size_t stage, const write_case *cases
 
     db_pool_t pool = {.task_queue = task_queue_new()};
     http_request_t *request = calloc(1, sizeof(*request));
+    auth_identity_t identity = {.claims.user_id = "0123456789abcdef0123456789abcdef", .verified = true};
+    request->auth_data = &identity;
     const char *id = stage == 1 ? tc->id : "1";
     char *id_bytes = NULL;
 
@@ -258,7 +261,7 @@ run_write_cases(test_ctx_t *ctx, bool put, size_t stage, const write_case *cases
           ASSERT_STR_EQ(tc->name, "application/json", response.content_type);
           ASSERT_EQ(tc->name, strlen(response.body), response.body_len);
           ASSERT_STR_EQ(tc->name,
-                        "{\"id\":1,\"creator_id\":\"dummy\",\"name\":\"new\\\"name\","
+                        "{\"id\":1,\"creator_id\":\"0123456789abcdef0123456789abcdef\",\"name\":\"new\\\"name\","
                         "\"description\":\"\",\"flag\":\"flag\\n\",\"genre\":\"web\"}",
                         response.body);
         }

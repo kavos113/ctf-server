@@ -3,6 +3,7 @@
 #include "util.h"
 
 #include <app/handler.h>
+#include <app/handler_auth.h>
 #include <app/json.h>
 #include <app/json_p.h>
 #include <app/repository.h>
@@ -48,11 +49,11 @@ static MYSQL_RES *
 answer_fixture(bool empty)
 {
   const char *values[][6] = {
-      {"10", "1", "dummy", "wrong", "0", DATE},
+      {"10", "1", "0123456789abcdef0123456789abcdef", "wrong", "0", DATE},
       {"11", "1", "other", "flag", "1", DATE},
-      {"12", "1", "dummy", "flag", "1", DATE},
-      {"13", "2", "dummy", "second", "1", DATE},
-      {"14", "1", "dummy", "flag", "1", DATE},
+      {"12", "1", "0123456789abcdef0123456789abcdef", "flag", "1", DATE},
+      {"13", "2", "0123456789abcdef0123456789abcdef", "second", "1", DATE},
+      {"14", "1", "0123456789abcdef0123456789abcdef", "flag", "1", DATE},
   };
   return test_mysql_result(values, empty ? 0 : 5, 6);
 }
@@ -61,7 +62,7 @@ static MYSQL_RES *
 challenge_fixture(bool empty, const char *flag)
 {
   const char *values[][6] = {
-      {"1", "dummy", "first", "description", flag, "0"},
+      {"1", "0123456789abcdef0123456789abcdef", "first", "description", flag, "0"},
       {"2", "other", "second", "description", "second", "1"},
   };
   return test_mysql_result(values, empty ? 0 : 2, 6);
@@ -84,7 +85,7 @@ check_answer_insert(test_ctx_t *ctx, const answer_case *tc, db_task_t *task, con
                 "VALUES (?, ?, ?, ?, UTC_TIMESTAMP())",
                 task->query);
   ASSERT_EQ(tc->name, (int64_t)1, task->params[0].value.integer);
-  ASSERT_STR_EQ(tc->name, "dummy", task->params[1].value.string.ptr);
+  ASSERT_STR_EQ(tc->name, "0123456789abcdef0123456789abcdef", task->params[1].value.string.ptr);
   ASSERT_EQ(tc->name, (int64_t)!tc->incorrect, task->params[3].value.integer);
   submit_answer_request_t input;
   ASSERT_EQ(tc->name, 0, json_to_submit_answer_request(body, strlen(body), &input));
@@ -133,6 +134,8 @@ run_answer_cases(
 
     db_pool_t pool = {.task_queue = task_queue_new()};
     http_request_t *request = calloc(1, sizeof(*request));
+    auth_identity_t identity = {.claims.user_id = "0123456789abcdef0123456789abcdef", .verified = true};
+    request->auth_data = &identity;
     const char *body = tc->body ? tc->body : ANSWER_JSON;
     char *input = NULL;
 
@@ -1050,13 +1053,13 @@ test_bind_answers(test_ctx_t *ctx)
 }
 
 #define PRIVATE_ANSWER                                                                             \
-  "{\"challenge_id\":1,\"answer\":\"a\\n\\\"b\",\"correct\":false,\"user_id\":\"dummy\","          \
+  "{\"challenge_id\":1,\"answer\":\"a\\n\\\"b\",\"correct\":false,\"user_id\":\"0123456789abcdef0123456789abcdef\","          \
   "\"answered_at\":\"" DATE "\"}"
-#define PUBLIC_ANSWER "{\"challenge_id\":1,\"user_id\":\"dummy\",\"answered_at\":\"" DATE "\"}"
+#define PUBLIC_ANSWER "{\"challenge_id\":1,\"user_id\":\"0123456789abcdef0123456789abcdef\",\"answered_at\":\"" DATE "\"}"
 
 static const answer_t serialized_answer = {
     .challenge_id = 1,
-    .user_id = {.ptr = "dummy", .len = 5},
+    .user_id = {.ptr = "0123456789abcdef0123456789abcdef", .len = 32},
     .answer = {.ptr = "a\\n\\\"b", .len = 6},
     .created_at = {.ptr = DATE, .len = sizeof(DATE) - 1},
 };
@@ -1156,7 +1159,7 @@ check_challenge_binding(test_ctx_t *ctx, bool include_flag)
   {
     ctx->is_canceled = false;
     const char *values[][6] = {
-        {"1", "dummy", "first", "description", include_flag ? "fl\\u0061g" : "0", "0"},
+        {"1", "0123456789abcdef0123456789abcdef", "first", "description", include_flag ? "fl\\u0061g" : "0", "0"},
         {"2", "other", "second", "description", include_flag ? "second" : "1", "1"},
     };
     db_result_t result = {

@@ -2,6 +2,7 @@
 #include "util.h"
 
 #include <app/handler.h>
+#include <app/handler_auth.h>
 #include <app/json.h>
 #include <http_request.h>
 #include <http_response.h>
@@ -365,6 +366,8 @@ test_post_challenges(test_ctx_t *ctx)
     const struct test_case *tc = &cases[i];
     db_pool_t pool = {.task_queue = task_queue_new()};
     http_request_t *request = calloc(1, sizeof(*request));
+    auth_identity_t identity = {.claims.user_id = "0123456789abcdef0123456789abcdef", .verified = true};
+    request->auth_data = &identity;
     request->content_length = strlen(tc->json);
     char *body = malloc(request->content_length);
     memcpy(body, tc->json, request->content_length);
@@ -392,7 +395,7 @@ test_post_challenges(test_ctx_t *ctx)
                     "INSERT INTO challenges (creator_id, name, description, flag, genre) VALUES "
                     "(?, ?, ?, ?, ?)",
                     task->query);
-      ASSERT_STR_EQ(tc->name, "dummy", task->params[0].value.string.ptr);
+      ASSERT_STR_EQ(tc->name, "0123456789abcdef0123456789abcdef", task->params[0].value.string.ptr);
 
       task->result->success = tc->db_success;
       task->result->affected = tc->db_success ? 1 : 0;
@@ -411,7 +414,7 @@ test_post_challenges(test_ctx_t *ctx)
       ASSERT_TRUE(tc->name, response.body == request->app_data);
       ASSERT_TRUE(tc->name, request->dispose_app_data == free);
       ASSERT_EQ(tc->name, strlen(response.body), response.body_len);
-      ASSERT_TRUE(tc->name, strstr(response.body, "\"id\":123,\"creator_id\":\"dummy\"") != NULL);
+      ASSERT_TRUE(tc->name, strstr(response.body, "\"id\":123,\"creator_id\":\"0123456789abcdef0123456789abcdef\"") != NULL);
 
       create_challenge_request_t original;
       create_challenge_request_t created;
