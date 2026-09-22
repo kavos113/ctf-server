@@ -10,9 +10,34 @@ export class E2eClient {
   ) {}
 
   async exchange(test: RequestCase, step: string): Promise<ReceivedResponse> {
-    const label = `${step}: ${test.method.toUpperCase()} ${test.path}${test.query ? ` ${JSON.stringify(test.query)}` : ''}`;
-
     this.contract.assertRequest(test);
+
+    return this.send(test, step);
+  }
+
+  // Negative-input scenarios must prove the request is invalid before sending it.
+  async requestInvalid(test: RequestCase, step: string): Promise<void> {
+    let invalid = false;
+
+    try {
+      this.contract.assertRequest(test);
+    } catch {
+      invalid = true;
+    }
+
+    if (!invalid) {
+      throw new Error(`${step}: expected a schema-invalid request`);
+    }
+
+    const received = await this.send(test, step);
+
+    if (received.status !== 400) {
+      throw new Error(`${step}: expected status 400, received ${received.status}`);
+    }
+  }
+
+  private async send(test: RequestCase, step: string): Promise<ReceivedResponse> {
+    const label = `${step}: ${test.method.toUpperCase()} ${test.path}${test.query ? ` ${JSON.stringify(test.query)}` : ''}`;
 
     let received: ReceivedResponse;
 

@@ -63,7 +63,7 @@ class Scenario {
     const input = {
       name: `e2e-${randomUUID()}`,
       description: 'description',
-      genre: 'web',
+      genre: 'web' as const,
       flag: `flag-${randomUUID()}`,
       ...overrides
     };
@@ -356,7 +356,7 @@ describe('API behavior', { concurrent: false }, () => {
   });
 
   for (const { label, value } of sqlLikeCases) {
-    for (const field of ['name', 'description', 'genre', 'flag'] as const) {
+    for (const field of ['name', 'description', 'flag'] as const) {
       scenario(`B20 SQL-like ${field}: ${label}`, async (s) => {
         const owner = await s.user();
         const neighbor = await s.create(owner);
@@ -376,6 +376,30 @@ describe('API behavior', { concurrent: false }, () => {
         await s.visible(neighbor);
       });
     }
+
+    scenario(`B20 rejects SQL-like genre: ${label}`, async (s) => {
+      const owner = await s.user();
+      const problem = await s.create(owner);
+      const neighbor = await s.create(owner);
+
+      for (const method of ['post', 'put'] as const) {
+        await owner.client.requestInvalid(
+          {
+            method,
+            path: '/challenges',
+            ...(method === 'put' ? { query: { id: problem.id } } : {}),
+            body: { ...problem.input, genre: value }
+          },
+          `${s.label} ${method}`
+        );
+      }
+
+      const own = await s.list(owner);
+
+      expect(own.map((item) => item.id).sort()).toEqual([problem.id, neighbor.id].sort());
+      await s.visible(problem);
+      await s.visible(neighbor);
+    });
 
     scenario(`B21 SQL-like answer: ${label}`, async (s) => {
       const owner = await s.user();
@@ -584,6 +608,95 @@ describe('API behavior', { concurrent: false }, () => {
         `${s.label} owner`
       ).toBe(true);
     }
+  });
+
+  scenario('B25 scores count distinct correct challenges', async (s) => {
+    const owner = await s.user();
+    const solver = await s.user();
+    const first = await s.create(owner);
+    const second = await s.create(owner);
+    const points = process.env.E2E_SCORING_CLOSED === '1' ? 0 : 100;
+
+    async function scores(expected: number): Promise<void> {
+      const rows = (await s.publicClient.request(
+        { method: 'get', path: '/users' },
+        200,
+        s.label
+      )) as Required<components['schemas']['User']>[];
+
+      expect(rows.find((row) => row.id === solver.id)?.score).toBe(expected);
+      expect(rows.find((row) => row.id === owner.id)?.score).toBe(0);
+
+      for (let i = 1; i < rows.length; i++) {
+        const previous = rows[i - 1];
+        const current = rows[i];
+
+        expect(previous.score >= current.score).toBe(true);
+
+        if (previous.score === current.score) {
+          expect(previous.id < current.id).toBe(true);
+        }
+      }
+    }
+
+    await scores(0);
+    await s.submit(solver, first, 'incorrect', false);
+    await scores(0);
+    await s.submit(solver, first, first.input.flag, true);
+    await s.recorded(solver, first, first.input.flag, true);
+    await scores(points);
+    await s.submit(solver, first, first.input.flag, true);
+    await scores(points);
+    await s.submit(solver, second, second.input.flag, true);
+    await scores(points * 2);
+    await s.remove(first);
+    await scores(points);
+  });
+
+  scenario('B26 all genre enum values survive creation and update', async (s) => {
+    const owner = await s.user();
+    const genres: ChallengeInput['genre'][] = [
+      'web',
+      'crypto',
+      'pwn',
+      'rev',
+      'forensics',
+      'osint',
+      'misc'
+    ];
+
+    for (const [index, genre] of genres.entries()) {
+      const problem = await s.create(owner, { genre });
+
+      await s.visible(problem);
+      await s.visible(
+        await s.update(problem, {
+          ...problem.input,
+          genre: genres[(index + 1) % genres.length]
+        })
+      );
+    }
+  });
+
+  scenario('B27 invalid IDs are rejected without changing challenges', async (s) => {
+    const owner = await s.user();
+    const problem = await s.create(owner);
+
+    for (const id of [-1, 0, 2147483648]) {
+      const requests = [
+        { method: 'put', path: '/challenges', query: { id }, body: problem.input },
+        { method: 'delete', path: '/challenges', query: { id } },
+        { method: 'get', path: '/answers', query: { challenge_id: id } },
+        { method: 'get', path: '/answers/me', query: { challenge_id: id } },
+        { method: 'post', path: '/answers', body: { challenge_id: id, answer: problem.input.flag } }
+      ];
+
+      for (const request of requests) {
+        await owner.client.requestInvalid(request, s.label);
+      }
+    }
+
+    await s.visible(problem);
   });
 
   scenario('B19 own answers isolated by user', async (s) => {

@@ -66,6 +66,7 @@ handle_get_challenges_2(struct http_request_context *ctx, db_pool_t *db, db_task
         .status = HTTP_STATUS_OK,
         .body = "[]",
         .body_len = 2,
+        .content_type = "application/json",
     };
     db_task_free(task);
     fprintf(stderr, "Failed to bind challenges from database result\n");
@@ -93,6 +94,7 @@ handle_get_challenges_2(struct http_request_context *ctx, db_pool_t *db, db_task
       .status = HTTP_STATUS_OK,
       .body = json_str.ptr,
       .body_len = json_str.len,
+      .content_type = "application/json",
   };
 
   db_task_free(task);

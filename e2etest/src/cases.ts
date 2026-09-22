@@ -33,7 +33,7 @@ export function createCases(): ContractCase[] {
     name: `e2e-${suffix}`,
     description: `OpenAPI contract test ${suffix}`,
     flag: `flag-${suffix}`,
-    genre: 'web'
+    genre: 'web' as const
   };
 
   return [
@@ -42,14 +42,18 @@ export function createCases(): ContractCase[] {
     { method: 'post', path: '/logout' },
     { method: 'get', path: '/challenges' },
     { method: 'post', path: '/challenges', body: challenge },
-    { method: 'put', path: '/challenges', query: { id: -1 }, body: challenge },
-    { method: 'delete', path: '/challenges', query: { id: -1 } },
+    { method: 'put', path: '/challenges', query: { id: 2147483647 }, body: challenge },
+    { method: 'delete', path: '/challenges', query: { id: 2147483647 } },
     { method: 'get', path: '/challenges/me' },
     { method: 'get', path: '/answers' },
-    { method: 'get', path: '/answers', query: { challenge_id: -1 } },
-    { method: 'post', path: '/answers', body: { challenge_id: -1, answer: `answer-${suffix}` } },
+    { method: 'get', path: '/answers', query: { challenge_id: 2147483647 } },
+    {
+      method: 'post',
+      path: '/answers',
+      body: { challenge_id: 2147483647, answer: `answer-${suffix}` }
+    },
     { method: 'get', path: '/answers/me' },
-    { method: 'get', path: '/answers/me', query: { challenge_id: -1 } },
+    { method: 'get', path: '/answers/me', query: { challenge_id: 2147483647 } },
     { method: 'get', path: '/users' }
   ];
 }

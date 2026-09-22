@@ -250,6 +250,13 @@ export interface paths {
                         "application/json": components["schemas"]["Challenge"];
                     };
                 };
+                /** @description 入力またはIDが不正（空本文） */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
                 401: components["responses"]["Unauthorized"];
                 /** @description 自分の問題ではない */
                 403: {
@@ -290,6 +297,13 @@ export interface paths {
                         "application/json": components["schemas"]["Challenge"];
                     };
                 };
+                /** @description 入力またはIDが不正（空本文） */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
                 401: components["responses"]["Unauthorized"];
             };
         };
@@ -307,6 +321,13 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description 入力またはIDが不正（空本文） */
+                400: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -409,6 +430,13 @@ export interface paths {
                         "application/json": components["schemas"]["CorrectAnswer"][];
                     };
                 };
+                /** @description 入力またはIDが不正（空本文） */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
                 /** @description 問題が存在しない */
                 404: {
                     headers: {
@@ -444,6 +472,13 @@ export interface paths {
                     content: {
                         "application/json": components["schemas"]["Answer"];
                     };
+                };
+                /** @description 入力またはIDが不正（空本文） */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
                 };
                 401: components["responses"]["Unauthorized"];
                 /** @description 問題が存在しない */
@@ -488,6 +523,13 @@ export interface paths {
                     content: {
                         "application/json": components["schemas"]["Answer"][];
                     };
+                };
+                /** @description 入力またはIDが不正（空本文） */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
                 };
                 401: components["responses"]["Unauthorized"];
                 /** @description 問題が存在しない */
@@ -571,7 +613,8 @@ export interface components {
             id?: number;
             name?: string;
             description?: string;
-            genre?: string;
+            /** @enum {string} */
+            genre?: "web" | "crypto" | "pwn" | "rev" | "forensics" | "osint" | "misc";
             creator_id?: string;
         };
         Challenge: {
@@ -580,14 +623,16 @@ export interface components {
             name?: string;
             description?: string;
             flag?: string;
-            genre?: string;
+            /** @enum {string} */
+            genre?: "web" | "crypto" | "pwn" | "rev" | "forensics" | "osint" | "misc";
             creator_id?: string;
         };
         CreateChallengeRequest: {
             name?: string;
             description?: string;
             flag?: string;
-            genre?: string;
+            /** @enum {string} */
+            genre?: "web" | "crypto" | "pwn" | "rev" | "forensics" | "osint" | "misc";
         };
         AnswerRequest: {
             /** Format: int64 */

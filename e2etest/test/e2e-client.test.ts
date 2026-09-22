@@ -234,6 +234,48 @@ describe('E2eClient without HTTP', () => {
     }
   });
 
+  it('requestInvalid sends only schema-invalid requests and requires 400', async () => {
+    const cases = [
+      { genre: 'unknown', status: 400, calls: 1 },
+      { genre: 'web', status: 400, calls: 0, error: 'expected a schema-invalid request' },
+      { genre: 'unknown', status: 201, calls: 1, error: 'expected status 400, received 201' },
+      { genre: 'unknown', status: 418, calls: 1, error: 'contract validation failed' }
+    ];
+
+    for (const test of cases) {
+      const transport = vi.fn<typeof fetch>().mockResolvedValue(
+        new Response('{}', {
+          status: test.status,
+          headers: { 'Content-Type': 'application/json' }
+        })
+      );
+      const client = new E2eClient(
+        baseUrl('http://example.invalid'),
+        contract,
+        'test-token',
+        transport
+      );
+      const result = client.requestInvalid(
+        { method: 'post', path: '/challenges', body: { genre: test.genre } },
+        'invalid genre'
+      );
+
+      if (test.error) {
+        await expect(result).rejects.toThrow(test.error);
+      } else {
+        await expect(result).resolves.toBeUndefined();
+      }
+
+      expect(transport).toHaveBeenCalledTimes(test.calls);
+
+      if (test.calls) {
+        expect(new Headers(transport.mock.calls[0][1]?.headers).get('Authorization')).toBe(
+          'Bearer test-token'
+        );
+      }
+    }
+  });
+
   it('requiredValue rejects missing or malformed scenario identifiers without exposing values', () => {
     for (const value of ['id', 'token']) {
       expect(requiredValue(value, 'string', 'field')).toBe(value);
