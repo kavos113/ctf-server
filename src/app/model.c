@@ -1,5 +1,6 @@
 #include "model.h"
 
+#include <stdlib.h>
 #include <string.h>
 
 // TODO: byte compare
@@ -22,7 +23,7 @@ ctf_genre_from_string(string_t str)
   {
     return CTF_GENRE_REV;
   }
-  else if (str.len == 8 && strncmp(str.ptr, "forensics", 8) == 0)
+  else if (str.len == 9 && strncmp(str.ptr, "forensics", 9) == 0)
   {
     return CTF_GENRE_FORENSICS;
   }
@@ -50,7 +51,7 @@ ctf_genre_to_string(ctf_genre genre)
   case CTF_GENRE_REV:
     return (string_t){"rev", 3};
   case CTF_GENRE_FORENSICS:
-    return (string_t){"forensics", 8};
+    return (string_t){"forensics", 9};
   case CTF_GENRE_OSINT:
     return (string_t){"osint", 5};
   default:
