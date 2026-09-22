@@ -33,13 +33,14 @@ bind_challenges_impl(const db_result_t *result, size_t *out_count, bool include_
   MYSQL_ROW row;
   while ((row = mysql_fetch_row(res)))
   {
+    unsigned long *lengths = mysql_fetch_lengths(res);
     chals[chal_count].id = (int)strtol(row[0], NULL, 10);
-    chals[chal_count].creator_id = string_from_cstr_dup(row[1]);
-    chals[chal_count].name = string_from_cstr_dup(row[2]);
-    chals[chal_count].description = string_from_cstr_dup(row[3]);
+    chals[chal_count].creator_id = string_from_cstr_dup_n(row[1], lengths[1]);
+    chals[chal_count].name = string_from_cstr_dup_n(row[2], lengths[2]);
+    chals[chal_count].description = string_from_cstr_dup_n(row[3], lengths[3]);
     if (include_flag)
     {
-      chals[chal_count].flag = string_from_cstr_dup(row[4]);
+      chals[chal_count].flag = string_from_cstr_dup_n(row[4], lengths[4]);
     }
     chals[chal_count].genre = (ctf_genre)strtol(row[include_flag ? 5 : 4], NULL, 10);
 
