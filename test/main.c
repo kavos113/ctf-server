@@ -41,6 +41,8 @@ main(int argc, char **argv)
   test_app_challenge_write(&ctx);
   test_app_answer(&ctx);
   test_auth_libraries(&ctx);
+  test_app_json_auth(&ctx);
+  test_app_auth(&ctx);
   test_app_auth_repository(&ctx);
   test_server_lifetime(&ctx);
 
