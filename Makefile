@@ -6,6 +6,12 @@ TESTOBJS=$(TESTS:.c=.o) $(SRCS:.c=.o)
 TARGET=ctf-server
 TESTTARGET=test-ctf-server
 
+DB_TEST_WRAPS=calloc mysql_init mysql_real_connect mysql_close mysql_thread_end \
+ mysql_stmt_init mysql_stmt_prepare mysql_stmt_field_count mysql_stmt_param_count \
+ mysql_stmt_bind_param mysql_stmt_execute mysql_stmt_close mysql_stmt_error \
+ mysql_stmt_affected_rows mysql_stmt_insert_id mysql_query mysql_store_result mysql_affected_rows
+TEST_LDFLAGS=$(foreach symbol,$(DB_TEST_WRAPS),-Wl,--wrap=$(symbol))
+
 CC=gcc
 CFLAGS=-std=c11 -Wall -Wextra -Wno-unused-parameter -Wno-int-to-pointer-cast -g
 
@@ -22,7 +28,7 @@ $(TARGET): $(OBJS)
 
 .PHONY: test fmt clean
 test: $(TESTOBJS)
-	$(CC) -o $(TESTTARGET) $^ $(LDFLAGS)
+	$(CC) $(CFLAGS) -o $(TESTTARGET) $^ $(LDFLAGS) $(TEST_LDFLAGS)
 
 clean:
 	rm -f $(OBJS) $(TESTOBJS) $(TARGET) $(TESTTARGET)

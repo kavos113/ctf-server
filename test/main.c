@@ -35,11 +35,12 @@ main(int argc, char **argv)
   test_http_request_path(&ctx);
   test_app_str(&ctx);
   test_app_json(&ctx);
+  test_db(&ctx);
 
   timespec_get(&end_time, TIME_UTC);
   double elapsed = (end_time.tv_sec - start_time.tv_sec) + (end_time.tv_nsec - start_time.tv_nsec) / 1e6;
   printf("\n====== TEST ENDED ======\n");
   printf("All: %d, Passed: %d, Failed: %d, Time: %.3f ms\n", ctx.passed_count + ctx.failed_count, ctx.passed_count, ctx.failed_count, elapsed);
 
-  return 0;
+  return ctx.failed_count ? 1 : 0;
 }

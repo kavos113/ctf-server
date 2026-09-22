@@ -17,6 +17,7 @@ typedef struct test_ctx
   int passed_count;
 } test_ctx_t;
 
+void test_db(test_ctx_t *ctx);
 void test_http_request(test_ctx_t *ctx);
 void test_http_request_path(test_ctx_t *ctx);
 void test_app_json(test_ctx_t *ctx);

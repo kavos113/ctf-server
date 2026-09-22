@@ -103,8 +103,12 @@ db_pool_t *db_pool_new_from_env(int epoll_fd, int num_threads);
 void db_pool_free(db_pool_t *pool);
 
 void db_pool_exec_query(db_pool_t *pool, const char *query, size_t query_len, void *data);
-int db_exec_query_param(db_pool_t *pool, const char *query, size_t query_len,
-                        const db_param_t *params, size_t param_count, void *data);
+int db_exec_query_param(db_pool_t *pool,
+                        const char *query,
+                        size_t query_len,
+                        const db_param_t *params,
+                        size_t param_count,
+                        void *data);
 
 db_task_t *db_pool_get_latest_completed_task(db_pool_t *pool);
 

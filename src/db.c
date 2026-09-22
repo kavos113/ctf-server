@@ -101,6 +101,7 @@ execute_param_query(MYSQL *conn, db_task_t *task)
 {
   db_result_t *result = task->result;
   MYSQL_STMT *stmt = mysql_stmt_init(conn);
+
   if (!stmt)
   {
     set_param_query_error(result, "cannot allocate statement");
@@ -108,6 +109,7 @@ execute_param_query(MYSQL *conn, db_task_t *task)
   }
 
   MYSQL_BIND *bindings = NULL;
+
   if (mysql_stmt_prepare(stmt, task->query, task->query_len) != 0)
   {
     set_param_query_error(result, mysql_stmt_error(stmt));
@@ -129,6 +131,7 @@ execute_param_query(MYSQL *conn, db_task_t *task)
   if (task->param_count)
   {
     bindings = calloc(task->param_count, sizeof(*bindings));
+
     if (!bindings)
     {
       set_param_query_error(result, "cannot allocate parameter bindings");
@@ -138,6 +141,7 @@ execute_param_query(MYSQL *conn, db_task_t *task)
     for (size_t i = 0; i < task->param_count; i++)
     {
       db_param_t *param = &task->params[i];
+
       switch (param->type)
       {
       case DB_PARAM_STRING:
@@ -158,6 +162,7 @@ execute_param_query(MYSQL *conn, db_task_t *task)
         break;
       }
     }
+
     if (mysql_stmt_bind_param(stmt, bindings) != 0)
     {
       set_param_query_error(result, mysql_stmt_error(stmt));
@@ -358,14 +363,26 @@ db_pool_exec_query(db_pool_t *pool, const char *query, size_t query_len, void *d
 }
 
 int
-db_exec_query_param(db_pool_t *pool, const char *query, size_t query_len,
-                    const db_param_t *params, size_t param_count, void *data)
+db_exec_query_param(db_pool_t *pool,
+                    const char *query,
+                    size_t query_len,
+                    const db_param_t *params,
+                    size_t param_count,
+                    void *data)
 {
-  if (!pool || !pool->task_queue || !query || query_len == 0 || query_len >= DEFAULT_QUERY_SIZE || memchr(query, '\0', query_len) || (param_count && !params))
+  if (!pool ||
+      !pool->task_queue ||
+      !query ||
+      query_len == 0 ||
+      query_len >= DEFAULT_QUERY_SIZE ||
+      memchr(query, '\0', query_len) ||
+      (param_count && !params))
   {
     return -1;
   }
+
   size_t size = sizeof(db_task_t) + param_count * sizeof(db_param_t);
+
   for (size_t i = 0; i < param_count; i++)
   {
     switch (params[i].type)
@@ -373,10 +390,14 @@ db_exec_query_param(db_pool_t *pool, const char *query, size_t query_len,
     case DB_PARAM_STRING:
     {
       size_t len = params[i].value.string.len;
-      if ((!params[i].value.string.ptr && len) || len > ULONG_MAX || len >= SIZE_MAX - size)
+
+      if ((!params[i].value.string.ptr && len) ||
+          len > ULONG_MAX ||
+          len >= SIZE_MAX - size)
       {
         return -1;
       }
+
       size += len + 1;
       break;
     }
@@ -384,12 +405,14 @@ db_exec_query_param(db_pool_t *pool, const char *query, size_t query_len,
     case DB_PARAM_INT64:
     case DB_PARAM_NULL:
       break;
+
     default:
       return -1;
     }
   }
 
   db_task_t *task = calloc(1, size);
+
   if (!task)
   {
     return -1;
@@ -397,6 +420,7 @@ db_exec_query_param(db_pool_t *pool, const char *query, size_t query_len,
 
   // Allocate the result before enqueueing so allocation failure is synchronous.
   task->result = calloc(1, sizeof(db_result_t));
+
   if (!task->result)
   {
     free(task);
@@ -410,23 +434,28 @@ db_exec_query_param(db_pool_t *pool, const char *query, size_t query_len,
   task->data = data;
 
   char *strings = (char *)(task->params + param_count);
+
   for (size_t i = 0; i < param_count; i++)
   {
     task->params[i] = params[i];
+
     if (params[i].type == DB_PARAM_STRING)
     {
       size_t len = params[i].value.string.len;
+
       if (len)
       {
         memcpy(strings, params[i].value.string.ptr, len);
       }
+
       strings[len] = '\0';
       task->params[i].value.string.ptr = strings;
       strings += len + 1;
     }
   }
-  
+
   task_queue_push(pool->task_queue, task);
+
   return 0;
 }
 
