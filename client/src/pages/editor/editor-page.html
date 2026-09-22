@@ -30,7 +30,7 @@
       </button>
       <div if.bind="confirmDelete" role="alert">
         <p>「${form.name}」を削除します。この操作は取り消せません。</p>
-        <button class="danger" click.trigger="remove()" disabled.bind="busy">削除を確定</button
+        <button class="danger" click.trigger="remove()" disabled.bind="busy">削除を確定</button>
         ><button class="secondary" click.trigger="confirmDelete = false" disabled.bind="busy">
           キャンセル
         </button>
