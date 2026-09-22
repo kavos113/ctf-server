@@ -1,4 +1,5 @@
 import type { PublicChallenge, User } from '../../api/api';
+import { genres } from '../../api/genre';
 import { PageState } from '../shared/page-state';
 import './challenges-page.css';
 
@@ -7,6 +8,7 @@ export class ChallengesPage extends PageState {
   users: User[] = [];
   search = '';
   genre = '';
+  genres = genres;
 
   loading() {
     return this.refresh();
@@ -28,10 +30,6 @@ export class ChallengesPage extends PageState {
     }
 
     return this.users.find((user) => user.id === id)?.username || id;
-  }
-
-  get genres() {
-    return [...new Set(this.items.map((item) => item.genre).filter(Boolean))];
   }
 
   get filtered() {

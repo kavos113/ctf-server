@@ -20,7 +20,7 @@
       repeat.for="item of filtered"
       class="panel challenge-card ${item.id !== undefined ? 'is-link' : ''}"
     >
-      <span class="badge">${item.genre || 'ジャンル未設定'}</span>
+      <span class="badge" data-genre.bind="item.genre">${item.genre || 'ジャンル未設定'}</span>
       <h2>
         <a if.bind="item.id !== undefined" load.bind="'/challenges/' + item.id"
           >${item.name || '名前未設定'}</a

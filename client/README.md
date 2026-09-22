@@ -28,6 +28,10 @@ src/
 
 ページ固有のCSSはページ名のクラスを起点に適用し、対応するTypeScriptから読み込みます。共通スタイルだけを使うページには空のCSSファイルを作りません。
 
+ジャンルはサーバーの `ctf_genre` に合わせ、`src/api/genre.ts` の `Genre` にweb・crypto・pwn・rev・forensics・osint・miscを定義しています。作成・編集と一覧の絞り込みはこの共通定義を使用します。OpenAPIではgenreはstringのため、生成型を直接変更せず、フロントエンドの入力型で7種類に制限しています。
+
+ジャンルの色は `src/styles/genres.css` の `:root` で変更できます。`--color-genre-web` が文字・枠線の色、`--color-genre-web-background` が背景色です。他のジャンルも同じ命名で、問題一覧・詳細・自分の問題一覧に共通で反映されます。
+
 ## 開発環境
 
 Node.jsとpnpmのバージョンは[ルートの開発環境](../README.md)に従います。依存関係はルートのworkspace・catalog・lockfileで管理します。

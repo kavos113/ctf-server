@@ -9,7 +9,7 @@
   <p if.bind="!pending && !error && !items.length" class="empty">まだ問題を作成していません。</p>
   <div class="cards">
     <article class="panel" repeat.for="item of items">
-      <span class="badge">${item.genre || 'ジャンル未設定'}</span>
+      <span class="badge" data-genre.bind="item.genre">${item.genre || 'ジャンル未設定'}</span>
       <h2>${item.name || '名前未設定'}</h2>
       <a if.bind="item.id !== undefined" href.bind="'#/me/challenges/' + item.id + '/edit'"
         >編集する →</a

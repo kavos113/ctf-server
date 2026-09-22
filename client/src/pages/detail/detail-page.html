@@ -13,7 +13,9 @@
   <template if.bind="challenge">
     <h1>${challenge.name || '名前未設定'}</h1>
     <div class="challenge-meta">
-      <span class="badge">${challenge.genre || 'ジャンル未設定'}</span>
+      <span class="badge" data-genre.bind="challenge.genre"
+        >${challenge.genre || 'ジャンル未設定'}</span
+      >
       <span class="creator">作成者: ${creatorName}</span>
     </div>
     <p class="description panel">${challenge.description || '説明はありません。'}</p>

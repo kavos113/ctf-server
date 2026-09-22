@@ -1,9 +1,12 @@
 import type { components, paths } from './generated/schema';
 import { ApiError, HttpClient } from './http-client';
+import type { Genre } from './genre';
 
 export type Challenge = components['schemas']['Challenge'];
 export type PublicChallenge = components['schemas']['ChallengeWithoutFlag'];
-export type ChallengeInput = components['schemas']['CreateChallengeRequest'];
+export type ChallengeInput = Omit<components['schemas']['CreateChallengeRequest'], 'genre'> & {
+  genre?: Genre;
+};
 export type Answer = components['schemas']['Answer'];
 export type CorrectAnswer = components['schemas']['CorrectAnswer'];
 export type User = components['schemas']['User'];

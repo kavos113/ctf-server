@@ -1,0 +1,57 @@
+:root {
+  --color-genre-web: #f58fc0;
+  --color-genre-web-background: #fff2f8;
+  --color-genre-crypto: #f8a263;
+  --color-genre-crypto-background: #fff4ed;
+  --color-genre-pwn: #b99ff0;
+  --color-genre-pwn-background: #f6f1ff;
+  --color-genre-rev: #ff7e7e;
+  --color-genre-rev-background: #fef3f3;
+  --color-genre-forensics: #e2cf23;
+  --color-genre-forensics-background: #fffdf0;
+  --color-genre-osint: #4ae66c;
+  --color-genre-osint-background: #eefff2;
+  --color-genre-misc: #aae038;
+  --color-genre-misc-background: #f6fde6;
+}
+
+.badge[data-genre] {
+  color: var(--genre-color, var(--color-muted));
+  border-color: currentcolor;
+  background: var(--genre-background, var(--color-surface));
+}
+
+[data-genre='web'] {
+  --genre-color: var(--color-genre-web);
+  --genre-background: var(--color-genre-web-background);
+}
+
+[data-genre='crypto'] {
+  --genre-color: var(--color-genre-crypto);
+  --genre-background: var(--color-genre-crypto-background);
+}
+
+[data-genre='pwn'] {
+  --genre-color: var(--color-genre-pwn);
+  --genre-background: var(--color-genre-pwn-background);
+}
+
+[data-genre='rev'] {
+  --genre-color: var(--color-genre-rev);
+  --genre-background: var(--color-genre-rev-background);
+}
+
+[data-genre='forensics'] {
+  --genre-color: var(--color-genre-forensics);
+  --genre-background: var(--color-genre-forensics-background);
+}
+
+[data-genre='osint'] {
+  --genre-color: var(--color-genre-osint);
+  --genre-background: var(--color-genre-osint-background);
+}
+
+[data-genre='misc'] {
+  --genre-color: var(--color-genre-misc);
+  --genre-background: var(--color-genre-misc-background);
+}

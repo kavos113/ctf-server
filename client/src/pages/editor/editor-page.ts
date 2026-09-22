@@ -1,18 +1,10 @@
 import type { ChallengeInput } from '../../api/api';
+import { genres } from '../../api/genre';
 import { PageState, parseId } from '../shared/page-state';
 import './editor-page.css';
 
-const genres: ChallengeInput['genre'][] = [
-  'web',
-  'crypto',
-  'pwn',
-  'rev',
-  'forensics',
-  'osint',
-  'misc'
-];
-
 export class EditorPage extends PageState {
+  genres = genres;
   id?: number;
   editing = false;
   ready = false;
@@ -87,7 +79,7 @@ export class EditorPage extends PageState {
 
     const { name, description = '', genre, flag } = this.form;
 
-    if (!name?.trim() || !genre || !flag) {
+    if (!name?.trim() || !genre || !genres.includes(genre) || !flag) {
       this.error = '問題名・ジャンル・フラグを入力してください。';
 
       return;

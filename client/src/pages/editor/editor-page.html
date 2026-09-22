@@ -11,8 +11,11 @@
         <label for="name">問題名</label><input id="name" value.bind="form.name" required />
         <label for="description">説明</label
         ><textarea id="description" value.bind="form.description" rows="8"></textarea>
-        <label for="genre">ジャンル</label
-        ><input id="genre" value.bind="form.genre" required placeholder="例: web" />
+        <label for="genre">ジャンル</label>
+        <select id="genre" value.bind="form.genre" required>
+          <option model.bind="undefined">選択してください</option>
+          <option repeat.for="genre of genres" model.bind="genre">${genre}</option>
+        </select>
         <label for="flag">フラグ</label
         ><input id="flag" value.bind="form.flag" autocomplete="off" required />
         <button type="submit" disabled.bind="busy">${busy ? '保存中…' : '保存する'}</button>
