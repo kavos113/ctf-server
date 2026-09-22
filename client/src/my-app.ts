@@ -2,6 +2,7 @@ import { Api } from './api/api';
 import { errorMessage } from './api/http-client';
 import { SessionService } from './services/session-service';
 import { AuthPage } from './pages/auth/auth-page';
+import { HomePage } from './pages/home/home-page';
 import { ChallengesPage } from './pages/challenges/challenges-page';
 import { DetailPage } from './pages/detail/detail-page';
 import { HistoryPage } from './pages/history/history-page';
@@ -15,7 +16,7 @@ export class MyApp {
   static inject = [Api, SessionService];
 
   static routes = [
-    { path: '', redirectTo: 'challenges' },
+    { path: '', component: HomePage, title: 'トップ' },
     { path: 'login', component: AuthPage, title: 'ログイン' },
     { path: 'signup', component: AuthPage, data: { signup: true }, title: 'ユーザー登録' },
     { path: 'challenges', component: ChallengesPage, title: '問題一覧' },

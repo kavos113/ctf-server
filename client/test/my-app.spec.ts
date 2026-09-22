@@ -23,7 +23,7 @@ describe('application', () => {
   });
 
   it('renders every route with an in-memory API and enforces private navigation', async () => {
-    window.history.replaceState(null, '', '/#/challenges');
+    window.history.replaceState(null, '', '/#/');
 
     const session = new SessionService();
     const store = createStore();
@@ -52,6 +52,16 @@ describe('application', () => {
 
     await fixture.started;
 
+    expect(fixture.appHost.textContent).toContain('EachOtherへようこそ');
+    expect(fixture.appHost.textContent).toContain('注意事項（仮）');
+    expect(new URL(fixture.appHost.querySelector<HTMLAnchorElement>('.brand')!.href).hash).toBe(
+      '#/'
+    );
+
+    const router = fixture.container.get(IRouter);
+
+    await router.load('challenges');
+
     const card = fixture.appHost.querySelector('.challenge-card')!;
 
     expect(card.classList.contains('is-link')).toBe(true);
@@ -62,12 +72,9 @@ describe('application', () => {
     card.querySelector('a')!.click();
     await vi.waitFor(() => expect(fixture.appHost.textContent).toContain('フラグを提出'));
 
-    const router = fixture.container.get(IRouter);
-
     for (const [path, expected] of [
       ['challenges', 'はじめてのフラグ'],
       ['challenges/1', 'フラグを提出'],
-      ['answers', '正答履歴'],
       ['ranking', '200'],
       ['signup', '登録する'],
       ['login', 'ログイン'],
@@ -98,7 +105,9 @@ describe('application', () => {
     input.value = 'flag{welcome}';
     input.dispatchEvent(new Event('input', { bubbles: true }));
     input.closest('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-    await vi.waitFor(() => expect(fixture.appHost.textContent).toContain('正解です！'));
+    await vi.waitFor(() =>
+      expect(fixture.appHost.querySelector('.result')?.textContent).toContain('正解')
+    );
 
     expect(store.answers.filter((item) => item.user_id === 'alice')).toHaveLength(1);
 

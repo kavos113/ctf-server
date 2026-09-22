@@ -27,9 +27,6 @@
         ><span else>${item.name || '名前未設定'}</span>
       </h2>
       <p class="creator">作成者: ${creatorName(item.creator_id)}</p>
-      <span if.bind="item.id !== undefined" class="open-label" aria-hidden="true"
-        >問題を開く →</span
-      >
     </article>
   </div>
 </section>

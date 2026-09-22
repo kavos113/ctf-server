@@ -1,12 +1,12 @@
 :root {
-  --color-background: #f5f7fa;
+  --color-background: #fdfdfd;
   --color-surface: #fff;
   --color-text: #1f2937;
   --color-muted: #526176;
   --color-border: #d8e0e8;
   --color-border-strong: #8190a3;
-  --color-accent: #0f766e;
-  --color-accent-hover: #115e59;
+  --color-accent: #32982a;
+  --color-accent-hover: #0c6f2d;
   --color-on-accent: #fff;
   --color-focus: #2563eb;
   --color-danger: #b42318;

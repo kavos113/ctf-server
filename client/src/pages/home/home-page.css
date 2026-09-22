@@ -1,0 +1,58 @@
+.home-page .home-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(280px, 1fr);
+  gap: 2rem;
+  align-items: center;
+  padding-block: 2rem;
+}
+
+.home-page .home-lead {
+  max-width: 36rem;
+  color: var(--color-muted);
+  font-size: 1.125rem;
+}
+
+.home-page .home-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.75rem;
+}
+
+.home-page .button.secondary {
+  background: var(--color-surface);
+  border-color: var(--color-border-strong);
+  color: var(--color-text);
+}
+
+.home-page .button.secondary:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent-hover);
+}
+
+.home-page .home-intro {
+  margin: 0;
+}
+
+.home-page .home-intro ol {
+  padding-left: 1.5rem;
+}
+
+.home-page .home-intro li + li,
+.home-page .home-notices li + li {
+  margin-top: 0.5rem;
+}
+
+.home-page .home-notices {
+  margin-top: 2rem;
+}
+
+.home-page .home-notices .eyebrow {
+  margin-top: 0;
+}
+
+@media (width <= 720px) {
+  .home-page .home-hero {
+    grid-template-columns: 1fr;
+  }
+}
