@@ -20,6 +20,16 @@ main()
   http_handler_t get_challenges_2_handler = {handle_get_challenges_2, NULL};
   http_handler_t get_challenges_1_handler = {handle_get_challenges_1, &get_challenges_2_handler};
 
+  http_handler_t post_challenges_2_handler = {
+      .func = handle_post_challenges_2,
+      .next = NULL,
+  };
+  http_handler_t post_challenges_1_handler = {
+      .func = handle_post_challenges_1,
+      .next = &post_challenges_2_handler,
+  };
+
+  http_server_add_route(server->http_server, HTTP_METHOD_POST, "/challenges", &post_challenges_1_handler);
   http_server_add_route(server->http_server, HTTP_METHOD_GET, "/", &root_handler);
   http_server_add_route(server->http_server, HTTP_METHOD_GET, "/hello", &hello_1_handler);
   http_server_add_route(server->http_server, HTTP_METHOD_GET, "/challenges", &get_challenges_1_handler);
