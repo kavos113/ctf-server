@@ -19,3 +19,21 @@ CREATE TABLE IF NOT EXISTS `answers` (
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (challenge_id) REFERENCES challenges(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `users` (
+    `id` CHAR(32) CHARACTER SET ascii COLLATE ascii_bin PRIMARY KEY,
+    `username` VARCHAR(32) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    `password_hash` VARCHAR(255) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    `created_at` DATETIME NOT NULL,
+    UNIQUE KEY `users_username_unique` (`username`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `auth_sessions` (
+    `id` CHAR(32) CHARACTER SET ascii COLLATE ascii_bin PRIMARY KEY,
+    `user_id` CHAR(32) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    `issued_at` DATETIME NOT NULL,
+    `expires_at` DATETIME NOT NULL,
+    KEY `auth_sessions_expires_at` (`expires_at`),
+    CONSTRAINT `auth_sessions_user_fk` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
+    CONSTRAINT `auth_sessions_time_order` CHECK (`expires_at` > `issued_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
