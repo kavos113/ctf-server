@@ -15,6 +15,7 @@
 
 #include <arpa/inet.h>
 #include <sys/epoll.h>
+#include <sys/eventfd.h>
 #include <sys/signalfd.h>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -48,25 +49,29 @@ set_nonblocking(int sockfd)
 server_t *
 create_server(int port, int max_connections)
 {
-  server_t *srv = malloc(sizeof(server_t));
+  server_t *srv = calloc(1, sizeof(server_t));
   if (!srv)
   {
     perror("malloc");
     return NULL;
   }
 
+  srv->epoll_fd = -1;
+  srv->listen_conn.fd = -1;
+  srv->signal_conn.fd = -1;
   int listen_fd = socket(AF_INET, SOCK_STREAM, 0);
+  srv->listen_conn.fd = listen_fd;
   if (listen_fd < 0)
   {
     perror("socket");
-    return NULL;
+    goto error;
   }
 
   int optval = 1;
   if (setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) < 0)
   {
     perror("setsocketopt");
-    return NULL;
+    goto error;
   }
 
   struct sockaddr_in addr = {0};
@@ -77,19 +82,19 @@ create_server(int port, int max_connections)
   if (bind(listen_fd, (struct sockaddr *)&addr, sizeof(addr)) < 0)
   {
     perror("bind");
-    return NULL;
+    goto error;
   }
 
   if (listen(listen_fd, max_connections) < 0)
   {
     perror("listen");
-    return NULL;
+    goto error;
   }
 
   if (set_nonblocking(listen_fd) < 0)
   {
     perror("set_nonblocking");
-    return NULL;
+    goto error;
   }
 
   connection_t listen_conn = {
@@ -97,28 +102,39 @@ create_server(int port, int max_connections)
       .type = FD_TYPE_LISTEN};
 
   int epoll_fd = epoll_create1(0);
-  if (srv->epoll_fd < 0)
+  if (epoll_fd < 0)
   {
     perror("epoll_create1");
-    return NULL;
+    goto error;
   }
 
   srv->listen_conn = listen_conn;
   srv->epoll_fd = epoll_fd;
   srv->port = port;
 
-  setup_shutdown(srv);
+  if (setup_shutdown(srv) < 0)
+  {
+    goto error;
+  }
 
-  srv->http_server = malloc(sizeof(http_server_t));
-  memset(srv->http_server, 0, sizeof(http_server_t));
+  srv->http_server = calloc(1, sizeof(http_server_t));
+
+  if (!srv->http_server)
+  {
+    goto error;
+  }
 
   srv->db_pool = db_pool_new_from_env(srv->epoll_fd, NUM_DB_WORKER_THREADS);
   if (!srv->db_pool)
   {
-    return NULL;
+    goto error;
   }
 
   return srv;
+
+error:
+  destroy_server(srv);
+  return NULL;
 }
 
 void
@@ -156,13 +172,27 @@ serve(server_t *srv)
     {
       connection_t *conn = (connection_t *)events[i].data.ptr;
 
-      // handle async writev
-      if (events[i].events & EPOLLOUT)
+      if (conn->fd < 0)
       {
-        int res = connection_send_buffer(conn);
-        if (res != 0)
+        continue;
+      }
+
+      if (conn->type == FD_TYPE_CLIENT)
+      {
+        if (events[i].events & (EPOLLERR | EPOLLHUP))
         {
           remove_connection(srv, conn);
+          continue;
+        }
+
+        if (events[i].events & EPOLLOUT)
+        {
+          if (connection_send_buffer(conn) != 0)
+          {
+            remove_connection(srv, conn);
+          }
+
+          continue;
         }
       }
 
@@ -185,7 +215,14 @@ serve(server_t *srv)
         db_handler(srv, conn);
         break;
       }
+
+      if (!is_running)
+      {
+        break;
+      }
     }
+
+    reap_connections(srv);
   }
 }
 
@@ -197,47 +234,73 @@ destroy_server(server_t *srv)
     return;
   }
 
-  if (srv->epoll_fd >= 0)
+  while (srv->clients)
   {
-    close(srv->epoll_fd);
-    srv->epoll_fd = -1;
+    remove_connection(srv, srv->clients);
+  }
+
+  if (srv->db_pool)
+  {
+    db_pool_stop(srv->db_pool);
+    db_handler(srv, NULL);
+    db_pool_free(srv->db_pool);
+  }
+
+  reap_connections(srv);
+
+  if (srv->signal_conn.fd >= 0)
+  {
+    close(srv->signal_conn.fd);
   }
 
   if (srv->listen_conn.fd >= 0)
   {
     close(srv->listen_conn.fd);
-    srv->listen_conn.fd = -1;
   }
 
-  if (srv->http_server)
+  if (srv->epoll_fd >= 0)
   {
-    free(srv->http_server);
-    srv->http_server = NULL;
+    close(srv->epoll_fd);
   }
 
+  free(srv->http_server);
   free(srv);
-
-  printf("[Server] shutdown completed.\n");
 }
 
-void
+int
 setup_shutdown(server_t *srv)
 {
+  struct sigaction action = {.sa_handler = SIG_IGN};
+  sigemptyset(&action.sa_mask);
+
+  if (sigaction(SIGPIPE, &action, NULL) < 0)
+  {
+    return -1;
+  }
+
   sigset_t mask;
   sigemptyset(&mask);
   sigaddset(&mask, SIGINT);
   sigaddset(&mask, SIGTERM);
-  sigprocmask(SIG_BLOCK, &mask, NULL);
 
-  connection_t *conn = malloc(sizeof(connection_t));
-  conn->fd = signalfd(-1, &mask, SFD_NONBLOCK);
-  conn->type = FD_TYPE_SIGNAL;
+  if (sigprocmask(SIG_BLOCK, &mask, NULL) < 0)
+  {
+    return -1;
+  }
 
-  add_connection(srv, conn, EPOLLIN);
+  srv->signal_conn.fd = signalfd(-1, &mask, SFD_NONBLOCK | SFD_CLOEXEC);
+  srv->signal_conn.type = FD_TYPE_SIGNAL;
+
+  if (srv->signal_conn.fd < 0)
+  {
+    return -1;
+  }
+
+  return add_connection(srv, &srv->signal_conn, EPOLLIN);
 }
 
 void
-listen_handler(const server_t *srv)
+listen_handler(server_t *srv)
 {
   while (1)
   {
@@ -279,35 +342,74 @@ listen_handler(const server_t *srv)
       continue;
     }
 
+    client_conn->next = srv->clients;
+
+    if (srv->clients)
+    {
+      srv->clients->previous = client_conn;
+    }
+
+    srv->clients = client_conn;
     printf("Accepted connection on fd %d\n", client_fd);
   }
 }
 
 void
-db_handler(const server_t *srv, connection_t *conn)
+db_handler(server_t *srv, connection_t *conn)
 {
-  db_task_t *task = db_pool_get_latest_completed_task(srv->db_pool);
+  eventfd_t count;
 
-  // fprintf(stderr, "[DEBUG] db response: |%*.s|\n", (int)task->result_len, task->result_body);
-
-  http_request_context_t *ctx = (http_request_context_t *)task->data;
-  http_response_t response;
-  bool is_complete = ctx->current_handler->func(ctx, srv->db_pool, task, &response);
-
-  if (!is_complete)
+  while (eventfd_read(srv->db_pool->notify_fd, &count) < 0 && errno == EINTR)
   {
-    return;
   }
 
-  // fprintf(stderr, "[DEBUG], conn = %p, ctx->request->conn = %p, status = %d", conn, ctx->request->conn, response.status);
+  db_task_t *task;
 
-  start_send_http_response(srv, ctx->request->conn, response);
+  while ((task = db_pool_get_latest_completed_task(srv->db_pool)))
+  {
+    http_request_context_t *ctx = task->data;
+
+    if (!ctx->request->conn)
+    {
+      db_task_free(task);
+      http_request_context_dispose(ctx);
+      continue;
+    }
+
+    http_response_t response = {0};
+    bool is_complete = ctx->current_handler->func(ctx, srv->db_pool, task, &response);
+
+    if (is_complete)
+    {
+      start_send_http_response(srv, ctx->request->conn, response);
+      http_request_context_dispose(ctx);
+    }
+  }
 }
 
 void
-client_handler(const server_t *srv, connection_t *conn)
+client_handler(server_t *srv, connection_t *conn)
 {
+  if (conn->state.client.request)
+  {
+    char byte;
+    ssize_t n = recv(conn->fd, &byte, 1, MSG_PEEK);
+
+    if (n == 0 || n > 0 || (n < 0 && errno != EAGAIN && errno != EWOULDBLOCK && errno != EINTR))
+    {
+      remove_connection(srv, conn);
+    }
+
+    return;
+  }
+
   http_request_t *req = malloc(sizeof(http_request_t));
+
+  if (!req)
+  {
+    remove_connection(srv, conn);
+    return;
+  }
   conn->state.client.request = req;
 
   http_response_t response = parse_http_request(conn, req);
@@ -392,20 +494,22 @@ connection_send_buffer(connection_t *conn)
 }
 
 void
-start_send_http_response(const server_t *server, connection_t *conn, http_response_t response)
+start_send_http_response(server_t *server, connection_t *conn, http_response_t response)
 {
-  char *header_buf;
-  size_t header_buf_len;
+  char *header_buf = NULL;
+  size_t header_buf_len = 0;
   error err = http_response_build_header(&response, &header_buf, &header_buf_len);
   if (err.code != ERR_NONE)
   {
-    http_response_internal_server_error(&header_buf, &header_buf_len);
+    remove_connection(server, conn);
+    return;
   }
 
   printf("[HTTP Response] status: %d, header_len: %zu, body_len: %zu\n", response.status, header_buf_len, response.body_len);
 
   client_connection_state_t *client_state = &conn->state.client;
 
+  client_state->header_buffer = header_buf;
   client_state->iov[0].iov_base = header_buf;
   client_state->iov[0].iov_len = header_buf_len;
   client_state->iov_count = 1;
@@ -421,10 +525,13 @@ start_send_http_response(const server_t *server, connection_t *conn, http_respon
   if (res == 0)
   {
     struct epoll_event event;
-    event.events = EPOLLIN | EPOLLOUT | EPOLLET;
+    event.events = EPOLLOUT | EPOLLET;
     event.data.ptr = conn;
 
-    epoll_ctl(conn->fd, EPOLL_CTL_MOD, conn->fd, &event);
+    if (epoll_ctl(server->epoll_fd, EPOLL_CTL_MOD, conn->fd, &event) < 0)
+    {
+      remove_connection(server, conn);
+    }
     return;
   }
 

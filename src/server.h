@@ -20,13 +20,17 @@ typedef struct
   int iov_index;
 
   struct http_request *request;
+  char *header_buffer;
 } client_connection_state_t;
 
 // connection_t represents event notified from epoll
-typedef struct
+typedef struct connection
 {
   int fd;
   fd_type_t type;
+  struct connection *next;
+  struct connection *previous;
+  struct connection *retired_next;
 
   union
   {
@@ -46,6 +50,8 @@ typedef struct
   connection_t signal_conn;
   struct http_server_t *http_server;
   struct db_pool_t *db_pool;
+  connection_t *clients;
+  connection_t *retired_clients;
 } server_t;
 
 server_t *create_server(int port, int max_connections);

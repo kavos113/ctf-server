@@ -4,6 +4,7 @@
 #include <db.h>
 #include <limits.h>
 #include <sys/eventfd.h>
+#include <sys/epoll.h>
 #include <unistd.h>
 
 // Only the test executable wraps these calls; no DB connection is established.
@@ -746,9 +747,116 @@ test_task_queue_push(test_ctx_t *ctx)
   }
 }
 
+static void
+test_db_pool_exec_query(test_ctx_t *ctx)
+{
+  const struct
+  {
+    const char *name;
+    const char *query;
+    size_t length;
+    bool stopped;
+    int allocation_failure;
+    bool success;
+  } cases[] = {
+      {.name = "ordinary query", .query = "SELECT 1", .length = 8, .allocation_failure = -1, .success = true},
+      {.name = "empty query", .query = "", .allocation_failure = -1},
+      {.name = "NULL query", .length = 8, .allocation_failure = -1},
+      {.name = "oversized query", .query = "SELECT 1", .length = DEFAULT_QUERY_SIZE, .allocation_failure = -1},
+      {.name = "embedded NUL", .query = "SELECT\0x", .length = 8, .allocation_failure = -1},
+      {.name = "stopped queue", .query = "SELECT 1", .length = 8, .stopped = true, .allocation_failure = -1},
+      {.name = "task allocation", .query = "SELECT 1", .length = 8, .allocation_failure = 0},
+      {.name = "result allocation", .query = "SELECT 1", .length = 8, .allocation_failure = 1},
+  };
+
+  for (size_t i = 0; i < sizeof(cases) / sizeof(cases[0]); i++)
+  {
+    ctx->is_canceled = false;
+    db_pool_t pool = {.task_queue = task_queue_new(), .done_queue = task_queue_new()};
+    pool.task_queue->stop = cases[i].stopped;
+    test_set_calloc_failure(cases[i].allocation_failure);
+    int result = db_pool_exec_query(&pool, cases[i].query, cases[i].length, ctx);
+    test_set_calloc_failure(-1);
+    ASSERT_EQ(cases[i].name, cases[i].success ? 0 : -1, result);
+    ASSERT_EQ(cases[i].name, cases[i].success, pool.task_queue->head != NULL);
+
+    if (result == 0)
+    {
+      db_task_t *task = task_queue_pop(pool.task_queue);
+      ASSERT_NOT_NULL(cases[i].name, task->result);
+      ASSERT_STR_EQ(cases[i].name, cases[i].query, task->query);
+      ASSERT_TRUE(cases[i].name, task->data == ctx);
+      task_queue_push(pool.done_queue, task);
+      ASSERT_TRUE(cases[i].name, db_pool_get_latest_completed_task(&pool) == task);
+      db_task_free(task);
+    }
+
+    ASSERT_NULL(cases[i].name, db_pool_get_latest_completed_task(&pool));
+    task_queue_free(pool.task_queue);
+    task_queue_free(pool.done_queue);
+    CHECK_TEST(cases[i].name);
+  }
+}
+
+static void
+test_db_pool_stop(test_ctx_t *ctx)
+{
+  const struct
+  {
+    const char *name;
+    size_t tasks;
+  } cases[] = {
+      {.name = "stop idle worker", .tasks = 0},
+      {.name = "join and drain worker", .tasks = 3},
+  };
+
+  for (size_t i = 0; i < sizeof(cases) / sizeof(cases[0]); i++)
+  {
+    ctx->is_canceled = false;
+    int epoll_fd = epoll_create1(0);
+    mock = (__typeof__(mock)){.query = "SELECT 1", .valid_bindings = true};
+    db_pool_t *pool = db_pool_new((db_option_t){0}, epoll_fd, 1);
+    ASSERT_NOT_NULL(cases[i].name, pool);
+
+    if (pool)
+    {
+      for (size_t j = 0; j < cases[i].tasks; j++)
+      {
+        ASSERT_EQ(cases[i].name, 0, db_pool_exec_query(pool, "SELECT 1", 8, NULL));
+      }
+
+      db_pool_stop(pool);
+      ASSERT_EQ(cases[i].name, 0, pool->num_threads);
+      ASSERT_EQ(cases[i].name, -1, db_pool_exec_query(pool, "SELECT 1", 8, NULL));
+      ASSERT_EQ(cases[i].name, -1, db_exec_query_param(pool, "DELETE FROM t", 13, NULL, 0, NULL));
+
+      for (size_t j = 0; j < cases[i].tasks; j++)
+      {
+        db_task_t *task = db_pool_get_latest_completed_task(pool);
+        ASSERT_NOT_NULL(cases[i].name, task);
+
+        if (task)
+        {
+          ASSERT_EQ(cases[i].name, 1, task->result->success);
+          db_task_free(task);
+        }
+      }
+
+      ASSERT_NULL(cases[i].name, db_pool_get_latest_completed_task(pool));
+      ASSERT_EQ(cases[i].name, (unsigned)cases[i].tasks, mock.query_calls);
+      db_pool_free(pool);
+    }
+
+    close(epoll_fd);
+    CHECK_TEST(cases[i].name);
+  }
+}
+
 void
 test_db(test_ctx_t *ctx)
 {
+  test_db_pool_exec_query(ctx);
+  test_db_pool_stop(ctx);
   test_db_exec_query_param(ctx);
   test_db_worker_thread(ctx);
   test_task_queue_push(ctx);

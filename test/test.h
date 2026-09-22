@@ -17,6 +17,10 @@ typedef struct test_ctx
   int passed_count;
 } test_ctx_t;
 
+void test_auth_libraries(test_ctx_t *ctx);
+void test_app_auth_repository(test_ctx_t *ctx);
+void test_server_lifetime(test_ctx_t *ctx);
+
 void test_set_calloc_failure(int after);
 void test_set_malloc_failure(int after);
 void test_app_answer(test_ctx_t *ctx);
