@@ -22,15 +22,21 @@
     条件に一致する問題はありません。
   </p>
   <div class="cards">
-    <article repeat.for="item of filtered" class="panel">
+    <article
+      repeat.for="item of filtered"
+      class="panel challenge-card ${item.id !== undefined ? 'is-link' : ''}"
+    >
       <span class="badge">${item.genre || 'ジャンル未設定'}</span>
       <h2>
-        <a if.bind="item.id !== undefined" href.bind="'#/challenges/' + item.id"
+        <a if.bind="item.id !== undefined" load.bind="'/challenges/' + item.id"
           >${item.name || '名前未設定'}</a
         ><span else>${item.name || '名前未設定'}</span>
       </h2>
       <p class="excerpt">${item.description || '説明はありません。'}</p>
-      <a if.bind="item.id !== undefined" href.bind="'#/challenges/' + item.id">問題を開く →</a>
+      <p class="creator">作成者: ${creatorName(item.creator_id)}</p>
+      <span if.bind="item.id !== undefined" class="open-label" aria-hidden="true"
+        >問題を開く →</span
+      >
     </article>
   </div>
 </section>

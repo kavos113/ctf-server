@@ -1,9 +1,10 @@
-import type { PublicChallenge } from '../../api/api';
+import type { PublicChallenge, User } from '../../api/api';
 import { PageState } from '../shared/page-state';
 import './challenges-page.css';
 
 export class ChallengesPage extends PageState {
   items: PublicChallenge[] = [];
+  users: User[] = [];
   search = '';
   genre = '';
 
@@ -13,11 +14,20 @@ export class ChallengesPage extends PageState {
 
   refresh() {
     return this.read(
-      () => this.api.challenges(),
-      (items) => {
+      () => Promise.all([this.api.challenges(), this.api.users().catch(() => [])]),
+      ([items, users]) => {
         this.items = items;
+        this.users = users;
       }
     );
+  }
+
+  creatorName(id?: string) {
+    if (!id) {
+      return '作成者不明';
+    }
+
+    return this.users.find((user) => user.id === id)?.username || id;
   }
 
   get genres() {

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { Registration } from 'aurelia';
 import { RouterConfiguration, IRouter } from '@aurelia/router';
 import { createFixture } from '@aurelia/testing';
@@ -11,6 +11,17 @@ import { createStore } from '../mock/store.mjs';
 import { handleRequest } from '../mock/handlers.mjs';
 
 describe('application', () => {
+  const base = document.createElement('base');
+
+  beforeEach(() => {
+    base.href = '/';
+    document.head.append(base);
+  });
+
+  afterEach(() => {
+    base.remove();
+  });
+
   it('renders every route with an in-memory API and enforces private navigation', async () => {
     window.history.replaceState(null, '', '/#/challenges');
 
@@ -40,6 +51,16 @@ describe('application', () => {
     ]);
 
     await fixture.started;
+
+    const card = fixture.appHost.querySelector('.challenge-card')!;
+
+    expect(card.classList.contains('is-link')).toBe(true);
+    expect(card.querySelectorAll('a')).toHaveLength(1);
+    expect(new URL(card.querySelector('a')!.href).hash).toBe('#/challenges/1');
+    expect(card.querySelector('.creator')?.textContent).toContain('alice');
+
+    card.querySelector('a')!.click();
+    await vi.waitFor(() => expect(fixture.appHost.textContent).toContain('フラグを提出'));
 
     const router = fixture.container.get(IRouter);
 

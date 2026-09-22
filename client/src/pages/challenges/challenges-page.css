@@ -6,3 +6,45 @@
   color: var(--color-muted);
   white-space: pre-wrap;
 }
+
+.challenges-page .challenge-card {
+  position: relative;
+  transition: box-shadow 160ms ease;
+}
+
+.challenges-page .challenge-card.is-link:hover,
+.challenges-page .challenge-card.is-link:focus-within {
+  box-shadow: 0 6px 20px rgb(31 41 55 / 14%);
+}
+
+.challenges-page .challenge-card a::after {
+  position: absolute;
+  inset: 0;
+  border-radius: 0.6rem;
+  content: '';
+}
+
+.challenges-page .challenge-card a:focus-visible {
+  outline: none;
+}
+
+.challenges-page .challenge-card a:focus-visible::after {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 4px;
+}
+
+.challenges-page .creator {
+  color: var(--color-muted);
+  font-size: 0.875rem;
+  overflow-wrap: anywhere;
+}
+
+.challenges-page .open-label {
+  color: var(--color-accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .challenges-page .challenge-card {
+    transition: none;
+  }
+}
