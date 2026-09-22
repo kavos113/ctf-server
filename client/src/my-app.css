@@ -1,10 +1,11 @@
 .site-header {
+  background: var(--color-surface);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1.5rem;
   padding: 1.1rem max(1.5rem, calc((100% - 1120px) / 2));
-  border-bottom: 1px solid #344359;
+  border-bottom: 1px solid var(--color-border);
   flex-wrap: wrap;
 }
 
@@ -13,11 +14,11 @@
   font-weight: 800;
   text-decoration: none;
   white-space: nowrap;
-  color: #fff;
+  color: var(--color-text);
 }
 
 .brand span {
-  color: #70dfcc;
+  color: var(--color-accent);
 }
 
 nav {
@@ -28,7 +29,7 @@ nav {
 }
 
 nav a {
-  color: #e5edf7;
+  color: var(--color-text);
   text-decoration: none;
 }
 
@@ -43,12 +44,13 @@ footer {
   max-width: 1120px;
   margin: auto;
   padding: 1.5rem;
-  color: #adbbce;
+  color: var(--color-muted);
 }
 
 .notice {
+  color: var(--color-accent-hover);
   padding: 1rem;
-  background: #203e3c;
+  background: var(--color-notice-background);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -59,7 +61,7 @@ footer {
   position: absolute;
   left: 1rem;
   top: -6rem;
-  background: #101722;
+  background: var(--color-surface);
   padding: 1rem;
   z-index: 2;
 }
@@ -69,5 +71,5 @@ footer {
 }
 
 nav a:hover {
-  color: #b1f6e9;
+  color: var(--color-accent-hover);
 }

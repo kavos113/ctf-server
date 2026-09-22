@@ -1,9 +1,23 @@
 :root {
+  --color-background: #f5f7fa;
+  --color-surface: #fff;
+  --color-text: #1f2937;
+  --color-muted: #526176;
+  --color-border: #d8e0e8;
+  --color-border-strong: #8190a3;
+  --color-accent: #0f766e;
+  --color-accent-hover: #115e59;
+  --color-on-accent: #fff;
+  --color-focus: #2563eb;
+  --color-danger: #b42318;
+  --color-danger-background: #fff1f0;
+  --color-notice-background: #eaf7f3;
+
   font-family: system-ui, sans-serif;
-  color: #e5edf7;
-  background: #101722;
+  color: var(--color-text);
+  background: var(--color-background);
   line-height: 1.65;
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 * {
@@ -15,12 +29,12 @@ body {
 }
 
 a {
-  color: #70dfcc;
+  color: var(--color-accent);
   text-underline-offset: 0.25em;
 }
 
 :focus-visible {
-  outline: 3px solid #ffd778;
+  outline: 3px solid var(--color-focus);
   outline-offset: 4px;
 }
 
@@ -35,5 +49,5 @@ h2 {
 }
 
 a:hover {
-  color: #b1f6e9;
+  color: var(--color-accent-hover);
 }

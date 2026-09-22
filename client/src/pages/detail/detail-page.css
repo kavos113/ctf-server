@@ -4,7 +4,7 @@
 }
 
 .detail-page .result {
-  color: #70dfcc;
+  color: var(--color-accent);
 }
 
 .detail-page code {

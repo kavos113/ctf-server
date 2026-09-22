@@ -3,6 +3,6 @@
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  color: #adbbce;
+  color: var(--color-muted);
   white-space: pre-wrap;
 }
