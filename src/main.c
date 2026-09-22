@@ -52,6 +52,9 @@ main()
                             .contest_start_at = contest_start_at};
   server->http_server->app_context = &runtime;
 
+  http_handler_t get_users_2_handler = {handle_get_users_2, NULL};
+  http_handler_t get_users_1_handler = {handle_get_users_1, &get_users_2_handler};
+
   http_handler_t root_handler = {handle_root, NULL};
   http_handler_t hello_2_handler = {handle_hello_2, NULL};
   http_handler_t hello_1_handler = {handle_hello_1, &hello_2_handler};
@@ -132,6 +135,8 @@ main()
   http_server_add_route(server->http_server, HTTP_METHOD_POST, "/signup", &signup_1_handler);
   http_server_add_route(server->http_server, HTTP_METHOD_POST, "/login", &login_1_handler);
   http_server_add_route(server->http_server, HTTP_METHOD_POST, "/logout", &logout_auth_1);
+
+  http_server_add_route(server->http_server, HTTP_METHOD_GET, "/users", &get_users_1_handler);
 
   serve(server);
 

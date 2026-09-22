@@ -254,7 +254,10 @@ paths:
   /users:
     get:
       summary: すべてのユーザー（ランキング含む）
+      description: 認証不要。開始時刻による制限なし。正解した異なる問題数×100点（自作問題を含む）。未回答者は0点。得点降順、同点はユーザーID昇順。ユーザーなしは空配列。
       responses:
+        "500":
+          description: 内部エラー（空本文）
         "200":
           description: OK
           content:
@@ -389,3 +392,6 @@ components:
           type: string
         score:
           type: integer
+          format: int64
+          minimum: 0
+          description: 現存する正解回答から集計する。重複正解は加点しない。問題削除に伴い回答が削除された場合は得点も減る。

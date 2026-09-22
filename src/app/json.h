@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+#include "model_auth.h"
 #include "model.h"
 #include "model_request.h"
 
@@ -20,5 +21,7 @@ void challenges_to_json_without_flag(const challenge_t *challenges, size_t count
 int json_to_submit_answer_request(const char *json, size_t len, submit_answer_request_t *request);
 void answer_to_json(const answer_t *answer, string_t *json);
 void answers_to_json(const answer_t *answers, size_t count, string_t *json, bool public_view);
+
+void public_users_to_json(const public_user_t *users, size_t count, string_t *json);
 
 #endif // APP_JSON_H

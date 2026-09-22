@@ -199,3 +199,90 @@ bind_auth_sessions(const db_result_t *result, auth_session_t **out_sessions, siz
   *out_count = (size_t)count;
   return true;
 }
+
+static bool
+read_score(const char *value, size_t length, int64_t *out)
+{
+  int64_t score = 0;
+
+  if (!value || !length)
+  {
+    return false;
+  }
+
+  for (size_t i = 0; i < length; i++)
+  {
+    if (value[i] < '0' || value[i] > '9' || score > (INT64_MAX - (value[i] - '0')) / 10)
+    {
+      return false;
+    }
+
+    score = score * 10 + (value[i] - '0');
+  }
+
+  *out = score;
+  return true;
+}
+
+bool
+bind_public_users(const db_result_t *result, public_user_t **out_users, size_t *out_count)
+{
+  if (!out_users || !out_count)
+  {
+    return false;
+  }
+
+  *out_users = NULL;
+  *out_count = 0;
+
+  if (!result || !result->success || !result->res || mysql_num_fields(result->res) != 3)
+  {
+    return false;
+  }
+
+  uint64_t count = mysql_num_rows(result->res);
+
+  if (count > SIZE_MAX / sizeof(public_user_t))
+  {
+    return false;
+  }
+
+  if (!count)
+  {
+    return true;
+  }
+
+  public_user_t *users = calloc((size_t)count, sizeof(*users));
+
+  if (!users)
+  {
+    return false;
+  }
+
+  for (size_t i = 0; i < count; i++)
+  {
+    MYSQL_ROW row = mysql_fetch_row(result->res);
+    unsigned long *lengths = row ? mysql_fetch_lengths(result->res) : NULL;
+
+    if (!row || !lengths || !read_auth_id(row[0], lengths[0], users[i].id) ||
+        !valid_username(row[1], lengths[1]) || !read_score(row[2], lengths[2], &users[i].score))
+    {
+      goto error;
+    }
+
+    users[i].username = string_from_cstr_dup_n(row[1], lengths[1]);
+
+    if (!users[i].username.ptr)
+    {
+      goto error;
+    }
+  }
+
+  *out_users = users;
+  *out_count = (size_t)count;
+  return true;
+
+error:
+  free_public_users(users, (size_t)count);
+  return false;
+}

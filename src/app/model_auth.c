@@ -30,3 +30,19 @@ free_auth_sessions(auth_session_t *sessions)
 {
   free(sessions);
 }
+
+void
+free_public_users(public_user_t *users, size_t count)
+{
+  if (!users)
+  {
+    return;
+  }
+
+  for (size_t i = 0; i < count; i++)
+  {
+    free(users[i].username.ptr);
+  }
+
+  free(users);
+}
