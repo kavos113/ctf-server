@@ -15,3 +15,11 @@ export const descriptionCases = [
   { label: 'empty', description: '' },
   { label: 'mixed', description: '"引用" と \\ と\n日本語 🔐 と O\'Reilly' }
 ] satisfies (Description & { label: string })[];
+
+export const sqlLikeCases = [
+  { label: 'single quote tautology', value: "' OR '1'='1' -- " },
+  { label: 'double quote tautology', value: '" OR "1"="1" -- ' },
+  { label: 'union query', value: "' UNION SELECT NULL, NULL, NULL -- " },
+  { label: 'stacked statement', value: "'; DELETE FROM challenges; -- " },
+  { label: 'backslash and comment', value: "\\' OR 1=1 /* comment */ #" }
+];

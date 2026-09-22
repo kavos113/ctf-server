@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { descriptionCases } from '../src/behavior-cases';
+import { descriptionCases, sqlLikeCases } from '../src/behavior-cases';
 import { baseUrl, Contract, loadContract } from '../src/contract';
 import { E2eClient, requiredValue } from '../src/e2e-client';
 import type { components } from '../src/generated/schema';
@@ -256,6 +256,46 @@ function scenario(label: string, run: (scenario: Scenario) => Promise<void>): vo
 }
 
 describe('API behavior', { concurrent: false }, () => {
+  for (const { label, value } of sqlLikeCases) {
+    for (const field of ['name', 'description', 'genre', 'flag'] as const) {
+      scenario(`B20 SQL-like ${field}: ${label}`, async (s) => {
+        const owner = await s.user();
+        const neighbor = await s.create(owner);
+        const input = field === 'name' ? `${randomUUID()} ${value}` : value;
+        const problem = await s.create(owner, { [field]: input });
+
+        expect(problem.id, `${s.label} distinct IDs`).not.toBe(neighbor.id);
+        await s.visible(problem);
+        await s.visible(neighbor);
+
+        const updated = await s.update(problem, {
+          ...problem.input,
+          [field]: `updated ${input}`
+        });
+
+        await s.visible(updated);
+        await s.visible(neighbor);
+      });
+    }
+
+    scenario(`B21 SQL-like answer: ${label}`, async (s) => {
+      const owner = await s.user();
+      const solver = await s.user();
+      const neighbor = await s.create(owner);
+      const problem = await s.create(owner, { flag: value });
+
+      expect(problem.id, `${s.label} distinct IDs`).not.toBe(neighbor.id);
+
+      // SQL-looking text must not make a different flag match.
+      await s.submit(solver, neighbor, value, false);
+      await s.recorded(solver, neighbor, value, false);
+      await s.submit(solver, problem, value, true);
+      await s.recorded(solver, problem, value, true);
+      await s.visible(problem);
+      await s.visible(neighbor);
+    });
+  }
+
   scenario('B01 signup, login and user listing', async (s) => {
     const user = await s.user();
     const rows = (await s.publicClient.request(
