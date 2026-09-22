@@ -10,7 +10,8 @@ RUN pnpm --filter client... install --frozen-lockfile
 
 COPY tsconfig.base.json ./
 COPY client ./client
-RUN pnpm --dir client build
+ARG VITE_CONTEST_START_AT
+RUN VITE_CONTEST_START_AT="$VITE_CONTEST_START_AT" pnpm --dir client build
 
 FROM nginx:stable-alpine
 
