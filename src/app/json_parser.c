@@ -22,7 +22,7 @@ skip_whitespace(const char *str, const char *end)
   return str;
 }
 
-const char *
+static const char *
 parse_json_str(const char *str, const char *end, string_t *out_str)
 {
   if (str >= end || *str != '"')
@@ -267,7 +267,6 @@ read_object(json_parser_t *parser, unsigned depth, json_field_reader read_field,
       }
     }
 
-    // Only bookkeeping is allocated; key and value bytes remain in the input.
     json_key *entry = calloc(1, sizeof(*entry));
 
     if (!entry)

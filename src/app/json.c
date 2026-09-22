@@ -180,58 +180,61 @@ json_to_challenge(const char *json_str, size_t json_len, challenge_t *challenge)
 
   memset(challenge, 0, sizeof(challenge_t));
 
-  const char *ptr = json_str;
-  const char *end = json_str + json_len;
+  json_parser_t parser = {
+      .cur = json_str,
+      .end = json_str + json_len,
+      .error = -1,
+  };
 
-  ptr = skip_whitespace(ptr, end);
-  if (ptr >= end || *ptr != '{')
+  parser.cur = skip_whitespace(parser.cur, parser.end);
+  if (parser.cur >= parser.end || *parser.cur != '{')
   {
     return -1;
   }
-  ptr++; // Skip '{'
+  parser.cur++; // Skip '{'
 
-  while (ptr < end)
+  while (parser.cur < parser.end)
   {
-    ptr = skip_whitespace(ptr, end);
-    if (ptr >= end)
+    parser.cur = skip_whitespace(parser.cur, parser.end);
+    if (parser.cur >= parser.end)
     {
       return -1;
     }
 
-    if (*ptr == '}')
+    if (*parser.cur == '}')
     {
-      ptr++; // Skip '}'
+      parser.cur++; // Skip '}'
       return 0;
     }
 
-    if (*ptr == ',')
+    if (*parser.cur == ',')
     {
-      ptr++; // Skip ','
+      parser.cur++; // Skip ','
       continue;
     }
 
     // parse key
     string_t key;
-    ptr = parse_json_str(ptr, end, &key);
-    if (!ptr)
+
+    if (!read_string(&parser, &key))
     {
       return -1;
     }
 
-    ptr = skip_whitespace(ptr, end);
-    if (ptr >= end || *ptr != ':')
+    parser.cur = skip_whitespace(parser.cur, parser.end);
+    if (parser.cur >= parser.end || *parser.cur != ':')
     {
       return -1;
     }
-    ptr++; // Skip ':'
-    ptr = skip_whitespace(ptr, end);
+    parser.cur++; // Skip ':'
+    parser.cur = skip_whitespace(parser.cur, parser.end);
 
     // parse value
     if (string_equals_cstr(key, "id"))
     {
       int value;
-      ptr = parse_json_int(ptr, end, &value);
-      if (!ptr)
+      parser.cur = parse_json_int(parser.cur, parser.end, &value);
+      if (!parser.cur)
       {
         return -1;
       }
@@ -240,8 +243,8 @@ json_to_challenge(const char *json_str, size_t json_len, challenge_t *challenge)
     else if (string_equals_cstr(key, "creator_id"))
     {
       string_t value_str;
-      ptr = parse_json_str(ptr, end, &value_str);
-      if (!ptr)
+
+      if (!read_string(&parser, &value_str))
       {
         return -1;
       }
@@ -250,8 +253,8 @@ json_to_challenge(const char *json_str, size_t json_len, challenge_t *challenge)
     else if (string_equals_cstr(key, "name"))
     {
       string_t value_str;
-      ptr = parse_json_str(ptr, end, &value_str);
-      if (!ptr)
+
+      if (!read_string(&parser, &value_str))
       {
         return -1;
       }
@@ -260,8 +263,8 @@ json_to_challenge(const char *json_str, size_t json_len, challenge_t *challenge)
     else if (string_equals_cstr(key, "description"))
     {
       string_t value_str;
-      ptr = parse_json_str(ptr, end, &value_str);
-      if (!ptr)
+
+      if (!read_string(&parser, &value_str))
       {
         return -1;
       }
@@ -270,8 +273,8 @@ json_to_challenge(const char *json_str, size_t json_len, challenge_t *challenge)
     else if (string_equals_cstr(key, "flag"))
     {
       string_t value_str;
-      ptr = parse_json_str(ptr, end, &value_str);
-      if (!ptr)
+
+      if (!read_string(&parser, &value_str))
       {
         return -1;
       }
@@ -280,8 +283,8 @@ json_to_challenge(const char *json_str, size_t json_len, challenge_t *challenge)
     else if (string_equals_cstr(key, "genre"))
     {
       string_t value_str;
-      ptr = parse_json_str(ptr, end, &value_str);
-      if (!ptr)
+
+      if (!read_string(&parser, &value_str))
       {
         return -1;
       }
@@ -290,8 +293,8 @@ json_to_challenge(const char *json_str, size_t json_len, challenge_t *challenge)
     else
     {
       // Skip unknown key-value pair
-      ptr = skip_json_value(ptr, end);
-      if (!ptr)
+      parser.cur = skip_json_value(parser.cur, parser.end);
+      if (!parser.cur)
       {
         return -1;
       }

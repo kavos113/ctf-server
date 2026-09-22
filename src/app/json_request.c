@@ -66,7 +66,6 @@ stored_character_count(string_t value)
 {
   size_t count = 0;
 
-  // parse_json_str has already validated UTF-8. Escapes count as stored text.
   for (size_t i = 0; i < value.len; i++)
   {
     if (((unsigned char)value.ptr[i] & 0xc0) != 0x80)
