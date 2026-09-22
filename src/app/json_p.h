@@ -30,4 +30,8 @@ bool read_value(json_parser_t *parser, unsigned depth);
 // for each field. JSON syntax and duplicate keys are checked by the parser.
 bool read_object(json_parser_t *parser, unsigned depth, json_field_reader read_field, void *context);
 
+bool read_positive_integer(json_parser_t *parser, int *value);
+// Escaped contents without surrounding quotes; -1 means invalid input.
+int json_string_equal_decoded(string_t left, string_t right);
+
 #endif // APP_JSON_P_H

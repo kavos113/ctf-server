@@ -19,18 +19,18 @@ typedef enum
   RESULT_INVALID_ID,
 } result_kind;
 
-typedef struct
-{
-  unsigned fields;
-  size_t count;
-  size_t cursor;
-  char *rows[2][2];
-  unsigned long lengths[2];
-} mock_rows;
+#include "mysql_result_mock.h"
 
-static int live_results;
+typedef test_mysql_rows mock_rows;
+
 static int fail_malloc_after = -1;
 void *__real_malloc(size_t size);
+
+void
+test_set_malloc_failure(int after)
+{
+  fail_malloc_after = after;
+}
 
 void *
 __wrap_malloc(size_t size)
@@ -46,54 +46,6 @@ __wrap_malloc(size_t size)
   }
 
   return __real_malloc(size);
-}
-
-unsigned int
-__wrap_mysql_num_fields(MYSQL_RES *result)
-{
-  return ((mock_rows *)result)->fields;
-}
-
-MYSQL_ROW
-__wrap_mysql_fetch_row(MYSQL_RES *result)
-{
-  mock_rows *rows = (mock_rows *)result;
-
-  if (rows->cursor == rows->count)
-  {
-    return NULL;
-  }
-
-  return rows->rows[rows->cursor++];
-}
-
-unsigned long *
-__wrap_mysql_fetch_lengths(MYSQL_RES *result)
-{
-  mock_rows *rows = (mock_rows *)result;
-
-  for (size_t i = 0; i < 2; i++)
-  {
-    const char *value = rows->rows[rows->cursor - 1][i];
-    rows->lengths[i] = value ? strlen(value) : 0;
-  }
-
-  return rows->lengths;
-}
-
-void
-__wrap_mysql_free_result(MYSQL_RES *result)
-{
-  mock_rows *rows = (mock_rows *)result;
-
-  for (size_t i = 0; i < rows->count; i++)
-  {
-    free(rows->rows[i][0]);
-    free(rows->rows[i][1]);
-  }
-
-  free(rows);
-  live_results--;
 }
 
 static MYSQL_RES *
@@ -115,7 +67,7 @@ make_result(result_kind kind)
     }
   }
 
-  live_results++;
+  test_mysql_live_results++;
   return (MYSQL_RES *)rows;
 }
 
@@ -290,7 +242,7 @@ run_write_cases(test_ctx_t *ctx, bool put, size_t stage, const write_case *cases
     }
 
     ASSERT_EQ(tc->name, tc->complete, complete);
-    ASSERT_EQ(tc->name, 0, live_results);
+    ASSERT_EQ(tc->name, 0, test_mysql_live_results);
 
     if (complete)
     {

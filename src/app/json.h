@@ -17,4 +17,8 @@ void challenge_to_json_without_flag(const challenge_t *challenge, string_t *json
 void challenges_to_json(const challenge_t *challenges, size_t count, string_t *json_str, bool only_size);
 void challenges_to_json_without_flag(const challenge_t *challenges, size_t count, string_t *json_str, bool only_size);
 
+int json_to_submit_answer_request(const char *json, size_t len, submit_answer_request_t *request);
+void answer_to_json(const answer_t *answer, string_t *json);
+void answers_to_json(const answer_t *answers, size_t count, string_t *json, bool public_view);
+
 #endif // APP_JSON_H

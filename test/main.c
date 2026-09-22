@@ -39,6 +39,7 @@ main(int argc, char **argv)
   test_db(&ctx);
   test_app_create_challenge(&ctx);
   test_app_challenge_write(&ctx);
+  test_app_answer(&ctx);
 
   timespec_get(&end_time, TIME_UTC);
   double elapsed = (end_time.tv_sec - start_time.tv_sec) + (end_time.tv_nsec - start_time.tv_nsec) / 1e6;

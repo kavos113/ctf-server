@@ -18,6 +18,8 @@ typedef struct test_ctx
 } test_ctx_t;
 
 void test_set_calloc_failure(int after);
+void test_set_malloc_failure(int after);
+void test_app_answer(test_ctx_t *ctx);
 void test_app_create_challenge(test_ctx_t *ctx);
 void test_db(test_ctx_t *ctx);
 void test_app_challenge_write(test_ctx_t *ctx);

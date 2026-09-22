@@ -1,6 +1,7 @@
 #include "json_p.h"
 
 #include <ctype.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -437,5 +438,34 @@ read_value(json_parser_t *parser, unsigned depth)
     }
   }
 
+  return true;
+}
+
+bool
+read_positive_integer(json_parser_t *parser, int *value)
+{
+  const char *cur = skip_whitespace(parser->cur, parser->end);
+
+  if (cur == parser->end || *cur < '1' || *cur > '9')
+  {
+    return false;
+  }
+
+  int number = 0;
+
+  while (cur < parser->end && *cur >= '0' && *cur <= '9')
+  {
+    int digit = *cur++ - '0';
+
+    if (number > (INT_MAX - digit) / 10)
+    {
+      return false;
+    }
+
+    number = number * 10 + digit;
+  }
+
+  parser->cur = cur;
+  *value = number;
   return true;
 }

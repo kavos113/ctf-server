@@ -27,4 +27,16 @@ bool handle_delete_challenges_2(http_request_context_t *ctx, db_pool_t *db, db_t
 bool handle_delete_challenges_3(http_request_context_t *ctx, db_pool_t *db, db_task_t *task, http_response_t *out_response);
 bool handle_delete_challenges_4(http_request_context_t *ctx, db_pool_t *db, db_task_t *task, http_response_t *out_response);
 
+bool handle_post_answers_1(http_request_context_t *ctx, db_pool_t *db, db_task_t *task, http_response_t *response);
+bool handle_post_answers_2(http_request_context_t *ctx, db_pool_t *db, db_task_t *task, http_response_t *response);
+bool handle_post_answers_3(http_request_context_t *ctx, db_pool_t *db, db_task_t *task, http_response_t *response);
+bool handle_post_answers_4(http_request_context_t *ctx, db_pool_t *db, db_task_t *task, http_response_t *response);
+bool handle_post_answers_5(http_request_context_t *ctx, db_pool_t *db, db_task_t *task, http_response_t *response);
+bool handle_get_answers_1(http_request_context_t *ctx, db_pool_t *db, db_task_t *task, http_response_t *response);
+bool handle_get_answers_2(http_request_context_t *ctx, db_pool_t *db, db_task_t *task, http_response_t *response);
+bool handle_get_answers_3(http_request_context_t *ctx, db_pool_t *db, db_task_t *task, http_response_t *response);
+bool handle_get_own_answers_1(http_request_context_t *ctx, db_pool_t *db, db_task_t *task, http_response_t *response);
+bool handle_get_own_answers_2(http_request_context_t *ctx, db_pool_t *db, db_task_t *task, http_response_t *response);
+bool handle_get_own_answers_3(http_request_context_t *ctx, db_pool_t *db, db_task_t *task, http_response_t *response);
+
 #endif // APP_HANDLER_H
