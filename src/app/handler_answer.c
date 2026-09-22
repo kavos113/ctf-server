@@ -89,47 +89,6 @@ answer_filter(const http_request_t *request, int *id)
   return true;
 }
 
-static http_status
-find_answer_challenge(const db_result_t *result, int target)
-{
-  if (!result || !result->success || !result->res || mysql_num_fields(result->res) != 1)
-  {
-    return HTTP_STATUS_INTERNAL_SERVER_ERROR;
-  }
-
-  if (!target)
-  {
-    return HTTP_STATUS_OK;
-  }
-
-  MYSQL_ROW row;
-
-  while ((row = mysql_fetch_row(result->res)))
-  {
-    unsigned long *lengths = mysql_fetch_lengths(result->res);
-
-    if (!lengths || !row[0])
-    {
-      return HTTP_STATUS_INTERNAL_SERVER_ERROR;
-    }
-
-    json_parser_t parser = {.cur = row[0], .end = row[0] + lengths[0], .error = -1};
-    int id;
-
-    if (!read_positive_integer(&parser, &id) || parser.cur != parser.end)
-    {
-      return HTTP_STATUS_INTERNAL_SERVER_ERROR;
-    }
-
-    if (id == target)
-    {
-      return HTTP_STATUS_OK;
-    }
-  }
-
-  return HTTP_STATUS_NOT_FOUND;
-}
-
 bool
 handle_post_answers_1(http_request_context_t *ctx,
                       db_pool_t *db,
@@ -248,7 +207,7 @@ handle_post_answers_3(http_request_context_t *ctx,
   if (!success)
   {
     // Skip the normal response handler; the last handler checks for deletion.
-    const char query[] = "SELECT id FROM challenges";
+    const char query[] = "SELECT id, creator_id, name, description, flag, genre FROM challenges";
     ctx->current_handler = ctx->current_handler->next->next;
     db_pool_exec_query(db, query, sizeof(query) - 1, ctx);
     return false;
@@ -322,12 +281,43 @@ handle_post_answers_5(http_request_context_t *ctx,
 {
   assert(ctx->current_handler->next == NULL);
   answer_submit_state *state = ctx->request->app_data;
-  http_status status = find_answer_challenge(task->result, state->input.challenge_id);
+  *response = (http_response_t){.status = HTTP_STATUS_INTERNAL_SERVER_ERROR};
+
+  if (!task->result || !task->result->success || !task->result->res ||
+      mysql_num_fields(task->result->res) != 6)
+  {
+    free_answer_task(task);
+    return true;
+  }
+
+  bool empty = mysql_num_rows(task->result->res) == 0;
+  size_t count;
+  challenge_t *challenges = bind_challenges(task->result, &count);
   free_answer_task(task);
-  *response = (http_response_t){
-      .status = status == HTTP_STATUS_NOT_FOUND ? HTTP_STATUS_NOT_FOUND
-                                                : HTTP_STATUS_INTERNAL_SERVER_ERROR,
-  };
+
+  if (!challenges && !empty)
+  {
+    return true;
+  }
+
+  bool found = false;
+
+  for (size_t i = 0; i < count; i++)
+  {
+    if (challenges[i].id == state->input.challenge_id)
+    {
+      found = true;
+      break;
+    }
+  }
+
+  free_challenges(challenges, count);
+
+  if (!found)
+  {
+    response->status = HTTP_STATUS_NOT_FOUND;
+  }
+
   return true;
 }
 
@@ -357,7 +347,7 @@ handle_get_answers_1(http_request_context_t *ctx,
   state->challenge_id = challenge_id;
   ctx->request->app_data = state;
   ctx->request->dispose_app_data = free_list_state;
-  const char query[] = "SELECT id FROM challenges";
+  const char query[] = "SELECT id, creator_id, name, description, flag, genre FROM challenges";
   ctx->current_handler = ctx->current_handler->next;
   db_pool_exec_query(db, query, sizeof(query) - 1, ctx);
   return false;
@@ -371,12 +361,41 @@ handle_get_answers_2(http_request_context_t *ctx,
 {
   assert(ctx->current_handler->next != NULL);
   answer_list_state *state = ctx->request->app_data;
-  http_status status = find_answer_challenge(task->result, state->challenge_id);
-  free_answer_task(task);
-  *response = (http_response_t){.status = status};
+  *response = (http_response_t){.status = HTTP_STATUS_INTERNAL_SERVER_ERROR};
 
-  if (status != HTTP_STATUS_OK)
+  if (!task->result || !task->result->success || !task->result->res ||
+      mysql_num_fields(task->result->res) != 6)
   {
+    free_answer_task(task);
+    return true;
+  }
+
+  bool empty = mysql_num_rows(task->result->res) == 0;
+  size_t count;
+  challenge_t *challenges = bind_challenges(task->result, &count);
+  free_answer_task(task);
+
+  if (!challenges && !empty)
+  {
+    return true;
+  }
+
+  bool found = state->challenge_id == 0;
+
+  for (size_t i = 0; i < count; i++)
+  {
+    if (challenges[i].id == state->challenge_id)
+    {
+      found = true;
+      break;
+    }
+  }
+
+  free_challenges(challenges, count);
+
+  if (!found)
+  {
+    response->status = HTTP_STATUS_NOT_FOUND;
     return true;
   }
 
@@ -468,7 +487,7 @@ handle_get_own_answers_1(http_request_context_t *ctx,
   state->challenge_id = challenge_id;
   ctx->request->app_data = state;
   ctx->request->dispose_app_data = free_list_state;
-  const char query[] = "SELECT id FROM challenges";
+  const char query[] = "SELECT id, creator_id, name, description, flag, genre FROM challenges";
   ctx->current_handler = ctx->current_handler->next;
   db_pool_exec_query(db, query, sizeof(query) - 1, ctx);
   return false;
@@ -482,12 +501,41 @@ handle_get_own_answers_2(http_request_context_t *ctx,
 {
   assert(ctx->current_handler->next != NULL);
   answer_list_state *state = ctx->request->app_data;
-  http_status status = find_answer_challenge(task->result, state->challenge_id);
-  free_answer_task(task);
-  *response = (http_response_t){.status = status};
+  *response = (http_response_t){.status = HTTP_STATUS_INTERNAL_SERVER_ERROR};
 
-  if (status != HTTP_STATUS_OK)
+  if (!task->result || !task->result->success || !task->result->res ||
+      mysql_num_fields(task->result->res) != 6)
   {
+    free_answer_task(task);
+    return true;
+  }
+
+  bool empty = mysql_num_rows(task->result->res) == 0;
+  size_t count;
+  challenge_t *challenges = bind_challenges(task->result, &count);
+  free_answer_task(task);
+
+  if (!challenges && !empty)
+  {
+    return true;
+  }
+
+  bool found = state->challenge_id == 0;
+
+  for (size_t i = 0; i < count; i++)
+  {
+    if (challenges[i].id == state->challenge_id)
+    {
+      found = true;
+      break;
+    }
+  }
+
+  free_challenges(challenges, count);
+
+  if (!found)
+  {
+    response->status = HTTP_STATUS_NOT_FOUND;
     return true;
   }
 

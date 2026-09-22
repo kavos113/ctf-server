@@ -58,19 +58,13 @@ answer_fixture(bool empty)
 }
 
 static MYSQL_RES *
-challenge_fixture(bool flags, bool empty, const char *flag)
+challenge_fixture(bool empty, const char *flag)
 {
-  if (flags)
-  {
-    const char *values[][6] = {
-        {"1", "dummy", "first", "description", flag, "0"},
-        {"2", "other", "second", "description", "second", "1"},
-    };
-    return test_mysql_result(values, empty ? 0 : 2, 6);
-  }
-
-  const char *values[][6] = {{"1"}, {"2"}};
-  return test_mysql_result(values, empty ? 0 : 2, 1);
+  const char *values[][6] = {
+      {"1", "dummy", "first", "description", flag, "0"},
+      {"2", "other", "second", "description", "second", "1"},
+  };
+  return test_mysql_result(values, empty ? 0 : 2, 6);
 }
 
 static void
@@ -219,16 +213,13 @@ run_answer_cases(
           }
           else
           {
-            bool flags = route == POST_ANSWER && current == 2;
-            ASSERT_STR_EQ(
-                tc->name,
-                flags ? "SELECT id, creator_id, name, description, flag, genre FROM challenges"
-                      : "SELECT id FROM challenges",
-                task->query);
+            ASSERT_STR_EQ(tc->name,
+                          "SELECT id, creator_id, name, description, flag, genre FROM challenges",
+                          task->query);
             const char *flag = final_stage && tc->invalid_flag ? "\\ud800"
                                : tc->escaped_flag              ? "fl\\u0061g"
                                                                : "flag";
-            task->result->res = challenge_fixture(flags, final_stage && tc->empty, flag);
+            task->result->res = challenge_fixture(final_stage && tc->empty, flag);
           }
 
           if (final_stage && tc->invalid_shape)
@@ -507,6 +498,15 @@ test_handle_post_answers_5(test_ctx_t *ctx)
        .db_error = true,
        .complete = true,
        .status = HTTP_STATUS_INTERNAL_SERVER_ERROR},
+      {.name = "challenge binding allocation",
+       .fail_calloc = true,
+       .complete = true,
+       .status = HTTP_STATUS_INTERNAL_SERVER_ERROR},
+      {.name = "challenge binding partial allocation",
+       .fail_malloc = true,
+       .malloc_after = 3,
+       .complete = true,
+       .status = HTTP_STATUS_INTERNAL_SERVER_ERROR},
   };
   run_answer_cases(ctx, POST_ANSWER, 5, cases, sizeof(cases) / sizeof(cases[0]));
 }
@@ -576,6 +576,15 @@ test_handle_get_answers_2(test_ctx_t *ctx)
        .complete = true,
        .status = HTTP_STATUS_NOT_FOUND},
       {.name = "empty challenges no filter", .empty = true, .complete = false},
+      {.name = "challenge binding allocation",
+       .fail_calloc = true,
+       .complete = true,
+       .status = HTTP_STATUS_INTERNAL_SERVER_ERROR},
+      {.name = "challenge binding partial allocation",
+       .fail_malloc = true,
+       .malloc_after = 3,
+       .complete = true,
+       .status = HTTP_STATUS_INTERNAL_SERVER_ERROR},
   };
   run_answer_cases(ctx, GET_ANSWERS, 2, cases, sizeof(cases) / sizeof(cases[0]));
 }
@@ -698,6 +707,15 @@ test_handle_get_own_answers_2(test_ctx_t *ctx)
        .complete = true,
        .status = HTTP_STATUS_NOT_FOUND},
       {.name = "empty challenges no filter", .empty = true, .complete = false},
+      {.name = "challenge binding allocation",
+       .fail_calloc = true,
+       .complete = true,
+       .status = HTTP_STATUS_INTERNAL_SERVER_ERROR},
+      {.name = "challenge binding partial allocation",
+       .fail_malloc = true,
+       .malloc_after = 3,
+       .complete = true,
+       .status = HTTP_STATUS_INTERNAL_SERVER_ERROR},
   };
   run_answer_cases(ctx, GET_OWN_ANSWERS, 2, cases, sizeof(cases) / sizeof(cases[0]));
 }
