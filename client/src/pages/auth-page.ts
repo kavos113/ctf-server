@@ -19,6 +19,7 @@ export class AuthPage extends PageState {
   async submit() {
     if (!this.username.trim() || !this.password) {
       this.error = 'ユーザー名とパスワードを入力してください。';
+
       return;
     }
 
@@ -28,14 +29,18 @@ export class AuthPage extends PageState {
       if (this.signup) {
         await this.api.signup(credentials);
 
-        if (!current()) return;
+        if (!current()) {
+          return;
+        }
 
         this.session.notice = '登録しました。ログインしてください。';
         window.location.hash = '/login';
       } else {
         const token = await this.api.login(credentials);
 
-        if (!current()) return;
+        if (!current()) {
+          return;
+        }
 
         this.session.start(token);
         window.location.hash = '/challenges';

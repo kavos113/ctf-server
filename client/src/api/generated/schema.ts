@@ -198,7 +198,10 @@ export interface paths {
                 };
             };
         };
-        /** 問題を作成 */
+        /**
+         * 問題を作成
+         * @description creator_idは暫定的にdummy固定。リクエスト全体は65,536バイト未満。
+         */
         post: {
             parameters: {
                 query?: never;
@@ -220,6 +223,27 @@ export interface paths {
                     content: {
                         "application/json": components["schemas"]["Challenge"];
                     };
+                };
+                /** @description 不正なJSON、必須項目の欠落、型・値・文字数制約違反、重複キー */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description リクエスト全体が65,536バイト以上 */
+                413: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description DB処理またはメモリ確保に失敗 */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
                 };
             };
         };
@@ -477,11 +501,14 @@ export interface components {
             genre?: string;
             creator_id?: string;
         };
+        /** @description 未知の項目は無視する。idとcreator_idはサーバーが決定する。重複キーは禁止。 */
         CreateChallengeRequest: {
-            name?: string;
-            description?: string;
-            flag?: string;
-            genre?: string;
+            name: string;
+            /** @description 空文字を許可。UTF-8で65,535バイト以内。 */
+            description: string;
+            flag: string;
+            /** @enum {string} */
+            genre: "web" | "crypto" | "pwn" | "rev" | "forensics" | "osint" | "misc";
         };
         AnswerRequest: {
             /** Format: int64 */

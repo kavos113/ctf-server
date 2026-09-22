@@ -72,7 +72,7 @@ describe('page state', () => {
     const page = new EditorPage(api, session);
 
     page.ready = true;
-    page.form = { name: 'n', description: 'd', genre: 'g', flag: 'f' };
+    page.form = { name: 'n', description: 'd', genre: 'web', flag: 'f' };
 
     const first = page.save();
 
@@ -126,7 +126,9 @@ describe('page state', () => {
   });
 
   it('formatDate handles absent and invalid timestamps', () => {
-    for (const input of [undefined, '', 'invalid']) expect(formatDate(input)).toBe('日時不明');
+    for (const input of [undefined, '', 'invalid']) {
+      expect(formatDate(input)).toBe('日時不明');
+    }
 
     expect(formatDate('2026-09-22T00:00:00Z')).not.toBe('日時不明');
   });
@@ -139,7 +141,8 @@ describe('page state', () => {
       ['abc', undefined],
       ['', undefined],
       [undefined, undefined]
-    ] as const)
+    ] as const) {
       expect(parseId(input)).toBe(expected);
+    }
   });
 });

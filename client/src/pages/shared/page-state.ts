@@ -22,7 +22,9 @@ export class PageState {
       this.reset();
       this.clearPrivate();
 
-      if (!this.session.authenticated) this.error = 'ログインしてください。';
+      if (!this.session.authenticated) {
+        this.error = 'ログインしてください。';
+      }
     });
   }
 
@@ -67,16 +69,24 @@ export class PageState {
     try {
       const result = await load();
 
-      if (generation === this.generation) apply(result);
+      if (generation === this.generation) {
+        apply(result);
+      }
     } catch (error) {
-      if (generation === this.generation) this.error = errorMessage(error);
+      if (generation === this.generation) {
+        this.error = errorMessage(error);
+      }
     } finally {
-      if (generation === this.generation) this.pending = false;
+      if (generation === this.generation) {
+        this.pending = false;
+      }
     }
   }
 
   async write(action: (current: () => boolean) => Promise<void>) {
-    if (this.busy) return;
+    if (this.busy) {
+      return;
+    }
 
     const current = this.checkpoint();
 
@@ -87,15 +97,21 @@ export class PageState {
     try {
       await action(current);
     } catch (error) {
-      if (current()) this.error = errorMessage(error);
+      if (current()) {
+        this.error = errorMessage(error);
+      }
     } finally {
-      if (current()) this.busy = false;
+      if (current()) {
+        this.busy = false;
+      }
     }
   }
 }
 
 export function formatDate(value?: string) {
-  if (!value) return '日時不明';
+  if (!value) {
+    return '日時不明';
+  }
 
   const date = new Date(value);
 
@@ -103,7 +119,9 @@ export function formatDate(value?: string) {
 }
 
 export function parseId(value: unknown): number | undefined {
-  if (typeof value !== 'string' || !/^-?\d+$/.test(value)) return undefined;
+  if (typeof value !== 'string' || !/^-?\d+$/.test(value)) {
+    return undefined;
+  }
 
   return Number(value);
 }

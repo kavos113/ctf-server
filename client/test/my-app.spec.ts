@@ -30,6 +30,7 @@ describe('application', () => {
         status: result.status
       });
     };
+
     const api = new Api(new HttpClient(session, fetcher));
     const fixture = createFixture(template, MyApp, [
       MyApp,

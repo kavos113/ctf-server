@@ -11,14 +11,19 @@ beforeAll(async () => {
 describe('Contract', () => {
   it('assertCoverage detects missing and unknown operations', () => {
     const cases = createCases();
+
     for (const [input, error] of [
       [cases, undefined],
       [cases.filter((test) => test.path !== '/users'), /missing \[get \/users\]/],
       [[...cases, { method: 'get', path: '/unknown' }], /extra \[get \/unknown\]/]
     ] as const) {
       const check = () => contract.assertCoverage([...input]);
-      if (error) expect(check).toThrow(error);
-      else expect(check).not.toThrow();
+
+      if (error) {
+        expect(check).toThrow(error);
+      } else {
+        expect(check).not.toThrow();
+      }
     }
   });
 
@@ -35,10 +40,15 @@ describe('Contract', () => {
       [{ method: 'delete', path: '/challenges', query: { id: 1.5 } }, /query.id.*integer/],
       [{ method: 'get', path: '/unknown' }, /Unknown operation/]
     ];
+
     for (const [input, error] of cases) {
       const check = () => contract.assertRequest(input);
-      if (error) expect(check).toThrow(error);
-      else expect(check).not.toThrow();
+
+      if (error) {
+        expect(check).toThrow(error);
+      } else {
+        expect(check).not.toThrow();
+      }
     }
   });
 
@@ -143,10 +153,15 @@ describe('Contract', () => {
         contentType: null
       }
     ];
+
     for (const { request, status, body, contentType = 'application/json', error } of cases) {
       const check = () => contract.assertResponse(request, { status, body, contentType });
-      if (error) expect(check).toThrow(error);
-      else expect(check).not.toThrow();
+
+      if (error) {
+        expect(check).toThrow(error);
+      } else {
+        expect(check).not.toThrow();
+      }
     }
   });
 });
@@ -159,6 +174,7 @@ it('baseUrl requires an explicit HTTP target and preserves a base path', () => {
   ]) {
     expect(baseUrl(input).href).toBe(expected);
   }
+
   for (const input of [
     undefined,
     '',

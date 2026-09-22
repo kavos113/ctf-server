@@ -17,7 +17,9 @@ export class MyChallengesPage extends PageState {
   }
 
   refresh() {
-    if (!this.allowed) return;
+    if (!this.allowed) {
+      return;
+    }
 
     return this.read(
       () => this.api.myChallenges(),

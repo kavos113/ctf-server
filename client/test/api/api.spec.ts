@@ -12,7 +12,7 @@ describe('API', () => {
     const fetcher = vi.fn<typeof fetch>();
     const api = new Api(new HttpClient(session, fetcher));
     const credentials = { username: 'a', password: 'p' };
-    const challenge = { name: 'n', description: 'd', genre: 'web', flag: 'f' };
+    const challenge = { name: 'n', description: 'd', genre: 'web' as const, flag: 'f' };
     const cases: [() => Promise<unknown>, string, string, unknown, unknown, number][] = [
       [() => api.login(credentials), 'POST', '/login', credentials, { token: 't' }, 200],
       [() => api.logout(), 'POST', '/logout', undefined, undefined, 200],
@@ -99,8 +99,9 @@ describe('API', () => {
       expect(objectResponse(input, { id: 'number' })).toEqual(expected);
     }
 
-    for (const input of [null, [], 'text', { id: '1' }])
+    for (const input of [null, [], 'text', { id: '1' }]) {
       expect(() => objectResponse(input, { id: 'number' })).toThrow();
+    }
   });
 
   it('login and answer reject missing decision fields', async () => {

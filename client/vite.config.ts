@@ -3,6 +3,7 @@ import aurelia from '@aurelia/vite-plugin';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
+
   return {
     server: {
       open: !process.env.CI,

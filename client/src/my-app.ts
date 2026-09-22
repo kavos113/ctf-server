@@ -39,7 +39,9 @@ export class MyApp {
 
   binding() {
     this.unsubscribe = this.session.subscribe(() => {
-      if (this.session.notice && !this.session.authenticated) window.location.hash = '/login';
+      if (this.session.notice && !this.session.authenticated) {
+        window.location.hash = '/login';
+      }
     });
   }
 
@@ -54,7 +56,9 @@ export class MyApp {
   }
 
   async logout() {
-    if (this.busy) return;
+    if (this.busy) {
+      return;
+    }
 
     this.busy = true;
 

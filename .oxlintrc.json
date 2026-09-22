@@ -82,7 +82,42 @@
       "rules": {
         "eslint/no-undef": "error"
       }
+    },
+    {
+      "files": ["**/*.ts"],
+      "rules": {
+        "eslint/curly": ["error", "all"],
+        "stylistic/padding-line-between-statements": [
+          "error",
+          {
+            "blankLine": "always",
+            "prev": ["const", "let", "var"],
+            "next": "*"
+          },
+          {
+            "blankLine": "any",
+            "prev": ["const", "let", "var"],
+            "next": ["const", "let", "var"]
+          },
+          {
+            "blankLine": "always",
+            "prev": "*",
+            "next": ["return", "throw", "if", "for", "while", "do", "switch", "try"]
+          },
+          {
+            "blankLine": "always",
+            "prev": "block-like",
+            "next": "*"
+          }
+        ]
+      }
     }
   ],
-  "ignorePatterns": ["**/src/**/generated/**"]
+  "ignorePatterns": ["**/src/**/generated/**"],
+  "jsPlugins": [
+    {
+      "name": "stylistic",
+      "specifier": "@stylistic/eslint-plugin"
+    }
+  ]
 }

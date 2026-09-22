@@ -10,16 +10,21 @@ beforeAll(async () => {
   base = baseUrl(process.env.E2E_BASE_URL);
   contract = new Contract(await loadContract());
   contract.assertCoverage(cases);
-  for (const test of cases) contract.assertRequest(test);
+
+  for (const test of cases) {
+    contract.assertRequest(test);
+  }
 });
 
 describe('OpenAPI contract', { concurrent: false }, () => {
   for (const test of cases) {
     const label = `${test.method.toUpperCase()} ${test.path}${test.query ? ` ${JSON.stringify(test.query)}` : ''}`;
+
     it(label, async () => {
       const url = requestUrl(base, test);
       let response: Response;
       let body: string;
+
       try {
         response = await fetch(url, {
           method: test.method.toUpperCase(),
@@ -35,6 +40,7 @@ describe('OpenAPI contract', { concurrent: false }, () => {
       } catch (cause) {
         throw new Error(`${label}: HTTP exchange failed for ${url}`, { cause });
       }
+
       contract.assertResponse(test, {
         status: response.status,
         contentType: response.headers.get('content-type'),

@@ -4,10 +4,13 @@ import './ranking-page.css';
 
 export function sortUsers(users: User[]) {
   return [...users].sort((a, b) => {
-    if (a.score === undefined)
+    if (a.score === undefined) {
       return b.score === undefined ? (a.id ?? '').localeCompare(b.id ?? '') : 1;
+    }
 
-    if (b.score === undefined) return -1;
+    if (b.score === undefined) {
+      return -1;
+    }
 
     return b.score - a.score || (a.id ?? '').localeCompare(b.id ?? '');
   });

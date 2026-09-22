@@ -24,11 +24,15 @@ export class HistoryPage extends PageState {
   }
 
   clearPrivate() {
-    if (this.mine) this.items = [];
+    if (this.mine) {
+      this.items = [];
+    }
   }
 
   async refresh() {
-    if (this.mine && !this.allowed) return;
+    if (this.mine && !this.allowed) {
+      return;
+    }
 
     const id = parseId(this.filter);
 

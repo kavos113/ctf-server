@@ -27,8 +27,9 @@ const answerFields: SchemaFields = {
 
 // Properties remain optional, as in OpenAPI; present values must have the documented type.
 export function objectResponse<T>(value: unknown, fields: SchemaFields): T {
-  if (!value || typeof value !== 'object' || Array.isArray(value))
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
     throw new ApiError('サーバーの応答形式が不正です。');
+  }
 
   const result: Record<string, unknown> = {};
 
@@ -36,7 +37,9 @@ export function objectResponse<T>(value: unknown, fields: SchemaFields): T {
     const field = (value as Record<string, unknown>)[key];
 
     if (field !== undefined) {
-      if (typeof field !== type) throw new ApiError('サーバーの応答形式が不正です。');
+      if (typeof field !== type) {
+        throw new ApiError('サーバーの応答形式が不正です。');
+      }
 
       result[key] = field;
     }
@@ -46,7 +49,9 @@ export function objectResponse<T>(value: unknown, fields: SchemaFields): T {
 }
 
 function listResponse<T>(value: unknown, fields: SchemaFields): T[] {
-  if (!Array.isArray(value)) throw new ApiError('サーバーの応答形式が不正です。');
+  if (!Array.isArray(value)) {
+    throw new ApiError('サーバーの応答形式が不正です。');
+  }
 
   return value.map((item) => objectResponse<T>(item, fields));
 }
@@ -62,7 +67,9 @@ export class Api {
       { token: 'string' }
     );
 
-    if (!data.token) throw new ApiError('ログイン応答にtokenがありません。');
+    if (!data.token) {
+      throw new ApiError('ログイン応答にtokenがありません。');
+    }
 
     return data.token;
   }
@@ -137,8 +144,9 @@ export class Api {
       { ...answerFields, answer: 'string', correct: 'boolean' }
     );
 
-    if (result.correct === undefined)
+    if (result.correct === undefined) {
       throw new ApiError('応答に正誤の情報がありません。履歴を確認してください。');
+    }
 
     return result;
   }

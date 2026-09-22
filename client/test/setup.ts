@@ -11,6 +11,7 @@ function bootstrapTextEnv() {
 }
 
 const fixtures: IFixture<object>[] = [];
+
 beforeAll(() => {
   bootstrapTextEnv();
   onFixtureCreated((fixture) => {

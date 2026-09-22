@@ -2,12 +2,22 @@ import type { ChallengeInput } from '../../api/api';
 import { PageState, parseId } from '../shared/page-state';
 import './editor-page.css';
 
+const genres: ChallengeInput['genre'][] = [
+  'web',
+  'crypto',
+  'pwn',
+  'rev',
+  'forensics',
+  'osint',
+  'misc'
+];
+
 export class EditorPage extends PageState {
   id?: number;
   editing = false;
   ready = false;
   confirmDelete = false;
-  form: ChallengeInput = {};
+  form: Partial<ChallengeInput> = {};
 
   canLoad() {
     return this.allowed ? true : 'login';
@@ -31,16 +41,20 @@ export class EditorPage extends PageState {
   async refresh() {
     this.ready = false;
 
-    if (!this.allowed) return;
+    if (!this.allowed) {
+      return;
+    }
 
     if (!this.editing) {
       this.form = {};
       this.ready = true;
+
       return;
     }
 
     if (this.id === undefined) {
       this.error = '問題IDが不正です。';
+
       return;
     }
 
@@ -51,13 +65,14 @@ export class EditorPage extends PageState {
 
         if (!item) {
           this.error = '編集できる問題が見つかりません。';
+
           return;
         }
 
         this.form = {
           name: item.name,
           description: item.description,
-          genre: item.genre,
+          genre: genres.find((genre) => genre === item.genre),
           flag: item.flag
         };
         this.ready = true;
@@ -66,22 +81,24 @@ export class EditorPage extends PageState {
   }
 
   async save() {
-    if (!this.allowed || !this.ready) return;
+    if (!this.allowed || !this.ready) {
+      return;
+    }
 
-    if (
-      !this.form.name?.trim() ||
-      !this.form.description?.trim() ||
-      !this.form.genre?.trim() ||
-      !this.form.flag
-    ) {
-      this.error = 'すべての項目を入力してください。';
+    const { name, description = '', genre, flag } = this.form;
+
+    if (!name?.trim() || !genre || !flag) {
+      this.error = '問題名・ジャンル・フラグを入力してください。';
+
       return;
     }
 
     await this.write(async (current) => {
-      await this.api.saveChallenge({ ...this.form }, this.id);
+      await this.api.saveChallenge({ name, description, genre, flag }, this.id);
 
-      if (!current()) return;
+      if (!current()) {
+        return;
+      }
 
       this.form = {};
       window.location.hash = '/me/challenges';
@@ -89,12 +106,16 @@ export class EditorPage extends PageState {
   }
 
   async remove() {
-    if (!this.allowed || !this.confirmDelete || this.id === undefined) return;
+    if (!this.allowed || !this.confirmDelete || this.id === undefined) {
+      return;
+    }
 
     await this.write(async (current) => {
       await this.api.deleteChallenge(this.id!);
 
-      if (!current()) return;
+      if (!current()) {
+        return;
+      }
 
       window.location.hash = '/me/challenges';
     });

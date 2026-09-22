@@ -36,6 +36,7 @@ export class DetailPage extends PageState {
 
     if (this.id === undefined) {
       this.error = '問題IDが不正です。';
+
       return;
     }
 
@@ -44,11 +45,15 @@ export class DetailPage extends PageState {
       (items) => {
         this.challenge = items.find((item) => item.id === this.id);
 
-        if (!this.challenge) this.error = '問題が見つかりません。';
+        if (!this.challenge) {
+          this.error = '問題が見つかりません。';
+        }
       }
     );
 
-    if (this.challenge) await this.refreshHistory();
+    if (this.challenge) {
+      await this.refreshHistory();
+    }
   }
 
   async refreshHistory() {
@@ -61,29 +66,42 @@ export class DetailPage extends PageState {
       this.allowed ? this.api.myAnswers(id) : Promise.resolve([])
     ]);
 
-    if (!current() || generation !== this.historyGeneration || id !== this.id) return;
+    if (!current() || generation !== this.historyGeneration || id !== this.id) {
+      return;
+    }
 
     this.historyError = '';
 
-    if (results[0].status === 'fulfilled') this.publicAnswers = results[0].value;
-    else this.historyError = errorMessage(results[0].reason);
+    if (results[0].status === 'fulfilled') {
+      this.publicAnswers = results[0].value;
+    } else {
+      this.historyError = errorMessage(results[0].reason);
+    }
 
-    if (results[1].status === 'fulfilled') this.own = results[1].value;
-    else this.historyError = errorMessage(results[1].reason);
+    if (results[1].status === 'fulfilled') {
+      this.own = results[1].value;
+    } else {
+      this.historyError = errorMessage(results[1].reason);
+    }
   }
 
   async submit() {
-    if (!this.allowed || this.id === undefined || !this.challenge) return;
+    if (!this.allowed || this.id === undefined || !this.challenge) {
+      return;
+    }
 
     if (!this.answer) {
       this.error = '解答を入力してください。';
+
       return;
     }
 
     await this.write(async (current) => {
       const result = await this.api.answer(this.id!, this.answer);
 
-      if (!current()) return;
+      if (!current()) {
+        return;
+      }
 
       this.message = result.correct ? '正解です！' : '不正解です。もう一度挑戦できます。';
       this.answer = '';

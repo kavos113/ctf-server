@@ -42,14 +42,20 @@ export class HttpClient {
     const version = this.session.version;
     const headers: Record<string, string> = { Accept: 'application/json' };
 
-    if (options.body !== undefined) headers['Content-Type'] = 'application/json';
+    if (options.body !== undefined) {
+      headers['Content-Type'] = 'application/json';
+    }
 
-    if (this.session.token) headers.Authorization = `Bearer ${this.session.token}`;
+    if (this.session.token) {
+      headers.Authorization = `Bearer ${this.session.token}`;
+    }
 
     const query = new URLSearchParams();
 
     Object.entries(options.query ?? {}).forEach(([key, value]) => {
-      if (value !== undefined) query.set(key, String(value));
+      if (value !== undefined) {
+        query.set(key, String(value));
+      }
     });
 
     let response: Response;
@@ -91,7 +97,9 @@ export class HttpClient {
       );
     }
 
-    if (options.empty) return undefined;
+    if (options.empty) {
+      return undefined;
+    }
 
     let result: unknown;
 

@@ -13,6 +13,7 @@ declare module '*.html' {
 // Vite-specific declarations for ?inline imports that return CSS as strings
 declare module '*.css?inline' {
   const content: string;
+
   export default content;
 }
 
