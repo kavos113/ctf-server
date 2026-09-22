@@ -1,5 +1,6 @@
 #include "app/auth.h"
 #include "app/handler.h"
+#include "app/password_worker.h"
 
 #include "http_server.h"
 #include "server.h"
@@ -22,6 +23,16 @@ main()
   server_t *server = create_server(PORT, MAX_CONNECTIONS);
   if (!server)
   {
+    auth_config_dispose(&auth);
+    return 1;
+  }
+
+  server->password_worker = password_worker_new(&auth, server->epoll_fd);
+
+  if (!server->password_worker)
+  {
+    fprintf(stderr, "Password worker initialization failed.\n");
+    destroy_server(server);
     auth_config_dispose(&auth);
     return 1;
   }

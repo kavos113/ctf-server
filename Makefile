@@ -6,7 +6,7 @@ TESTOBJS=$(TESTS:.c=.o) $(SRCS:.c=.o)
 TARGET=ctf-server
 TESTTARGET=test-ctf-server
 
-DB_TEST_WRAPS=crypto_pwhash_str_alg jwt_encode_str writev calloc malloc mysql_init mysql_real_connect mysql_close mysql_thread_end \
+DB_TEST_WRAPS=pthread_mutex_init pthread_cond_init pthread_create eventfd auth_password_hash auth_password_verify crypto_pwhash_str_alg jwt_encode_str writev calloc malloc mysql_init mysql_real_connect mysql_close mysql_thread_end \
  mysql_stmt_init mysql_stmt_prepare mysql_stmt_field_count mysql_stmt_param_count \
  mysql_stmt_bind_param mysql_stmt_execute mysql_stmt_close mysql_stmt_error \
  mysql_stmt_affected_rows mysql_stmt_insert_id mysql_query mysql_store_result mysql_affected_rows \

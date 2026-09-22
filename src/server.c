@@ -21,6 +21,7 @@
 #include <sys/types.h>
 
 #include "db.h"
+#include "app/password_worker.h"
 #include "http.h"
 #include "http_request.h"
 #include "http_response.h"
@@ -211,6 +212,10 @@ serve(server_t *srv)
         is_running = 0;
         break;
 
+      case FD_TYPE_PASSWORD:
+        password_worker_handler(srv, conn);
+        break;
+
       case FD_TYPE_DB:
         db_handler(srv, conn);
         break;
@@ -237,6 +242,13 @@ destroy_server(server_t *srv)
   while (srv->clients)
   {
     remove_connection(srv, srv->clients);
+  }
+
+  if (srv->password_worker)
+  {
+    password_worker_stop(srv->password_worker);
+    password_worker_handler(srv, NULL);
+    password_worker_free(srv->password_worker);
   }
 
   if (srv->db_pool)

@@ -17,6 +17,7 @@ typedef struct test_ctx
   int passed_count;
 } test_ctx_t;
 
+void test_password_worker(test_ctx_t *ctx);
 void test_app_auth(test_ctx_t *ctx);
 void test_app_json_auth(test_ctx_t *ctx);
 void test_auth_libraries(test_ctx_t *ctx);

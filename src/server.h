@@ -11,6 +11,7 @@ typedef enum
   FD_TYPE_CLIENT,
   FD_TYPE_SIGNAL,
   FD_TYPE_DB,
+  FD_TYPE_PASSWORD,
 } fd_type_t;
 
 typedef struct
@@ -50,6 +51,7 @@ typedef struct
   connection_t signal_conn;
   struct http_server_t *http_server;
   struct db_pool_t *db_pool;
+  struct password_worker *password_worker;
   connection_t *clients;
   connection_t *retired_clients;
 } server_t;

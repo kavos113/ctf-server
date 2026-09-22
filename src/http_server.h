@@ -23,6 +23,7 @@ typedef struct http_handler
 typedef struct http_request_context
 {
   http_request_t *request;
+  void *worker_result; // Borrowed during a worker completion handler only.
 
   // handler実行中はその実行しているhandlerが入る（なので，handler内でnextを処理する）
   http_handler_t *current_handler;

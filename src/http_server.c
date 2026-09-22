@@ -67,6 +67,7 @@ http_server_handle_request(const http_server_t *server, http_request_t *req, db_
 
       req->context = ctx;
       ctx->request = req;
+      ctx->worker_result = NULL;
       ctx->current_handler = route->handler;
 
       http_response_t response;
