@@ -7,7 +7,7 @@
 #include "util_app.h"
 
 void test_skip_whitespace(test_ctx_t *ctx);
-void test_parse_json_str(test_ctx_t *ctx);
+void test_read_string(test_ctx_t *ctx);
 void test_parse_json_int(test_ctx_t *ctx);
 void test_skip_json_value(test_ctx_t *ctx);
 void test_json_to_challenge(test_ctx_t *ctx);
@@ -24,7 +24,7 @@ test_app_json(test_ctx_t *ctx)
   ctx->indent += PREFACE_INDENT;
 
   test_skip_whitespace(ctx);
-  test_parse_json_str(ctx);
+  test_read_string(ctx);
   test_parse_json_int(ctx);
   test_skip_json_value(ctx);
   test_json_to_challenge(ctx);
@@ -95,9 +95,9 @@ test_skip_whitespace(test_ctx_t *ctx)
 }
 
 void
-test_parse_json_str(test_ctx_t *ctx)
+test_read_string(test_ctx_t *ctx)
 {
-  PRINT_TEST_PREFACE("test_parse_json_str");
+  PRINT_TEST_PREFACE("test_read_string");
   ctx->indent += PREFACE_INDENT;
 
   struct test_case
@@ -130,6 +130,76 @@ test_parse_json_str(test_ctx_t *ctx)
           .expected_output = (string_t){NULL, 0},
           .expect_null = true,
       },
+      {
+          .name = "escaped quote",
+          .input = "\"a\\\"b\"",
+          .input_len = sizeof("\"a\\\"b\"") - 1,
+          .expected_output = {.ptr = "\"a\\\"b\"" + 1, .len = sizeof("\"a\\\"b\"") - 3},
+          .expect_null = false,
+      },
+      {
+          .name = "escaped backslash",
+          .input = "\"a\\\\\"",
+          .input_len = sizeof("\"a\\\\\"") - 1,
+          .expected_output = {.ptr = "\"a\\\\\"" + 1, .len = sizeof("\"a\\\\\"") - 3},
+          .expect_null = false,
+      },
+      {
+          .name = "backslashes before escaped quote",
+          .input = "\"a\\\\\\\"b\"",
+          .input_len = sizeof("\"a\\\\\\\"b\"") - 1,
+          .expected_output = {.ptr = "\"a\\\\\\\"b\"" + 1, .len = sizeof("\"a\\\\\\\"b\"") - 3},
+          .expect_null = false,
+      },
+      {
+          .name = "preserve escapes",
+          .input = "\"\\n\\t\\r\\b\\f\\/\\u65e5\\uD83D\\uDE00\"",
+          .input_len = sizeof("\"\\n\\t\\r\\b\\f\\/\\u65e5\\uD83D\\uDE00\"") - 1,
+          .expected_output = {.ptr = "\"\\n\\t\\r\\b\\f\\/\\u65e5\\uD83D\\uDE00\"" + 1, .len = sizeof("\"\\n\\t\\r\\b\\f\\/\\u65e5\\uD83D\\uDE00\"") - 3},
+          .expect_null = false,
+      },
+      {
+          .name = "invalid escape",
+          .input = "\"\\q\"",
+          .input_len = sizeof("\"\\q\"") - 1,
+          .expected_output = {.ptr = NULL, .len = 0},
+          .expect_null = true,
+      },
+      {
+          .name = "incomplete escape",
+          .input = "\"a\\",
+          .input_len = sizeof("\"a\\") - 1,
+          .expected_output = {.ptr = NULL, .len = 0},
+          .expect_null = true,
+      },
+      {
+          .name = "invalid unicode escape",
+          .input = "\"\\u12z4\"",
+          .input_len = sizeof("\"\\u12z4\"") - 1,
+          .expected_output = {.ptr = NULL, .len = 0},
+          .expect_null = true,
+      },
+      {
+          .name = "incomplete unicode escape",
+          .input = "\"\\u12\"",
+          .input_len = sizeof("\"\\u12\"") - 1,
+          .expected_output = {.ptr = NULL, .len = 0},
+          .expect_null = true,
+      },
+      {
+          .name = "raw newline",
+          .input = "\"a\nb\"",
+          .input_len = sizeof("\"a\nb\"") - 1,
+          .expected_output = {.ptr = NULL, .len = 0},
+          .expect_null = true,
+      },
+      {
+          .name = "raw control byte",
+          .input = "\"a\001b\"",
+          .input_len = sizeof("\"a\001b\"") - 1,
+          .expected_output = {.ptr = NULL, .len = 0},
+          .expect_null = true,
+      },
   };
 
   for (size_t i = 0; i < sizeof(test_cases) / sizeof(test_cases[0]); i++)
@@ -140,16 +210,23 @@ test_parse_json_str(test_ctx_t *ctx)
     const char *end = tc->input + tc->input_len;
     char out_buf[256] = {0};
     string_t out_str = {out_buf, sizeof(out_buf) - 1};
-    const char *result = parse_json_str(tc->input, end, &out_str);
+    json_parser_t parser = {
+        .cur = tc->input,
+        .end = end,
+        .error = -1,
+    };
+    bool result = read_string(&parser, &out_str);
 
     if (tc->expect_null)
     {
-      ASSERT_NULL(tc->name, result);
+      ASSERT_TRUE(tc->name, !result);
     }
     else
     {
-      ASSERT_NOT_NULL(tc->name, result);
+      ASSERT_TRUE(tc->name, result);
       ASSERT_STRING_EQ(tc->name, tc->expected_output, out_str);
+      ASSERT_TRUE(tc->name, out_str.ptr == tc->input + 1);
+      ASSERT_TRUE(tc->name, parser.cur == tc->input + tc->input_len);
     }
 
     CHECK_TEST(tc->name);
