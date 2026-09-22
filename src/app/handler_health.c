@@ -24,13 +24,15 @@ handle_hello_1(struct http_request_context *ctx, db_pool_t *db, db_task_t *task,
   assert(ctx->current_handler->next != NULL);
   ctx->current_handler = ctx->current_handler->next;
 
-  db_pool_exec_query(db, "SELECT * FROM challenges;", 26, (void *)ctx);
-  return false;
+  *out_response = (http_response_t){.status = HTTP_STATUS_INTERNAL_SERVER_ERROR};
+  const char query[] = "SELECT * FROM challenges;";
+  return db_pool_exec_query(db, query, sizeof(query) - 1, ctx) < 0;
 }
 
 bool
 handle_hello_2(struct http_request_context *ctx, db_pool_t *db, db_task_t *task, http_response_t *out_response)
 {
+  db_task_free(task);
   *out_response = (http_response_t){
       .status = HTTP_STATUS_OK,
       .body = "Hello, World!",

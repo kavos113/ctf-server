@@ -2,6 +2,7 @@
 
 #include "db.h"
 
+#include <errno.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,6 +10,7 @@
 
 #include <sys/epoll.h>
 #include <sys/eventfd.h>
+#include <unistd.h>
 
 #include "server.h"
 
@@ -16,6 +18,11 @@ task_queue_t *
 task_queue_new()
 {
   task_queue_t *q = malloc(sizeof(task_queue_t));
+
+  if (!q)
+  {
+    return NULL;
+  }
 
   q->head = q->tail = NULL;
   pthread_mutex_init(&q->mtx, NULL);
@@ -26,18 +33,41 @@ task_queue_new()
 }
 
 void
-task_queue_free(task_queue_t *queue)
+db_task_free(db_task_t *task)
 {
-  while (queue->head)
+  if (!task)
   {
-    db_task_t *top = task_queue_pop(queue);
-    if (top->is_param_query)
-    {
-      free(top->result);
-    }
-    free(top);
+    return;
   }
 
+  if (task->result)
+  {
+    if (task->result->res)
+    {
+      mysql_free_result(task->result->res);
+    }
+
+    free(task->result);
+  }
+
+  free(task);
+}
+
+void
+task_queue_free(task_queue_t *queue)
+{
+  if (!queue)
+  {
+    return;
+  }
+
+  while (queue->head)
+  {
+    db_task_free(task_queue_pop(queue));
+  }
+
+  pthread_cond_destroy(&queue->cond);
+  pthread_mutex_destroy(&queue->mtx);
   free(queue);
 }
 
@@ -191,20 +221,29 @@ db_worker_thread(void *arg)
   db_pool_t *pool = (db_pool_t *)arg;
 
   MYSQL *conn = mysql_init(NULL);
-  if (!mysql_real_connect(
-          conn,
-          pool->db_options.host,
-          pool->db_options.user,
-          pool->db_options.pass,
-          pool->db_options.db,
-          pool->db_options.port,
-          NULL, 0))
+  if (!conn || !mysql_real_connect(
+                   conn,
+                   pool->db_options.host,
+                   pool->db_options.user,
+                   pool->db_options.pass,
+                   pool->db_options.db,
+                   pool->db_options.port,
+                   NULL, 0))
   {
-    fprintf(stderr, "[MYSQL] mysql connect error: %s\n", mysql_error(conn));
-    return NULL;
+    fprintf(stderr, "[MYSQL] connection failed\n");
+
+    if (conn)
+    {
+      mysql_close(conn);
+    }
+
+    conn = NULL;
   }
 
-  fprintf(stderr, "[MYSQL] connected to db successfully. \n");
+  if (conn)
+  {
+    fprintf(stderr, "[MYSQL] connected to db successfully. \n");
+  }
 
   while (1)
   {
@@ -214,14 +253,17 @@ db_worker_thread(void *arg)
       break;
     }
 
-    if (task->is_param_query)
+    if (!conn)
+    {
+      set_param_query_error(task->result, "database connection unavailable");
+    }
+    else if (task->is_param_query)
     {
       execute_param_query(conn, task);
     }
     else
     {
       int err = mysql_query(conn, task->query);
-      task->result = calloc(1, sizeof(db_result_t));
       if (err == 0)
       {
         MYSQL_RES *res = mysql_store_result(conn);
@@ -242,10 +284,16 @@ db_worker_thread(void *arg)
     task_queue_push(pool->done_queue, task);
 
     eventfd_t val = 1;
-    eventfd_write(pool->notify_fd, val);
+    while (eventfd_write(pool->notify_fd, val) < 0 && errno == EINTR)
+    {
+    }
   }
 
-  mysql_close(conn);
+  if (conn)
+  {
+    mysql_close(conn);
+  }
+
   mysql_thread_end();
 
   return NULL;
@@ -254,36 +302,63 @@ db_worker_thread(void *arg)
 db_pool_t *
 db_pool_new(db_option_t option, int epoll_fd, int num_threads)
 {
-  db_pool_t *pool = malloc(sizeof(db_pool_t));
+  if (num_threads <= 0)
+  {
+    return NULL;
+  }
+
+  db_pool_t *pool = calloc(1, sizeof(*pool));
+
+  if (!pool)
+  {
+    return NULL;
+  }
 
   pool->epoll_fd = epoll_fd;
-  pool->num_threads = num_threads;
+  pool->notify_fd = -1;
   pool->db_options = option;
-
   pool->task_queue = task_queue_new();
   pool->done_queue = task_queue_new();
+  pool->threads = calloc(num_threads, sizeof(pthread_t));
+  pool->notification = calloc(1, sizeof(connection_t));
+
+  if (!pool->task_queue || !pool->done_queue || !pool->threads || !pool->notification)
+  {
+    goto error;
+  }
 
   pool->notify_fd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
 
-  connection_t *conn = malloc(sizeof(connection_t));
-  conn->fd = pool->notify_fd;
-  conn->type = FD_TYPE_DB;
+  if (pool->notify_fd < 0)
+  {
+    goto error;
+  }
 
-  struct epoll_event event;
-  event.events = EPOLLIN | EPOLLET;
-  event.data.ptr = conn;
+  pool->notification->fd = pool->notify_fd;
+  pool->notification->type = FD_TYPE_DB;
+  struct epoll_event event = {.events = EPOLLIN | EPOLLET, .data.ptr = pool->notification};
 
-  epoll_ctl(epoll_fd, EPOLL_CTL_ADD, pool->notify_fd, &event);
+  if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, pool->notify_fd, &event) < 0 ||
+      mysql_library_init(0, NULL, NULL) != 0)
+  {
+    goto error;
+  }
 
-  mysql_library_init(0, NULL, NULL);
-
-  pool->threads = malloc(sizeof(pthread_t) * num_threads);
   for (int i = 0; i < num_threads; i++)
   {
-    pthread_create(&pool->threads[i], NULL, db_worker_thread, pool);
+    if (pthread_create(&pool->threads[i], NULL, db_worker_thread, pool) != 0)
+    {
+      goto error;
+    }
+
+    pool->num_threads++;
   }
 
   return pool;
+
+error:
+  db_pool_free(pool);
+  return NULL;
 }
 
 db_pool_t *
@@ -338,28 +413,76 @@ db_pool_new_from_env(int epoll_fd, int num_threads)
 }
 
 void
-db_pool_free(db_pool_t *pool)
+db_pool_stop(db_pool_t *pool)
 {
-  task_queue_free(pool->task_queue);
-  task_queue_free(pool->done_queue);
+  if (pool->task_queue)
+  {
+    pthread_mutex_lock(&pool->task_queue->mtx);
+    pool->task_queue->stop = 1;
+    pthread_cond_broadcast(&pool->task_queue->cond);
+    pthread_mutex_unlock(&pool->task_queue->mtx);
+  }
 
-  free(pool);
+  for (int i = 0; i < pool->num_threads; i++)
+  {
+    pthread_join(pool->threads[i], NULL);
+  }
+
+  pool->num_threads = 0;
 }
 
 void
-db_pool_exec_query(db_pool_t *pool, const char *query, size_t query_len, void *data)
+db_pool_free(db_pool_t *pool)
 {
-  db_task_t *task = calloc(1, sizeof(db_task_t));
-
-  if (query_len >= DEFAULT_QUERY_SIZE)
+  if (!pool)
   {
     return;
   }
 
-  memcpy(task->query, query, query_len);
-  task->data = data;
+  db_pool_stop(pool);
 
+  if (pool->notify_fd >= 0)
+  {
+    epoll_ctl(pool->epoll_fd, EPOLL_CTL_DEL, pool->notify_fd, NULL);
+    close(pool->notify_fd);
+  }
+
+  task_queue_free(pool->task_queue);
+  task_queue_free(pool->done_queue);
+  free(pool->threads);
+  free(pool->notification);
+  free(pool);
+}
+
+int
+db_pool_exec_query(db_pool_t *pool, const char *query, size_t query_len, void *data)
+{
+  if (!pool || !pool->task_queue || !query || query_len == 0 ||
+      query_len >= DEFAULT_QUERY_SIZE || memchr(query, '\0', query_len) || pool->task_queue->stop)
+  {
+    return -1;
+  }
+
+  db_task_t *task = calloc(1, sizeof(*task));
+
+  if (!task)
+  {
+    return -1;
+  }
+
+  task->result = calloc(1, sizeof(*task->result));
+
+  if (!task->result)
+  {
+    free(task);
+    return -1;
+  }
+
+  memcpy(task->query, query, query_len);
+  task->query_len = query_len;
+  task->data = data;
   task_queue_push(pool->task_queue, task);
+  return 0;
 }
 
 int
@@ -372,11 +495,17 @@ db_exec_query_param(db_pool_t *pool,
 {
   if (!pool ||
       !pool->task_queue ||
+      pool->task_queue->stop ||
       !query ||
       query_len == 0 ||
       query_len >= DEFAULT_QUERY_SIZE ||
       memchr(query, '\0', query_len) ||
       (param_count && !params))
+  {
+    return -1;
+  }
+
+  if (param_count > (SIZE_MAX - sizeof(db_task_t)) / sizeof(db_param_t))
   {
     return -1;
   }
@@ -462,5 +591,22 @@ db_exec_query_param(db_pool_t *pool,
 db_task_t *
 db_pool_get_latest_completed_task(db_pool_t *pool)
 {
-  return task_queue_pop(pool->done_queue);
+  task_queue_t *queue = pool->done_queue;
+  pthread_mutex_lock(&queue->mtx);
+  db_task_t *task = queue->head;
+
+  if (task)
+  {
+    queue->head = task->next;
+
+    if (!queue->head)
+    {
+      queue->tail = NULL;
+    }
+
+    task->next = NULL;
+  }
+
+  pthread_mutex_unlock(&queue->mtx);
+  return task;
 }

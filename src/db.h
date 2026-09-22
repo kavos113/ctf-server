@@ -87,6 +87,7 @@ struct db_pool_t
   pthread_t *threads;
 
   db_option_t db_options;
+  struct connection *notification;
 };
 typedef struct db_pool_t db_pool_t;
 
@@ -100,9 +101,14 @@ void *db_worker_thread(void *arg);
 
 db_pool_t *db_pool_new(db_option_t option, int epoll_fd, int num_threads);
 db_pool_t *db_pool_new_from_env(int epoll_fd, int num_threads);
+// Main-thread shutdown: stop accepting work and join workers. Completed tasks
+// remain available so the caller can release task->data before freeing the pool.
+void db_pool_stop(db_pool_t *pool);
 void db_pool_free(db_pool_t *pool);
+void db_task_free(db_task_t *task);
 
-void db_pool_exec_query(db_pool_t *pool, const char *query, size_t query_len, void *data);
+// Submission returns -1 on failure; no completion notification will follow.
+int db_pool_exec_query(db_pool_t *pool, const char *query, size_t query_len, void *data);
 int db_exec_query_param(db_pool_t *pool,
                         const char *query,
                         size_t query_len,
@@ -110,6 +116,7 @@ int db_exec_query_param(db_pool_t *pool,
                         size_t param_count,
                         void *data);
 
+// Nonblocking: NULL when no completion is currently queued.
 db_task_t *db_pool_get_latest_completed_task(db_pool_t *pool);
 
 #endif // MYSQL_H

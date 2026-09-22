@@ -117,8 +117,7 @@ handle_post_answers_1(http_request_context_t *ctx,
 
   const char query[] = "SELECT id, creator_id, name, description, flag, genre FROM challenges";
   ctx->current_handler = ctx->current_handler->next;
-  db_pool_exec_query(db, query, sizeof(query) - 1, ctx);
-  return false;
+  return db_pool_exec_query(db, query, sizeof(query) - 1, ctx) < 0;
 }
 
 bool
@@ -209,8 +208,7 @@ handle_post_answers_3(http_request_context_t *ctx,
     // Skip the normal response handler; the last handler checks for deletion.
     const char query[] = "SELECT id, creator_id, name, description, flag, genre FROM challenges";
     ctx->current_handler = ctx->current_handler->next->next;
-    db_pool_exec_query(db, query, sizeof(query) - 1, ctx);
-    return false;
+    return db_pool_exec_query(db, query, sizeof(query) - 1, ctx) < 0;
   }
 
   if (affected != 1 || insert_id == 0 || insert_id > INT_MAX)
@@ -222,8 +220,7 @@ handle_post_answers_3(http_request_context_t *ctx,
   const char query[] = "SELECT id, challenge_id, user_id, answer, is_correct, "
                        "DATE_FORMAT(created_at, '%Y-%m-%dT%H:%i:%sZ') FROM answers ORDER BY id";
   ctx->current_handler = ctx->current_handler->next;
-  db_pool_exec_query(db, query, sizeof(query) - 1, ctx);
-  return false;
+  return db_pool_exec_query(db, query, sizeof(query) - 1, ctx) < 0;
 }
 
 bool
@@ -349,8 +346,7 @@ handle_get_answers_1(http_request_context_t *ctx,
   ctx->request->dispose_app_data = free_list_state;
   const char query[] = "SELECT id, creator_id, name, description, flag, genre FROM challenges";
   ctx->current_handler = ctx->current_handler->next;
-  db_pool_exec_query(db, query, sizeof(query) - 1, ctx);
-  return false;
+  return db_pool_exec_query(db, query, sizeof(query) - 1, ctx) < 0;
 }
 
 bool
@@ -402,8 +398,7 @@ handle_get_answers_2(http_request_context_t *ctx,
   const char query[] = "SELECT id, challenge_id, user_id, answer, is_correct, "
                        "DATE_FORMAT(created_at, '%Y-%m-%dT%H:%i:%sZ') FROM answers ORDER BY id";
   ctx->current_handler = ctx->current_handler->next;
-  db_pool_exec_query(db, query, sizeof(query) - 1, ctx);
-  return false;
+  return db_pool_exec_query(db, query, sizeof(query) - 1, ctx) < 0;
 }
 
 bool
@@ -489,8 +484,7 @@ handle_get_own_answers_1(http_request_context_t *ctx,
   ctx->request->dispose_app_data = free_list_state;
   const char query[] = "SELECT id, creator_id, name, description, flag, genre FROM challenges";
   ctx->current_handler = ctx->current_handler->next;
-  db_pool_exec_query(db, query, sizeof(query) - 1, ctx);
-  return false;
+  return db_pool_exec_query(db, query, sizeof(query) - 1, ctx) < 0;
 }
 
 bool
@@ -542,8 +536,7 @@ handle_get_own_answers_2(http_request_context_t *ctx,
   const char query[] = "SELECT id, challenge_id, user_id, answer, is_correct, "
                        "DATE_FORMAT(created_at, '%Y-%m-%dT%H:%i:%sZ') FROM answers ORDER BY id";
   ctx->current_handler = ctx->current_handler->next;
-  db_pool_exec_query(db, query, sizeof(query) - 1, ctx);
-  return false;
+  return db_pool_exec_query(db, query, sizeof(query) - 1, ctx) < 0;
 }
 
 bool
