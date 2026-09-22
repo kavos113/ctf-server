@@ -16,17 +16,17 @@ export class MyApp {
   static inject = [Api, SessionService];
 
   static routes = [
-    { path: '', component: HomePage, title: 'トップ' },
-    { path: 'login', component: AuthPage, title: 'ログイン' },
-    { path: 'signup', component: AuthPage, data: { signup: true }, title: 'ユーザー登録' },
-    { path: 'challenges', component: ChallengesPage, title: '問題一覧' },
-    { path: 'challenges/:id', component: DetailPage, title: '問題' },
-    { path: 'me/answers', component: HistoryPage, data: { mine: true }, title: '自分の解答' },
-    { path: 'ranking', component: RankingPage, title: 'ランキング' },
-    { path: 'me/challenges', component: MyChallengesPage, title: '自分の問題' },
-    { path: 'me/challenges/new', component: EditorPage, title: '問題作成' },
-    { path: 'me/challenges/:id/edit', component: EditorPage, title: '問題編集' },
-    { path: 'not-found', component: NotFoundPage, title: 'ページが見つかりません' }
+    { path: '', component: HomePage, title: 'トップ | EachOther 2026' },
+    { path: 'login', component: AuthPage, title: 'ログイン | EachOther 2026' },
+    { path: 'signup', component: AuthPage, data: { signup: true }, title: 'ユーザー登録 | EachOther 2026' },
+    { path: 'challenges', component: ChallengesPage, title: '問題一覧 | EachOther 2026' },
+    { path: 'challenges/:id', component: DetailPage, title: '問題 | EachOther 2026' },
+    { path: 'me/answers', component: HistoryPage, data: { mine: true }, title: '自分の解答 | EachOther 2026' },
+    { path: 'ranking', component: RankingPage, title: 'ランキング | EachOther 2026' },
+    { path: 'me/challenges', component: MyChallengesPage, title: '自分の問題 | EachOther 2026' },
+    { path: 'me/challenges/new', component: EditorPage, title: '問題作成 | EachOther 2026' },
+    { path: 'me/challenges/:id/edit', component: EditorPage, title: '問題編集 | EachOther 2026' },
+    { path: 'not-found', component: NotFoundPage, title: 'ページが見つかりません | EachOther 2026' }
   ];
 
   busy = false;
