@@ -62,6 +62,10 @@ typedef struct http_request
   http_param_t query_params[MAX_QUERY_PARAMS];
   size_t query_param_count;
 
+  // release when request is released
+  void *app_data;
+  void (*dispose_app_data)(void *);
+
   struct http_parser_internal_state *internal;
 } http_request_t;
 

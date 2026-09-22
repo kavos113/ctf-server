@@ -28,6 +28,11 @@ typedef struct http_parser_internal_state http_parser_internal_state;
 void
 http_request_dispose(http_request_t *req)
 {
+  if (req->dispose_app_data)
+  {
+    req->dispose_app_data(req->app_data);
+  }
+
   if (req->internal)
   {
     free(req->internal);
