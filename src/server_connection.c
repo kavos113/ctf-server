@@ -3,6 +3,8 @@
 
 #include <errno.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include <sys/epoll.h>
 
