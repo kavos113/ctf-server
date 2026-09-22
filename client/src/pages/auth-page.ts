@@ -1,5 +1,5 @@
 import type { RouteNode } from '@aurelia/router';
-import { PageState } from './page-state';
+import { PageState } from './shared/page-state';
 
 export class AuthPage extends PageState {
   signup = false;

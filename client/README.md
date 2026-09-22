@@ -75,9 +75,14 @@ pnpm run generate:api
 pnpm run check:api
 pnpm run typecheck
 pnpm run lint
+pnpm run fmt:check
 pnpm test
 pnpm run build
 ```
+
+JavaScript・TypeScriptのlintはoxlint（`.oxlintrc.json`）、整形はoxfmt（`.oxfmtrc.json`）を使用します。`pnpm run fmt` で `src/`・`test/`・`mock/` を整形し、`pnpm run fmt:check` で変更せずに確認できます。既存の空行、シングルクォート、2スペース、セミコロンありの書式を引き継ぎ、APIの生成ファイルはlint・整形から除外しています。CSSのlintはStylelintで行います。
+
+設定の参照先: [Oxlintの設定](https://oxc.rs/docs/guide/usage/linter/config)、[Oxfmtの設定](https://oxc.rs/docs/guide/usage/formatter/config)。
 
 自動テストはVitest + jsdomのユニットテストです。fetchをスタブに差し替え、モックのハンドラーも直接呼び出します。HTTPサーバーや実APIへの接続は不要です。ルーティングは既存の [Aureliaルーター](https://docs.aurelia.io/getting-to-know-aurelia/aurelia-router/fundamentals/getting-started) のハッシュモードです。
 

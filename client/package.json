@@ -18,28 +18,24 @@
     "@aurelia/metadata": "2.0.0-rc.2",
     "@aurelia/testing": "latest",
     "@aurelia/vite-plugin": "latest",
-    "@eslint/js": "9.39.5",
     "@types/node": "^22.10.2",
-    "@typescript-eslint/parser": "8.58.0",
-    "eslint": "^9.17.0",
-    "globals": "^15.14.0",
     "jsdom": "^25.0.1",
     "openapi-typescript": "7.13.0",
-    "prettier": "^3.9.8",
+    "oxfmt": "0.68.0",
+    "oxlint": "1.83.0",
     "stylelint": "^16.12.0",
     "stylelint-config-standard": "^36.0.1",
     "tslib": "^2.8.1",
     "typescript": "^5.7.2",
-    "typescript-eslint": "^8.18.1",
     "vite": "^7.3.1",
     "vite-plugin-node-polyfills": "^0.25.0",
     "vitest": "^2.1.8"
   },
   "scripts": {
-    "lint:js": "eslint \"src/**/*.{js,ts}\" \"test/**/*.{js,ts}\" \"mock/**/*.mjs\"",
+    "lint:js": "oxlint --deny-warnings src test mock",
     "lint:css": "stylelint \"src/**/*.css\"",
     "lint": "npm run lint:js && npm run lint:css",
-    "fmt": "prettier --write \"src/**/*.{js,ts,css,html}\" \"test/**/*.{js,ts,css,html}\"",
+    "fmt": "oxfmt --write src test mock",
     "pretest": "npm run lint",
     "start": "vite",
     "build": "vite build",
@@ -47,7 +43,8 @@
     "generate:api": "openapi-typescript ../docs/openapi.yaml -o src/api/generated/schema.ts",
     "check:api": "openapi-typescript ../docs/openapi.yaml -o src/api/generated/schema.ts --check",
     "mock": "node mock/server.mjs",
-    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.vitest.json"
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.vitest.json",
+    "fmt:check": "oxfmt --check src test mock"
   },
   "type": "module"
 }
