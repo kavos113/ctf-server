@@ -1,0 +1,45 @@
+<section>
+  <p class="eyebrow">ACTIVITY</p>
+  <h1>${mine ? '自分の解答' : '正答履歴'}</h1>
+  <div class="toolbar">
+    <div>
+      <label for="challenge-filter">問題</label
+      ><select id="challenge-filter" value.bind="filter" change.trigger="refresh()">
+        <option value="">すべて</option>
+        <option
+          repeat.for="item of challenges"
+          if.bind="item.id !== undefined"
+          value.bind="'' + item.id"
+        >
+          ${item.name || item.id}
+        </option>
+      </select>
+    </div>
+    <button class="secondary" click.trigger="refresh()" disabled.bind="pending">更新</button>
+  </div>
+  <p if.bind="pending" role="status">読み込み中…</p>
+  <p if.bind="error" class="error" role="alert">${error}</p>
+  <p if.bind="!pending && !error && !items.length" class="empty">履歴はありません。</p>
+  <div class="table-wrap" if.bind="items.length">
+    <table>
+      <thead>
+        <tr>
+          <th>問題</th>
+          <th>${mine ? '解答' : 'ユーザー'}</th>
+          <th if.bind="mine">結果</th>
+          <th>日時</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr repeat.for="item of items">
+          <td>${challengeName(item.challenge_id)}</td>
+          <td>${mine ? item.answer : userName(item.user_id)}</td>
+          <td if.bind="mine">
+            ${item.correct === true ? '正解' : item.correct === false ? '不正解' : '判定不明'}
+          </td>
+          <td>${formatDate(item.answered_at)}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>

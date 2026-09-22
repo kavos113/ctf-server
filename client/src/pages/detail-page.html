@@ -1,0 +1,53 @@
+<section>
+  <a href="#/challenges">← 問題一覧</a>
+  <p if.bind="pending" role="status">読み込み中…</p>
+  <p if.bind="error" role="alert" class="error">${error}</p>
+  <button
+    if.bind="error"
+    class="secondary"
+    click.trigger="refresh()"
+    disabled.bind="pending || busy"
+  >
+    再取得
+  </button>
+  <template if.bind="challenge">
+    <p class="eyebrow">${challenge.genre || 'CHALLENGE'}</p>
+    <h1>${challenge.name || '名前未設定'}</h1>
+    <p class="description panel">${challenge.description || '説明はありません。'}</p>
+    <section class="panel">
+      <h2>フラグを提出</h2>
+      <form if.bind="allowed" submit.trigger="submit()">
+        <label for="answer">解答</label
+        ><input id="answer" value.bind="answer" autocomplete="off" required disabled.bind="busy" />
+        <button type="submit" disabled.bind="busy">${busy ? '判定中…' : '解答する'}</button>
+      </form>
+      <p else><a href="#/login">ログイン</a>して解答してください。</p>
+      <p role="status" class="result">${message}</p>
+    </section>
+    <p if.bind="historyError" role="alert" class="error">
+      履歴の取得に失敗しました。${historyError}
+    </p>
+    <button class="secondary" click.trigger="refreshHistory()" disabled.bind="busy">
+      履歴を更新
+    </button>
+    <section if.bind="allowed" class="panel">
+      <h2>自分の解答</h2>
+      <p if.bind="!own.length">まだ解答がありません。</p>
+      <ul>
+        <li repeat.for="item of own">
+          ${formatDate(item.answered_at)} — ${item.correct === true ? '正解' : item.correct ===
+          false ? '不正解' : '判定不明'} <code>${item.answer}</code>
+        </li>
+      </ul>
+    </section>
+    <section class="panel">
+      <h2>正答履歴</h2>
+      <p if.bind="!publicAnswers.length">まだ正答がありません。</p>
+      <ul>
+        <li repeat.for="item of publicAnswers">
+          ${item.user_id || 'ユーザー不明'} — ${formatDate(item.answered_at)}
+        </li>
+      </ul>
+    </section>
+  </template>
+</section>

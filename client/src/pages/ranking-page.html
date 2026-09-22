@@ -1,0 +1,27 @@
+<section>
+  <p class="eyebrow">SCOREBOARD</p>
+  <h1>ランキング</h1>
+  <p class="muted">参加者の得点を確認しよう。同点のユーザーは同じ得点として表示します。</p>
+  <button class="secondary" click.trigger="refresh()" disabled.bind="pending">
+    ランキングを更新
+  </button>
+  <p if.bind="pending" role="status">読み込み中…</p>
+  <p if.bind="error" role="alert" class="error">${error}</p>
+  <p if.bind="!pending && !error && !users.length" class="empty">ユーザーはまだいません。</p>
+  <div class="table-wrap" if.bind="users.length">
+    <table>
+      <thead>
+        <tr>
+          <th>ユーザー</th>
+          <th>得点</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr repeat.for="user of users">
+          <td>${user.username || user.id || 'ユーザー不明'}</td>
+          <td class="score">${user.score === undefined ? '得点未取得' : user.score}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>

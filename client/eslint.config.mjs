@@ -7,7 +7,7 @@ export default [
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    files: ["**/*.ts"],
+    files: ["**/*.ts", "mock/**/*.mjs"],
 
     languageOptions: {
       globals: {

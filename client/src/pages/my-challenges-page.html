@@ -1,0 +1,21 @@
+<section>
+  <p class="eyebrow">CREATE</p>
+  <h1>自分の問題</h1>
+  <div class="toolbar">
+    <a class="button" href="#/me/challenges/new">問題を作成</a
+    ><button class="secondary" click.trigger="refresh()" disabled.bind="pending">更新</button>
+  </div>
+  <p if.bind="pending" role="status">読み込み中…</p>
+  <p if.bind="error" role="alert" class="error">${error}</p>
+  <p if.bind="!pending && !error && !items.length" class="empty">まだ問題を作成していません。</p>
+  <div class="cards">
+    <article class="panel" repeat.for="item of items">
+      <span class="badge">${item.genre || 'ジャンル未設定'}</span>
+      <h2>${item.name || '名前未設定'}</h2>
+      <a if.bind="item.id !== undefined" href.bind="'#/me/challenges/' + item.id + '/edit'"
+        >編集する →</a
+      >
+      <p else>問題IDがないため編集できません。</p>
+    </article>
+  </div>
+</section>

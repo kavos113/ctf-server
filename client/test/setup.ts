@@ -12,18 +12,20 @@ function bootstrapTextEnv() {
 const fixtures: IFixture<object>[] = [];
 beforeAll(() => {
   bootstrapTextEnv();
-  onFixtureCreated(fixture => {
+  onFixtureCreated((fixture) => {
     fixtures.push(fixture);
   });
 });
 
-afterEach(() => {
-  fixtures.forEach(async f => {
-    try {
-      await f.stop(true);
-    } catch {
-      // ignore
-    }
-  });
+afterEach(async () => {
+  await Promise.all(
+    fixtures.map(async (f) => {
+      try {
+        await f.stop(true);
+      } catch {
+        // ignore
+      }
+    })
+  );
   fixtures.length = 0;
 });

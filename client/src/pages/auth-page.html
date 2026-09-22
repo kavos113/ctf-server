@@ -1,0 +1,31 @@
+<section class="panel narrow">
+  <p class="eyebrow">ACCOUNT</p>
+  <h1>${signup ? 'ユーザー登録' : 'ログイン'}</h1>
+  <p class="muted">
+    ${signup ? 'アカウントを作成して、CTFに参加しましょう。' : '問題に挑戦する準備はできましたか？'}
+  </p>
+  <p if.bind="error" role="alert" class="error">${error}</p>
+  <form submit.trigger="submit()">
+    <label for="username">ユーザー名</label>
+    <input
+      id="username"
+      value.bind="username"
+      autocomplete="username"
+      required
+      disabled.bind="busy"
+    />
+    <label for="password">パスワード</label>
+    <input
+      id="password"
+      type="password"
+      value.bind="password"
+      autocomplete.bind="signup ? 'new-password' : 'current-password'"
+      required
+      disabled.bind="busy"
+    />
+    <button type="submit" disabled.bind="busy">
+      ${busy ? '送信中…' : signup ? '登録する' : 'ログイン'}
+    </button>
+  </form>
+  <a href.bind="signup ? '#/login' : '#/signup'">${signup ? 'ログインへ' : '新しく登録する'}</a>
+</section>
