@@ -47,6 +47,8 @@ struct http_server_t
 };
 typedef struct http_server_t http_server_t;
 
+void http_request_context_dispose(http_request_context_t *ctx);
+
 void http_server_add_route(
     http_server_t *server,
     http_method method,

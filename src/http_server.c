@@ -6,6 +6,20 @@
 #include <string.h>
 
 void
+http_request_context_dispose(http_request_context_t *ctx)
+{
+  http_request_t *request = ctx->request;
+  request->context = NULL;
+
+  if (!request->conn)
+  {
+    http_request_dispose(request);
+  }
+
+  free(ctx);
+}
+
+void
 http_server_add_route(
     http_server_t *server,
     http_method method,
@@ -45,6 +59,13 @@ http_server_handle_request(const http_server_t *server, http_request_t *req, db_
     if (strncmp(route->path, req->uri, route->path_len) == 0)
     {
       http_request_context_t *ctx = malloc(sizeof(http_request_context_t));
+      if (!ctx)
+      {
+        *is_complete = true;
+        return (http_response_t){.status = HTTP_STATUS_INTERNAL_SERVER_ERROR};
+      }
+
+      req->context = ctx;
       ctx->request = req;
       ctx->current_handler = route->handler;
 
@@ -54,6 +75,7 @@ http_server_handle_request(const http_server_t *server, http_request_t *req, db_
       if (completed)
       {
         *is_complete = true;
+        http_request_context_dispose(ctx);
         return response;
       }
       else
