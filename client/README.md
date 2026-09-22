@@ -30,12 +30,11 @@ src/
 
 ## 開発環境
 
-Node.js 22.12以降とpnpmを使用します。依存関係はlockfileで固定しています。
+Node.jsとpnpmのバージョンは[ルートの開発環境](../README.md)に従います。依存関係はルートのworkspace・catalog・lockfileで管理します。
 
 ```sh
-cd client
 pnpm install --frozen-lockfile
-pnpm mock
+pnpm --filter client mock
 ```
 
 別のターミナルで起動します。
@@ -80,7 +79,7 @@ pnpm test
 pnpm run build
 ```
 
-JavaScript・TypeScriptのlintはoxlint（`.oxlintrc.json`）、整形はoxfmt（`.oxfmtrc.json`）を使用します。`pnpm run fmt` で `src/`・`test/`・`mock/` を整形し、`pnpm run fmt:check` で変更せずに確認できます。既存の空行、シングルクォート、2スペース、セミコロンありの書式を引き継ぎ、APIの生成ファイルはlint・整形から除外しています。CSSのlintはStylelintで行います。
+JavaScript・TypeScriptのlintはoxlint、整形はoxfmtを使用します。設定はルートの[`.oxlintrc.json`](../.oxlintrc.json)・[`.oxfmtrc.json`](../.oxfmtrc.json)をE2Eと共有します。`client/`での`pnpm run fmt`は`src/`・`test/`・`mock/`と設定ファイルを整形し、`pnpm run fmt:check`で変更せずに確認できます。シングルクォート、2スペース、セミコロンありの書式を引き継ぎ、APIの生成ファイルはlint・整形から除外しています。CSSのlintはルートの[Stylelint設定](../.stylelintrc.json)を使用します。ルートでの同名コマンドはworkspace全体を対象にします。
 
 設定の参照先: [Oxlintの設定](https://oxc.rs/docs/guide/usage/linter/config)、[Oxfmtの設定](https://oxc.rs/docs/guide/usage/formatter/config)。
 

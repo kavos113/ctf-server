@@ -1,8 +1,6 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": [
-    "typescript"
-  ],
+  "plugins": ["typescript"],
   "categories": {
     "correctness": "off"
   },
@@ -80,16 +78,11 @@
   },
   "overrides": [
     {
-      "files": [
-        "**/*.js",
-        "**/*.mjs"
-      ],
+      "files": ["**/*.js", "**/*.mjs"],
       "rules": {
         "eslint/no-undef": "error"
       }
     }
   ],
-  "ignorePatterns": [
-    "src/api/generated/**"
-  ]
+  "ignorePatterns": ["**/src/**/generated/**"]
 }

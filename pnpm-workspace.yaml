@@ -1,0 +1,12 @@
+packages:
+  - client
+  - e2etest
+
+catalog:
+  '@types/node': 22.20.4
+  openapi-typescript: 7.13.0
+  typescript: 5.9.3
+  vitest: 2.1.9
+
+allowBuilds:
+  esbuild: true

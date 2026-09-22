@@ -2,13 +2,8 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "composite": false,
-    "types": [
-      "node"
-    ],
+    "types": ["node"],
     "allowJs": true
   },
-  "include": [
-    "src",
-    "test"
-  ]
+  "include": ["src", "test"]
 }

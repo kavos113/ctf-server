@@ -1,19 +1,27 @@
 # OpenAPI E2E契約テスト
 
 `../docs/openapi.yaml`だけをAPI仕様として、起動済みサーバーへHTTPリクエストを送信します。
-TypeScriptの独立したプロジェクトで、サーバー・DB・フロントエンドの実装は参照しません。
+clientと共通のTypeScript workspaceに属し、サーバー・DB・フロントエンドの実装は参照しません。
 
 ## 実行
 
-Node.js 22.19以降の22系、24系、または26以降とpnpmを使用します。`e2etest/`で実行してください。
+Node.jsとpnpmのバージョンは[ルートの開発環境](../README.md)に従います。インストールはリポジトリルートで実行します。
 
 ```sh
 pnpm install --frozen-lockfile
+cd e2etest
 pnpm check:api
 pnpm typecheck
+pnpm lint
+pnpm fmt:check
 pnpm test:unit
 E2E_BASE_URL=http://localhost:8080 pnpm test
 ```
+
+ルートからは`pnpm test`でclientと検証器のユニットテスト、
+`E2E_BASE_URL=http://localhost:8080 pnpm test:e2e`でE2Eを実行できます。
+共通依存のバージョンはルートのcatalog、TypeScript設定は`tsconfig.base.json`、fmt・lintはルートのOxfmt・Oxlint設定を使用します。
+`pnpm fmt`で整形できます。生成型はfmt・lint対象外です。
 
 `E2E_BASE_URL`は必須です。未指定・不正な場合、通信前に失敗します。
 パス接頭辞が必要な環境では `http://localhost:8080/api` のように指定できます。

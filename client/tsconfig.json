@@ -1,18 +1,10 @@
 {
+  "extends": "../tsconfig.base.json",
   "compilerOptions": {
-    "module": "esnext",
-    "moduleResolution": "bundler",
-    "skipLibCheck": true,
-    "target": "ES2017",
-    "esModuleInterop": true,
-    "resolveJsonModule": true,
+    "strict": false,
     "importHelpers": true,
     "sourceMap": true
   },
-  "include": [
-    "src"
-  ],
-  "files": [
-    "src/resource.d.ts"
-  ]
+  "include": ["src"],
+  "files": ["src/resource.d.ts"]
 }

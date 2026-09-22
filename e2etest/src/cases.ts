@@ -13,9 +13,10 @@ type Query<T> = T extends { parameters: { query: infer Q } }
 
 export type ContractCase = {
   [P in keyof paths]: {
-    [M in Method]: paths[P][M] extends undefined ? never
-      : { path: P; method: M } & Body<paths[P][M]> & Query<paths[P][M]>
-  }[Method]
+    [M in Method]: paths[P][M] extends undefined
+      ? never
+      : { path: P; method: M } & Body<paths[P][M]> & Query<paths[P][M]>;
+  }[Method];
 }[keyof paths];
 
 export function createCases(): ContractCase[] {

@@ -1,0 +1,28 @@
+{
+  "name": "ctf-server",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.5.1",
+  "engines": {
+    "node": "^22.19.0 || ^24.0.0 || >=26.0.0"
+  },
+  "scripts": {
+    "start": "pnpm --filter client start",
+    "mock": "pnpm --filter client mock",
+    "build": "pnpm --filter client build",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "pnpm -r lint",
+    "fmt": "pnpm -r fmt && oxfmt --write package.json pnpm-workspace.yaml tsconfig.base.json .oxfmtrc.json .oxlintrc.json .stylelintrc.json",
+    "fmt:check": "pnpm -r fmt:check && oxfmt --check package.json pnpm-workspace.yaml tsconfig.base.json .oxfmtrc.json .oxlintrc.json .stylelintrc.json",
+    "test": "pnpm --filter client test && pnpm --filter ctf-server-e2etest test:unit",
+    "test:e2e": "pnpm --filter ctf-server-e2etest test",
+    "generate:api": "pnpm -r generate:api",
+    "check:api": "pnpm -r check:api"
+  },
+  "devDependencies": {
+    "oxfmt": "0.68.0",
+    "oxlint": "1.83.0",
+    "stylelint": "^16.12.0",
+    "stylelint-config-standard": "^36.0.1"
+  }
+}
