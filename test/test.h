@@ -20,6 +20,7 @@ typedef struct test_ctx
 void test_set_calloc_failure(int after);
 void test_app_create_challenge(test_ctx_t *ctx);
 void test_db(test_ctx_t *ctx);
+void test_app_challenge_write(test_ctx_t *ctx);
 void test_http_request(test_ctx_t *ctx);
 void test_http_response(test_ctx_t *ctx);
 void test_http_request_path(test_ctx_t *ctx);

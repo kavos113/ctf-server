@@ -193,3 +193,387 @@ handle_post_challenges_2(struct http_request_context *ctx,
   free(task);
   return true;
 }
+
+typedef struct
+{
+  int id;
+  create_challenge_request_t input;
+  string_t response;
+} challenge_write_state;
+
+static void
+free_challenge_write_state(void *data)
+{
+  challenge_write_state *state = data;
+  free(state->response.ptr);
+  free(state);
+}
+
+static void
+free_challenge_task(db_task_t *task)
+{
+  if (task->result)
+  {
+    if (task->result->res)
+    {
+      mysql_free_result(task->result->res);
+    }
+
+    free(task->result);
+  }
+
+  free(task);
+}
+
+static bool
+parse_challenge_id(const char *text, size_t len, int *out)
+{
+  if (!text || !len || text[0] < '1' || text[0] > '9')
+  {
+    return false;
+  }
+
+  int value = 0;
+
+  for (size_t i = 0; i < len; i++)
+  {
+    if (text[i] < '0' || text[i] > '9')
+    {
+      return false;
+    }
+
+    int digit = text[i] - '0';
+
+    if (value > (INT_MAX - digit) / 10)
+    {
+      return false;
+    }
+
+    value = value * 10 + digit;
+  }
+
+  *out = value;
+  return true;
+}
+
+static bool
+read_challenge_id(const http_request_t *request, int *id)
+{
+  bool found = false;
+
+  for (size_t i = 0; i < request->query_param_count; i++)
+  {
+    const http_param_t *param = &request->query_params[i];
+
+    if (param->name_len != 2 || memcmp(param->name, "id", 2) != 0)
+    {
+      continue;
+    }
+
+    if (found || !parse_challenge_id(param->value, param->value_len, id))
+    {
+      return false;
+    }
+
+    found = true;
+  }
+
+  return found;
+}
+
+static challenge_write_state *
+new_challenge_write_state(http_request_context_t *ctx, http_response_t *response)
+{
+  *response = (http_response_t){.status = HTTP_STATUS_INTERNAL_SERVER_ERROR};
+  int id;
+
+  if (!read_challenge_id(ctx->request, &id))
+  {
+    response->status = HTTP_STATUS_BAD_REQUEST;
+    return NULL;
+  }
+
+  challenge_write_state *state = calloc(1, sizeof(*state));
+
+  if (!state)
+  {
+    return NULL;
+  }
+
+  state->id = id;
+  ctx->request->app_data = state;
+  ctx->request->dispose_app_data = free_challenge_write_state;
+  return state;
+}
+
+static bool
+select_challenge_owners(http_request_context_t *ctx, db_pool_t *db)
+{
+  assert(ctx->current_handler->next != NULL);
+  const char query[] = "SELECT id, creator_id FROM challenges";
+  ctx->current_handler = ctx->current_handler->next;
+  db_pool_exec_query(db, query, sizeof(query) - 1, ctx);
+  return false;
+}
+
+static http_status
+challenge_write_access(const db_result_t *result, int target_id)
+{
+  if (!result || !result->success || !result->res || mysql_num_fields(result->res) != 2)
+  {
+    return HTTP_STATUS_INTERNAL_SERVER_ERROR;
+  }
+
+  MYSQL_ROW row;
+
+  while ((row = mysql_fetch_row(result->res)))
+  {
+    unsigned long *lengths = mysql_fetch_lengths(result->res);
+    int id;
+
+    if (!lengths || !row[1] || !parse_challenge_id(row[0], lengths[0], &id))
+    {
+      return HTTP_STATUS_INTERNAL_SERVER_ERROR;
+    }
+
+    if (id == target_id)
+    {
+      return lengths[1] == 5 && memcmp(row[1], "dummy", 5) == 0 ? HTTP_STATUS_OK
+                                                                : HTTP_STATUS_FORBIDDEN;
+    }
+  }
+
+  return HTTP_STATUS_NOT_FOUND;
+}
+
+static void
+updated_challenge_response(challenge_write_state *state, http_response_t *response)
+{
+  *response = (http_response_t){.status = HTTP_STATUS_INTERNAL_SERVER_ERROR};
+  challenge_t challenge = {
+      .id = state->id,
+      .creator_id = {.ptr = "dummy", .len = 5},
+      .name = state->input.name,
+      .description = state->input.description,
+      .flag = state->input.flag,
+      .genre = state->input.genre,
+  };
+  challenge_to_json(&challenge, &state->response, false);
+
+  if (state->response.ptr)
+  {
+    *response = (http_response_t){
+        .status = HTTP_STATUS_OK,
+        .body = state->response.ptr,
+        .body_len = state->response.len,
+        .content_type = "application/json",
+    };
+  }
+}
+
+bool
+handle_put_challenges_1(http_request_context_t *ctx,
+                        db_pool_t *db,
+                        db_task_t *task,
+                        http_response_t *out_response)
+{
+  challenge_write_state *state = new_challenge_write_state(ctx, out_response);
+
+  if (!state)
+  {
+    return true;
+  }
+
+  int parsed = json_to_create_challenge_request(
+      ctx->request->body, ctx->request->content_length, &state->input);
+
+  if (parsed != 0)
+  {
+    out_response->status =
+        parsed == -2 ? HTTP_STATUS_INTERNAL_SERVER_ERROR : HTTP_STATUS_BAD_REQUEST;
+    return true;
+  }
+
+  return select_challenge_owners(ctx, db);
+}
+
+bool
+handle_put_challenges_2(http_request_context_t *ctx,
+                        db_pool_t *db,
+                        db_task_t *task,
+                        http_response_t *out_response)
+{
+  assert(ctx->current_handler->next != NULL);
+  challenge_write_state *state = ctx->request->app_data;
+  http_status access = challenge_write_access(task->result, state->id);
+  free_challenge_task(task);
+  *out_response = (http_response_t){.status = access};
+
+  if (access != HTTP_STATUS_OK)
+  {
+    return true;
+  }
+
+  const char query[] = "UPDATE challenges SET name = ?, description = ?, flag = ?, genre = ? "
+                       "WHERE id = ? AND creator_id = ?";
+  const db_param_t params[] = {
+      {
+          .type = DB_PARAM_STRING,
+          .value.string = {.ptr = state->input.name.ptr, .len = state->input.name.len},
+      },
+      {
+          .type = DB_PARAM_STRING,
+          .value.string = {.ptr = state->input.description.ptr,
+                           .len = state->input.description.len},
+      },
+      {
+          .type = DB_PARAM_STRING,
+          .value.string = {.ptr = state->input.flag.ptr, .len = state->input.flag.len},
+      },
+      {.type = DB_PARAM_INT64, .value.integer = state->input.genre},
+      {.type = DB_PARAM_INT64, .value.integer = state->id},
+      {.type = DB_PARAM_STRING, .value.string = {.ptr = "dummy", .len = 5}},
+  };
+
+  if (db_exec_query_param(db, query, sizeof(query) - 1, params, 6, ctx) < 0)
+  {
+    out_response->status = HTTP_STATUS_INTERNAL_SERVER_ERROR;
+    return true;
+  }
+
+  ctx->current_handler = ctx->current_handler->next;
+  return false;
+}
+
+bool
+handle_put_challenges_3(http_request_context_t *ctx,
+                        db_pool_t *db,
+                        db_task_t *task,
+                        http_response_t *out_response)
+{
+  *out_response = (http_response_t){.status = HTTP_STATUS_INTERNAL_SERVER_ERROR};
+  bool success = task->result && task->result->success;
+  uint64_t affected = success ? task->result->affected : 0;
+  free_challenge_task(task);
+
+  if (!success || affected > 1)
+  {
+    return true;
+  }
+
+  if (affected == 0)
+  {
+    return select_challenge_owners(ctx, db);
+  }
+
+  updated_challenge_response(ctx->request->app_data, out_response);
+  return true;
+}
+
+bool
+handle_put_challenges_4(http_request_context_t *ctx,
+                        db_pool_t *db,
+                        db_task_t *task,
+                        http_response_t *out_response)
+{
+  assert(ctx->current_handler->next == NULL);
+  challenge_write_state *state = ctx->request->app_data;
+  http_status access = challenge_write_access(task->result, state->id);
+  free_challenge_task(task);
+  *out_response = (http_response_t){.status = access};
+
+  if (access == HTTP_STATUS_OK)
+  {
+    updated_challenge_response(state, out_response);
+  }
+
+  return true;
+}
+
+bool
+handle_delete_challenges_1(http_request_context_t *ctx,
+                           db_pool_t *db,
+                           db_task_t *task,
+                           http_response_t *out_response)
+{
+  if (!new_challenge_write_state(ctx, out_response))
+  {
+    return true;
+  }
+
+  return select_challenge_owners(ctx, db);
+}
+
+bool
+handle_delete_challenges_2(http_request_context_t *ctx,
+                           db_pool_t *db,
+                           db_task_t *task,
+                           http_response_t *out_response)
+{
+  assert(ctx->current_handler->next != NULL);
+  challenge_write_state *state = ctx->request->app_data;
+  http_status access = challenge_write_access(task->result, state->id);
+  free_challenge_task(task);
+  *out_response = (http_response_t){.status = access};
+
+  if (access != HTTP_STATUS_OK)
+  {
+    return true;
+  }
+
+  const char query[] = "DELETE FROM challenges WHERE id = ? AND creator_id = ?";
+  const db_param_t params[] = {
+      {.type = DB_PARAM_INT64, .value.integer = state->id},
+      {.type = DB_PARAM_STRING, .value.string = {.ptr = "dummy", .len = 5}},
+  };
+
+  if (db_exec_query_param(db, query, sizeof(query) - 1, params, 2, ctx) < 0)
+  {
+    out_response->status = HTTP_STATUS_INTERNAL_SERVER_ERROR;
+    return true;
+  }
+
+  ctx->current_handler = ctx->current_handler->next;
+  return false;
+}
+
+bool
+handle_delete_challenges_3(http_request_context_t *ctx,
+                           db_pool_t *db,
+                           db_task_t *task,
+                           http_response_t *out_response)
+{
+  *out_response = (http_response_t){.status = HTTP_STATUS_INTERNAL_SERVER_ERROR};
+  bool success = task->result && task->result->success;
+  uint64_t affected = success ? task->result->affected : 0;
+  free_challenge_task(task);
+
+  if (!success || affected > 1)
+  {
+    return true;
+  }
+
+  if (affected == 0)
+  {
+    return select_challenge_owners(ctx, db);
+  }
+
+  out_response->status = HTTP_STATUS_OK;
+  return true;
+}
+
+bool
+handle_delete_challenges_4(http_request_context_t *ctx,
+                           db_pool_t *db,
+                           db_task_t *task,
+                           http_response_t *out_response)
+{
+  assert(ctx->current_handler->next == NULL);
+  challenge_write_state *state = ctx->request->app_data;
+  http_status access = challenge_write_access(task->result, state->id);
+  free_challenge_task(task);
+  *out_response = (http_response_t){
+      .status = access == HTTP_STATUS_OK ? HTTP_STATUS_INTERNAL_SERVER_ERROR : access,
+  };
+  return true;
+}

@@ -18,4 +18,13 @@ bool handle_get_challenges_2(struct http_request_context *ctx, db_pool_t *db, db
 bool handle_post_challenges_1(struct http_request_context *ctx, db_pool_t *db, db_task_t *task, http_response_t *out_response);
 bool handle_post_challenges_2(struct http_request_context *ctx, db_pool_t *db, db_task_t *task, http_response_t *out_response);
 
+bool handle_put_challenges_1(http_request_context_t *ctx, db_pool_t *db, db_task_t *task, http_response_t *out_response);
+bool handle_put_challenges_2(http_request_context_t *ctx, db_pool_t *db, db_task_t *task, http_response_t *out_response);
+bool handle_put_challenges_3(http_request_context_t *ctx, db_pool_t *db, db_task_t *task, http_response_t *out_response);
+bool handle_put_challenges_4(http_request_context_t *ctx, db_pool_t *db, db_task_t *task, http_response_t *out_response);
+bool handle_delete_challenges_1(http_request_context_t *ctx, db_pool_t *db, db_task_t *task, http_response_t *out_response);
+bool handle_delete_challenges_2(http_request_context_t *ctx, db_pool_t *db, db_task_t *task, http_response_t *out_response);
+bool handle_delete_challenges_3(http_request_context_t *ctx, db_pool_t *db, db_task_t *task, http_response_t *out_response);
+bool handle_delete_challenges_4(http_request_context_t *ctx, db_pool_t *db, db_task_t *task, http_response_t *out_response);
+
 #endif // APP_HANDLER_H

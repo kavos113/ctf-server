@@ -20,19 +20,25 @@ main()
   http_handler_t get_challenges_2_handler = {handle_get_challenges_2, NULL};
   http_handler_t get_challenges_1_handler = {handle_get_challenges_1, &get_challenges_2_handler};
 
-  http_handler_t post_challenges_2_handler = {
-      .func = handle_post_challenges_2,
-      .next = NULL,
-  };
-  http_handler_t post_challenges_1_handler = {
-      .func = handle_post_challenges_1,
-      .next = &post_challenges_2_handler,
-  };
+  http_handler_t post_challenges_2_handler = {handle_post_challenges_2, NULL};
+  http_handler_t post_challenges_1_handler = {handle_post_challenges_1, &post_challenges_2_handler};
+
+  http_handler_t put_challenges_4_handler = {handle_put_challenges_4, NULL};
+  http_handler_t put_challenges_3_handler = {handle_put_challenges_3, &put_challenges_4_handler};
+  http_handler_t put_challenges_2_handler = {handle_put_challenges_2, &put_challenges_3_handler};
+  http_handler_t put_challenges_1_handler = {handle_put_challenges_1, &put_challenges_2_handler};
+
+  http_handler_t delete_challenges_4_handler = {handle_delete_challenges_4, NULL};
+  http_handler_t delete_challenges_3_handler = {handle_delete_challenges_3, &delete_challenges_4_handler};
+  http_handler_t delete_challenges_2_handler = {handle_delete_challenges_2, &delete_challenges_3_handler};
+  http_handler_t delete_challenges_1_handler = {handle_delete_challenges_1, &delete_challenges_2_handler};
 
   http_server_add_route(server->http_server, HTTP_METHOD_GET, "/", &root_handler);
   http_server_add_route(server->http_server, HTTP_METHOD_GET, "/hello", &hello_1_handler);
   http_server_add_route(server->http_server, HTTP_METHOD_GET, "/challenges", &get_challenges_1_handler);
   http_server_add_route(server->http_server, HTTP_METHOD_POST, "/challenges", &post_challenges_1_handler);
+  http_server_add_route(server->http_server, HTTP_METHOD_PUT, "/challenges", &put_challenges_1_handler);
+  http_server_add_route(server->http_server, HTTP_METHOD_DELETE, "/challenges", &delete_challenges_1_handler);
 
   serve(server);
 
