@@ -112,3 +112,46 @@ free_corrected_answer(corrected_answer_t *corrected_answer)
 
   free(corrected_answer);
 }
+
+void
+free_answers(answer_t *answers, size_t count)
+{
+  if (!answers)
+  {
+    return;
+  }
+
+  for (size_t i = 0; i < count; i++)
+  {
+    if (answers[i].is_string_allocated)
+    {
+      free(answers[i].user_id.ptr);
+      free(answers[i].answer.ptr);
+      free(answers[i].created_at.ptr);
+    }
+  }
+
+  free(answers);
+}
+
+void
+free_challenges(challenge_t *challenges, size_t count)
+{
+  if (!challenges)
+  {
+    return;
+  }
+
+  for (size_t i = 0; i < count; i++)
+  {
+    if (challenges[i].is_string_allocated)
+    {
+      free(challenges[i].creator_id.ptr);
+      free(challenges[i].name.ptr);
+      free(challenges[i].description.ptr);
+      free(challenges[i].flag.ptr);
+    }
+  }
+
+  free(challenges);
+}
