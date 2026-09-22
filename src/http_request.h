@@ -66,6 +66,13 @@ typedef struct http_request
   void *app_data;
   void (*dispose_app_data)(void *);
 
+  // Independent of app_data; owned until request disposal.
+  void *auth_data;
+  void (*dispose_auth_data)(void *);
+
+  // Weak reference; the active handler chain keeps this request alive.
+  struct http_request_context *context;
+
   struct http_parser_internal_state *internal;
 } http_request_t;
 

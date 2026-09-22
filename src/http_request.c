@@ -33,6 +33,11 @@ http_request_dispose(http_request_t *req)
     req->dispose_app_data(req->app_data);
   }
 
+  if (req->dispose_auth_data)
+  {
+    req->dispose_auth_data(req->auth_data);
+  }
+
   if (req->internal)
   {
     free(req->internal);
