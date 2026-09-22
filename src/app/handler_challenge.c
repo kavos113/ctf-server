@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "json.h"
 #include "repository.h"
@@ -14,6 +15,22 @@
 bool
 handle_get_challenges_1(struct http_request_context *ctx, db_pool_t *db, db_task_t *task, http_response_t *out_response)
 {
+  const auth_runtime_t *runtime = ctx->app_context;
+
+  if (runtime && runtime->contest_start_at)
+  {
+    int64_t now = runtime->now ? runtime->now(runtime->clock_data) : (int64_t)time(NULL);
+
+    if (now < 0 || now < runtime->contest_start_at)
+    {
+      *out_response = (http_response_t){
+          .status = now < 0 ? HTTP_STATUS_INTERNAL_SERVER_ERROR : HTTP_STATUS_FORBIDDEN,
+          .no_store = true,
+      };
+      return true;
+    }
+  }
+
   assert(ctx->current_handler->next != NULL);
   ctx->current_handler = ctx->current_handler->next;
 
@@ -81,6 +98,101 @@ handle_get_challenges_2(struct http_request_context *ctx, db_pool_t *db, db_task
   db_task_free(task);
   free_challenges(challenges, rows);
 
+  return true;
+}
+
+bool
+handle_get_own_challenges_1(http_request_context_t *ctx, db_pool_t *db, db_task_t *task, http_response_t *response)
+{
+  if (!auth_request_user(ctx->request).ptr)
+  {
+    return auth_unauthorized(response);
+  }
+
+  assert(ctx->current_handler->next != NULL);
+  *response = (http_response_t){.status = HTTP_STATUS_INTERNAL_SERVER_ERROR, .no_store = true};
+  const char query[] = "SELECT id, creator_id, name, description, flag, genre FROM challenges";
+
+  if (db_pool_exec_query(db, query, sizeof(query) - 1, ctx) < 0)
+  {
+    return true;
+  }
+
+  ctx->current_handler = ctx->current_handler->next;
+  return false;
+}
+
+bool
+handle_get_own_challenges_2(http_request_context_t *ctx, db_pool_t *db, db_task_t *task, http_response_t *response)
+{
+  *response = (http_response_t){.status = HTTP_STATUS_INTERNAL_SERVER_ERROR, .no_store = true};
+  string_t user = auth_request_user(ctx->request);
+
+  if (!user.ptr)
+  {
+    db_task_free(task);
+    return auth_unauthorized(response);
+  }
+
+  if (!task->result || !task->result->success || !task->result->res ||
+      mysql_num_fields(task->result->res) != 6)
+  {
+    db_task_free(task);
+    return true;
+  }
+
+  bool empty = mysql_num_rows(task->result->res) == 0;
+  size_t count;
+  challenge_t *challenges = bind_challenges(task->result, &count);
+  db_task_free(task);
+
+  if (!challenges && !empty)
+  {
+    return true;
+  }
+
+  challenge_t *selected = count ? calloc(count, sizeof(*selected)) : NULL;
+
+  if (count && !selected)
+  {
+    free_challenges(challenges, count);
+    return true;
+  }
+
+  size_t selected_count = 0;
+
+  for (size_t i = 0; i < count; i++)
+  {
+    if (string_equals(challenges[i].creator_id, user))
+    {
+      selected[selected_count++] = challenges[i];
+    }
+  }
+
+  string_t json = {0};
+
+  if (selected_count)
+  {
+    challenges_to_json(selected, selected_count, &json, false);
+  }
+
+  free(selected); // Strings belong to challenges.
+  free_challenges(challenges, count);
+
+  if (selected_count && !json.ptr)
+  {
+    return true;
+  }
+
+  ctx->request->app_data = json.ptr;
+  ctx->request->dispose_app_data = free;
+  *response = (http_response_t){
+      .status = HTTP_STATUS_OK,
+      .body = json.ptr ? json.ptr : "[]",
+      .body_len = json.ptr ? json.len : 2,
+      .content_type = "application/json",
+      .no_store = true,
+  };
   return true;
 }
 

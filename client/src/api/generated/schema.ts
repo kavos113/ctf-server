@@ -194,7 +194,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** すべての問題（フラグを除く） */
+        /**
+         * すべての問題（フラグを除く）
+         * @description CONTEST_START_ATより前はログイン状態によらず403。未設定・空の場合は制限なし。
+         */
         get: {
             parameters: {
                 query?: never;
@@ -212,6 +215,13 @@ export interface paths {
                     content: {
                         "application/json": components["schemas"]["ChallengeWithoutFlag"][];
                     };
+                };
+                /** @description コンテスト開始前（空本文、Cache-Control no-store） */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
                 };
             };
         };
@@ -331,7 +341,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** 自分が作った問題 */
+        /**
+         * 自分が作った問題
+         * @description コンテスト開始前も取得可能。認証済みユーザーの問題だけをフラグ付きで返す。該当なしは空配列。
+         */
         get: {
             parameters: {
                 query?: never;
@@ -349,6 +362,14 @@ export interface paths {
                     content: {
                         "application/json": components["schemas"]["Challenge"][];
                     };
+                };
+                401: components["responses"]["Unauthorized"];
+                /** @description 内部エラー（空本文） */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
                 };
             };
         };

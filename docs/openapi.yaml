@@ -82,7 +82,10 @@ paths:
   /challenges:
     get:
       summary: すべての問題（フラグを除く）
+      description: CONTEST_START_ATより前はログイン状態によらず403。未設定・空の場合は制限なし。
       responses:
+        "403":
+          description: コンテスト開始前（空本文、Cache-Control no-store）
         "200":
           description: OK
           content:
@@ -164,7 +167,14 @@ paths:
   /challenges/me:
     get:
       summary: 自分が作った問題
+      description: コンテスト開始前も取得可能。認証済みユーザーの問題だけをフラグ付きで返す。該当なしは空配列。
+      security:
+        - bearerAuth: []
       responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          description: 内部エラー（空本文）
         "200":
           description: OK
           content:

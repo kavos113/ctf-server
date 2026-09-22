@@ -1,4 +1,5 @@
 #include "app/auth.h"
+#include "app/contest.h"
 #include "app/handler.h"
 #include "app/handler_auth.h"
 #include "app/password_worker.h"
@@ -6,6 +7,7 @@
 #include "http_server.h"
 #include "server.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 #define PORT            8080
 #define MAX_CONNECTIONS 10
@@ -13,6 +15,14 @@
 int
 main()
 {
+  int64_t contest_start_at;
+
+  if (!contest_start_parse(getenv("CONTEST_START_AT"), &contest_start_at))
+  {
+    fprintf(stderr, "Invalid CONTEST_START_AT; use an ISO 8601 timestamp with timezone.\n");
+    return 1;
+  }
+
   auth_config_t auth;
 
   if (auth_init_from_env(&auth) != AUTH_OK)
@@ -38,7 +48,8 @@ main()
     return 1;
   }
 
-  auth_runtime_t runtime = {.config = &auth, .password_worker = server->password_worker};
+  auth_runtime_t runtime = {.config = &auth, .password_worker = server->password_worker,
+                            .contest_start_at = contest_start_at};
   server->http_server->app_context = &runtime;
 
   http_handler_t root_handler = {handle_root, NULL};
@@ -46,6 +57,11 @@ main()
   http_handler_t hello_1_handler = {handle_hello_1, &hello_2_handler};
   http_handler_t get_challenges_2_handler = {handle_get_challenges_2, NULL};
   http_handler_t get_challenges_1_handler = {handle_get_challenges_1, &get_challenges_2_handler};
+
+  http_handler_t get_own_challenges_2_handler = {handle_get_own_challenges_2, NULL};
+  http_handler_t get_own_challenges_1_handler = {handle_get_own_challenges_1, &get_own_challenges_2_handler};
+  http_handler_t get_own_challenges_auth_2 = {handle_auth_2, &get_own_challenges_1_handler};
+  http_handler_t get_own_challenges_auth_1 = {handle_auth_1, &get_own_challenges_auth_2};
 
   http_handler_t post_challenges_2_handler = {handle_post_challenges_2, NULL};
   http_handler_t post_challenges_1_handler = {handle_post_challenges_1, &post_challenges_2_handler};
@@ -105,6 +121,7 @@ main()
   http_server_add_route(server->http_server, HTTP_METHOD_GET, "/", &root_handler);
   http_server_add_route(server->http_server, HTTP_METHOD_GET, "/hello", &hello_1_handler);
   http_server_add_route(server->http_server, HTTP_METHOD_GET, "/challenges", &get_challenges_1_handler);
+  http_server_add_route(server->http_server, HTTP_METHOD_GET, "/challenges/me", &get_own_challenges_auth_1);
   http_server_add_route(server->http_server, HTTP_METHOD_POST, "/challenges", &post_challenges_auth_1);
   http_server_add_route(server->http_server, HTTP_METHOD_PUT, "/challenges", &put_challenges_auth_1);
   http_server_add_route(server->http_server, HTTP_METHOD_DELETE, "/challenges", &delete_challenges_auth_1);

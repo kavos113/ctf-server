@@ -8,6 +8,7 @@
 typedef struct
 {
   const auth_config_t *config;
+  int64_t contest_start_at; // Unix seconds; zero means no restriction.
   password_worker_t *password_worker;
   int64_t (*now)(void *data); // NULL: system UTC clock.
   void *clock_data;

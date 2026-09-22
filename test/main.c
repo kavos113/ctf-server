@@ -47,6 +47,7 @@ main(int argc, char **argv)
   test_server_lifetime(&ctx);
   test_password_worker(&ctx);
   test_app_auth_api(&ctx);
+  test_app_contest(&ctx);
 
   timespec_get(&end_time, TIME_UTC);
   double elapsed = (end_time.tv_sec - start_time.tv_sec) + (end_time.tv_nsec - start_time.tv_nsec) / 1e6;

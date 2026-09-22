@@ -30,6 +30,7 @@ services:
       JWT_ISSUER: ${JWT_ISSUER}
       JWT_AUDIENCE: ${JWT_AUDIENCE}
       JWT_TTL_SECONDS: ${JWT_TTL_SECONDS:-3600}
+      CONTEST_START_AT: ${CONTEST_START_AT:-}
     ports:
       - "8080:8080"
     networks:
