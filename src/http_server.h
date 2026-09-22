@@ -23,6 +23,7 @@ typedef struct http_handler
 typedef struct http_request_context
 {
   http_request_t *request;
+  void *app_context; // Borrowed; must outlive all request contexts.
   void *worker_result; // Borrowed during a worker completion handler only.
 
   // handler実行中はその実行しているhandlerが入る（なので，handler内でnextを処理する）
@@ -45,6 +46,7 @@ struct http_server_t
 {
   http_route_t routes[MAX_ROUTES];
   size_t route_count;
+  void *app_context; // Borrowed; must outlive all request contexts.
 };
 typedef struct http_server_t http_server_t;
 
