@@ -1,9 +1,9 @@
-#include "app/handler.h"
 #include "app/auth.h"
+#include "app/handler.h"
 
-#include <stdio.h>
 #include "http_server.h"
 #include "server.h"
+#include <stdio.h>
 
 #define PORT            8080
 #define MAX_CONNECTIONS 10
@@ -52,54 +52,21 @@ main()
   http_server_add_route(server->http_server, HTTP_METHOD_PUT, "/challenges", &put_challenges_1_handler);
   http_server_add_route(server->http_server, HTTP_METHOD_DELETE, "/challenges", &delete_challenges_1_handler);
 
-  http_handler_t post_answers_5_handler = {
-      .func = handle_post_answers_5,
-      .next = NULL,
-  };
-  http_handler_t post_answers_4_handler = {
-      .func = handle_post_answers_4,
-      .next = &post_answers_5_handler,
-  };
-  http_handler_t post_answers_3_handler = {
-      .func = handle_post_answers_3,
-      .next = &post_answers_4_handler,
-  };
-  http_handler_t post_answers_2_handler = {
-      .func = handle_post_answers_2,
-      .next = &post_answers_3_handler,
-  };
-  http_handler_t post_answers_1_handler = {
-      .func = handle_post_answers_1,
-      .next = &post_answers_2_handler,
-  };
+  http_handler_t post_answers_5_handler = {handle_post_answers_5, NULL};
+  http_handler_t post_answers_4_handler = {handle_post_answers_4, &post_answers_5_handler};
+  http_handler_t post_answers_3_handler = {handle_post_answers_3, &post_answers_4_handler};
+  http_handler_t post_answers_2_handler = {handle_post_answers_2, &post_answers_3_handler};
+  http_handler_t post_answers_1_handler = {handle_post_answers_1, &post_answers_2_handler};
   http_server_add_route(server->http_server, HTTP_METHOD_POST, "/answers", &post_answers_1_handler);
 
-  http_handler_t get_answers_3_handler = {
-      .func = handle_get_answers_3,
-      .next = NULL,
-  };
-  http_handler_t get_answers_2_handler = {
-      .func = handle_get_answers_2,
-      .next = &get_answers_3_handler,
-  };
-  http_handler_t get_answers_1_handler = {
-      .func = handle_get_answers_1,
-      .next = &get_answers_2_handler,
-  };
+  http_handler_t get_answers_3_handler = {handle_get_answers_3, NULL};
+  http_handler_t get_answers_2_handler = {handle_get_answers_2, &get_answers_3_handler};
+  http_handler_t get_answers_1_handler = {handle_get_answers_1, &get_answers_2_handler};
   http_server_add_route(server->http_server, HTTP_METHOD_GET, "/answers", &get_answers_1_handler);
 
-  http_handler_t get_own_answers_3_handler = {
-      .func = handle_get_own_answers_3,
-      .next = NULL,
-  };
-  http_handler_t get_own_answers_2_handler = {
-      .func = handle_get_own_answers_2,
-      .next = &get_own_answers_3_handler,
-  };
-  http_handler_t get_own_answers_1_handler = {
-      .func = handle_get_own_answers_1,
-      .next = &get_own_answers_2_handler,
-  };
+  http_handler_t get_own_answers_3_handler = {handle_get_own_answers_3, NULL};
+  http_handler_t get_own_answers_2_handler = {handle_get_own_answers_2, &get_own_answers_3_handler};
+  http_handler_t get_own_answers_1_handler = {handle_get_own_answers_1, &get_own_answers_2_handler};
   http_server_add_route(server->http_server, HTTP_METHOD_GET, "/answers/me", &get_own_answers_1_handler);
 
   serve(server);
