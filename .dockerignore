@@ -1,0 +1,14 @@
+.git
+.agents
+.codex
+.idea
+docs_p
+**/node_modules
+**/.pnpm-store
+**/dist
+**/coverage
+**/.env
+**/.env.*
+**/*.o
+ctf-server
+test-ctf-server

@@ -1,4 +1,15 @@
 services:
+  client:
+    build:
+      context: .
+      dockerfile: client/Dockerfile
+    ports:
+      - "9000:80"
+    networks:
+      - ctf-network
+    depends_on:
+      - app
+
   db:
     image: mariadb:12.3.3-noble
     container_name: ctf-mariadb

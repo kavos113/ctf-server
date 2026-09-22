@@ -2,6 +2,9 @@
 
 Aurelia 2 + TypeScriptのCTFフロントエンドです。API契約は [`../docs/openapi.yaml`](../docs/openapi.yaml) を参照します。
 
+DB・APIとまとめて起動する場合は、リポジトリルートで `docker compose up --build -d` を実行します。
+クライアントは http://localhost:9000 で開けます。初期設定は[ルートの起動手順](../README.md)を参照してください。
+
 ## ソースの構成
 
 `src/pages/` はページコンポーネントごとにディレクトリを分け、TypeScript・HTML・ページ固有のCSSを同じ場所に配置します。ログインと登録など、既存の同一コンポーネントを使う画面は引き続き共通化しています。
