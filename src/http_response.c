@@ -37,7 +37,7 @@ http_response_build(http_response_t *res, char **out_buf, size_t *out_buf_len)
                         + 16                                    // "Content-Length: "
                         + resolve_content_length(res->body_len) // Content-Length value
                         + 2                                     // \r\n
-                        + 14 + strlen(content_type) + 2           // Content-Type header
+                        + 14 + strlen(content_type) + 2         // Content-Type header
                         + 19                                    // "Connection: close\r\n"
                         + 2                                     // \r\n
                         + res->body_len;
@@ -79,7 +79,7 @@ http_response_build_header(http_response_t *res, char **out_buf, size_t *out_buf
                         + 16                                    // "Content-Length: "
                         + resolve_content_length(res->body_len) // Content-Length value
                         + 2                                     // \r\n
-                        + 14 + strlen(content_type) + 2           // Content-Type header
+                        + 14 + strlen(content_type) + 2         // Content-Type header
                         + 19                                    // "Connection: close\r\n"
                         + 2;                                    // \r\n
 
