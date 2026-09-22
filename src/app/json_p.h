@@ -17,21 +17,16 @@ typedef struct
   int error; // Initialize to -1 (invalid input); -2 indicates allocation failure.
 } json_parser_t;
 
-// The callback consumes one field value. depth is the depth to pass to read_value.
 typedef bool (*json_field_reader)(json_parser_t *parser, string_t key, unsigned depth, void *context);
 
-// Returned string bytes are borrowed, still-escaped slices of the input.
 bool read_string(json_parser_t *parser, string_t *slice);
-
-// Consume one JSON value; the caller checks trailing input. Start at depth 0.
 bool read_value(json_parser_t *parser, unsigned depth);
-
-// With a NULL callback, validate and skip all fields. Otherwise call read_field
-// for each field. JSON syntax and duplicate keys are checked by the parser.
 bool read_object(json_parser_t *parser, unsigned depth, json_field_reader read_field, void *context);
-
 bool read_positive_integer(json_parser_t *parser, int *value);
-// Escaped contents without surrounding quotes; -1 means invalid input.
 int json_string_equal_decoded(string_t left, string_t right);
+
+// Decode escaped contents into owned, NUL-terminated UTF-8 (which may include NUL).
+// 0: success, -1: invalid input, -2: allocation failure. Release with free.
+int json_string_decode(string_t slice, string_t *out);
 
 #endif // APP_JSON_P_H

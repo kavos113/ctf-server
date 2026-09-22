@@ -1,5 +1,8 @@
 #include "json_p.h"
 
+#include <stdint.h>
+#include <stdlib.h>
+
 static bool
 hex_quad(const char **cur, const char *end, unsigned *value)
 {
@@ -191,4 +194,71 @@ json_string_equal_decoded(string_t left, string_t right)
   }
 
   return equal;
+}
+
+// The decoded UTF-8 representation never exceeds the escaped input length.
+int
+json_string_decode(string_t slice, string_t *out)
+{
+  if (!out)
+  {
+    return -1;
+  }
+
+  *out = (string_t){0};
+
+  if (!slice.ptr || slice.len == SIZE_MAX)
+  {
+    return -1;
+  }
+
+  // Validate before allocating so invalid input leaves no partially decoded data.
+  if (json_string_equal_decoded(slice, slice) < 0)
+  {
+    return -1;
+  }
+
+  char *buffer = malloc(slice.len + 1);
+
+  if (!buffer)
+  {
+    return -2;
+  }
+
+  const char *cur = slice.ptr;
+  const char *end = cur + slice.len;
+  size_t length = 0;
+
+  while (cur < end)
+  {
+    unsigned value;
+    read_codepoint(&cur, end, &value);
+
+    if (value < 0x80)
+    {
+      buffer[length++] = (char)value;
+    }
+    else if (value < 0x800)
+    {
+      buffer[length++] = (char)(0xc0 | (value >> 6));
+      buffer[length++] = (char)(0x80 | (value & 0x3f));
+    }
+    else if (value < 0x10000)
+    {
+      buffer[length++] = (char)(0xe0 | (value >> 12));
+      buffer[length++] = (char)(0x80 | ((value >> 6) & 0x3f));
+      buffer[length++] = (char)(0x80 | (value & 0x3f));
+    }
+    else
+    {
+      buffer[length++] = (char)(0xf0 | (value >> 18));
+      buffer[length++] = (char)(0x80 | ((value >> 12) & 0x3f));
+      buffer[length++] = (char)(0x80 | ((value >> 6) & 0x3f));
+      buffer[length++] = (char)(0x80 | (value & 0x3f));
+    }
+  }
+
+  buffer[length] = '\0';
+  *out = (string_t){.ptr = buffer, .len = length};
+  return 0;
 }
