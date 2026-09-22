@@ -18,10 +18,20 @@ export class MyApp {
   static routes = [
     { path: '', component: HomePage, title: 'トップ | EachOther 2026' },
     { path: 'login', component: AuthPage, title: 'ログイン | EachOther 2026' },
-    { path: 'signup', component: AuthPage, data: { signup: true }, title: 'ユーザー登録 | EachOther 2026' },
+    {
+      path: 'signup',
+      component: AuthPage,
+      data: { signup: true },
+      title: 'ユーザー登録 | EachOther 2026'
+    },
     { path: 'challenges', component: ChallengesPage, title: '問題一覧 | EachOther 2026' },
     { path: 'challenges/:id', component: DetailPage, title: '問題 | EachOther 2026' },
-    { path: 'me/answers', component: HistoryPage, data: { mine: true }, title: '自分の解答 | EachOther 2026' },
+    {
+      path: 'me/answers',
+      component: HistoryPage,
+      data: { mine: true },
+      title: '自分の解答 | EachOther 2026'
+    },
     { path: 'ranking', component: RankingPage, title: 'ランキング | EachOther 2026' },
     { path: 'me/challenges', component: MyChallengesPage, title: '自分の問題 | EachOther 2026' },
     { path: 'me/challenges/new', component: EditorPage, title: '問題作成 | EachOther 2026' },

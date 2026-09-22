@@ -18,7 +18,7 @@
       >
       <span class="creator">作成者: ${creatorName}</span>
     </div>
-    <p class="description panel">${challenge.description || '説明はありません。'}</p>
+    <div class="description panel" innerhtml.bind="descriptionHtml"></div>
     <section class="panel">
       <h2>フラグを提出</h2>
       <form if.bind="allowed" submit.trigger="submit()">

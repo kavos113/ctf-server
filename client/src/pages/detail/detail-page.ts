@@ -1,6 +1,7 @@
 import type { Answer, CorrectAnswer, PublicChallenge, User } from '../../api/api';
 import { errorMessage } from '../../api/http-client';
 import { contestState } from '../../services/contest';
+import { renderMarkdown } from '../../services/markdown';
 import { PageState, formatDate, parseId } from '../shared/page-state';
 import './detail-page.css';
 
@@ -15,6 +16,10 @@ export class DetailPage extends PageState {
   private submittedCorrectly = false;
   private historyGeneration = 0;
   formatDate = formatDate;
+
+  get descriptionHtml() {
+    return renderMarkdown(this.challenge?.description);
+  }
 
   canLoad() {
     return contestState().started ? true : 'challenges';

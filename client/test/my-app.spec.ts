@@ -27,6 +27,10 @@ describe('application', () => {
 
     const session = new SessionService();
     const store = createStore();
+
+    store.challenges[0].description = '**Markdownの説明**\n${1 + 1}';
+    store.challenges[1].description = '# 別の問題の説明';
+
     const fetcher: typeof fetch = async (input, init) => {
       const url = new URL(String(input), 'http://localhost');
       const result = handleRequest(store, {
@@ -71,6 +75,11 @@ describe('application', () => {
 
     card.querySelector('a')!.click();
     await vi.waitFor(() => expect(fixture.appHost.textContent).toContain('フラグを提出'));
+
+    expect(fixture.appHost.querySelector('.description strong')?.textContent).toBe(
+      'Markdownの説明'
+    );
+    expect(fixture.appHost.querySelector('.description')?.textContent).toContain('${1 + 1}');
 
     for (const [path, expected] of [
       ['challenges', 'はじめてのフラグ'],
@@ -127,6 +136,9 @@ describe('application', () => {
     expect(fixture.appHost.querySelector('.solved')?.textContent).toContain('正解済み');
 
     await router.load('challenges/2');
+
+    expect(fixture.appHost.querySelector('.description h1')?.textContent).toBe('別の問題の説明');
+    expect(fixture.appHost.querySelector('.description strong')).toBeNull();
 
     expect(fixture.appHost.querySelector('.solved')).toBeNull();
 

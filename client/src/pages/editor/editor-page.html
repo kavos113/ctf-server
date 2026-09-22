@@ -10,7 +10,13 @@
         <legend>問題の内容</legend>
         <label for="name">問題名</label><input id="name" value.bind="form.name" required />
         <label for="description">説明</label
-        ><textarea id="description" value.bind="form.description" rows="8"></textarea>
+        ><textarea
+          id="description"
+          value.bind="form.description"
+          rows="8"
+          aria-describedby="description-help"
+        ></textarea>
+        <p id="description-help" class="muted">Markdown形式で入力できます。</p>
         <label for="genre">ジャンル</label>
         <select id="genre" value.bind="form.genre" required>
           <option model.bind="undefined">選択してください</option>
