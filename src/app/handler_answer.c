@@ -1,4 +1,5 @@
 #include "handler.h"
+#include "handler_auth.h"
 #include "json.h"
 #include "json_p.h"
 #include "repository.h"
@@ -95,6 +96,11 @@ handle_post_answers_1(http_request_context_t *ctx,
                       db_task_t *task,
                       http_response_t *response)
 {
+  if (!auth_request_user(ctx->request).ptr)
+  {
+    return auth_unauthorized(response);
+  }
+
   assert(ctx->current_handler->next != NULL);
   *response = (http_response_t){.status = HTTP_STATUS_INTERNAL_SERVER_ERROR};
   answer_submit_state *state = calloc(1, sizeof(*state));
@@ -171,9 +177,10 @@ handle_post_answers_2(http_request_context_t *ctx,
   const char query[] =
       "INSERT INTO answers (challenge_id, user_id, answer, is_correct, created_at) "
       "VALUES (?, ?, ?, ?, UTC_TIMESTAMP())";
+  string_t user = auth_request_user(ctx->request);
   const db_param_t params[] = {
       {.type = DB_PARAM_INT64, .value.integer = state->input.challenge_id},
-      {.type = DB_PARAM_STRING, .value.string = {.ptr = "dummy", .len = 5}},
+      {.type = DB_PARAM_STRING, .value.string = {.ptr = user.ptr, .len = user.len}},
       {.type = DB_PARAM_STRING,
        .value.string = {.ptr = state->input.answer.ptr, .len = state->input.answer.len}},
       {.type = DB_PARAM_INT64, .value.integer = correct},
@@ -462,6 +469,11 @@ handle_get_own_answers_1(http_request_context_t *ctx,
                          db_task_t *task,
                          http_response_t *response)
 {
+  if (!auth_request_user(ctx->request).ptr)
+  {
+    return auth_unauthorized(response);
+  }
+
   assert(ctx->current_handler->next != NULL);
   *response = (http_response_t){.status = HTTP_STATUS_INTERNAL_SERVER_ERROR};
   int challenge_id;
@@ -570,7 +582,7 @@ handle_get_own_answers_3(http_request_context_t *ctx,
 
   for (size_t i = 0; i < count; i++)
   {
-    if (string_equals_cstr(answers[i].user_id, "dummy") &&
+    if (string_equals(answers[i].user_id, auth_request_user(ctx->request)) &&
         (!state->challenge_id || answers[i].challenge_id == state->challenge_id))
     {
       selected[selected_count++] = answers[i];

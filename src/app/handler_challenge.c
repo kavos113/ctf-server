@@ -1,4 +1,5 @@
 #include "handler.h"
+#include "handler_auth.h"
 
 #include <assert.h>
 #include <limits.h>
@@ -89,6 +90,11 @@ handle_post_challenges_1(struct http_request_context *ctx,
                          db_task_t *task,
                          http_response_t *out_response)
 {
+  if (!auth_request_user(ctx->request).ptr)
+  {
+    return auth_unauthorized(out_response);
+  }
+
   assert(ctx->current_handler->next != NULL);
 
   create_challenge_request_t request;
@@ -104,10 +110,11 @@ handle_post_challenges_1(struct http_request_context *ctx,
 
   const char query[] =
       "INSERT INTO challenges (creator_id, name, description, flag, genre) VALUES (?, ?, ?, ?, ?)";
+  string_t user = auth_request_user(ctx->request);
   const db_param_t params[] = {
       {
           .type = DB_PARAM_STRING,
-          .value.string = {.ptr = "dummy", .len = 5},
+          .value.string = {.ptr = user.ptr, .len = user.len},
       },
       {
           .type = DB_PARAM_STRING,
@@ -318,7 +325,7 @@ select_challenge_owners(http_request_context_t *ctx, db_pool_t *db)
 }
 
 static http_status
-challenge_write_access(const db_result_t *result, int target_id)
+challenge_write_access(const db_result_t *result, int target_id, string_t user)
 {
   if (!result || !result->success || !result->res || mysql_num_fields(result->res) != 2)
   {
@@ -339,8 +346,8 @@ challenge_write_access(const db_result_t *result, int target_id)
 
     if (id == target_id)
     {
-      return lengths[1] == 5 && memcmp(row[1], "dummy", 5) == 0 ? HTTP_STATUS_OK
-                                                                : HTTP_STATUS_FORBIDDEN;
+      return lengths[1] == user.len && memcmp(row[1], user.ptr, user.len) == 0 ? HTTP_STATUS_OK
+                                                                          : HTTP_STATUS_FORBIDDEN;
     }
   }
 
@@ -348,12 +355,12 @@ challenge_write_access(const db_result_t *result, int target_id)
 }
 
 static void
-updated_challenge_response(challenge_write_state *state, http_response_t *response)
+updated_challenge_response(challenge_write_state *state, string_t user, http_response_t *response)
 {
   *response = (http_response_t){.status = HTTP_STATUS_INTERNAL_SERVER_ERROR};
   challenge_t challenge = {
       .id = state->id,
-      .creator_id = {.ptr = "dummy", .len = 5},
+      .creator_id = user,
       .name = state->input.name,
       .description = state->input.description,
       .flag = state->input.flag,
@@ -378,6 +385,11 @@ handle_put_challenges_1(http_request_context_t *ctx,
                         db_task_t *task,
                         http_response_t *out_response)
 {
+  if (!auth_request_user(ctx->request).ptr)
+  {
+    return auth_unauthorized(out_response);
+  }
+
   challenge_write_state *state = new_challenge_write_state(ctx, out_response);
 
   if (!state)
@@ -406,7 +418,7 @@ handle_put_challenges_2(http_request_context_t *ctx,
 {
   assert(ctx->current_handler->next != NULL);
   challenge_write_state *state = ctx->request->app_data;
-  http_status access = challenge_write_access(task->result, state->id);
+  http_status access = challenge_write_access(task->result, state->id, auth_request_user(ctx->request));
   free_challenge_task(task);
   *out_response = (http_response_t){.status = access};
 
@@ -417,6 +429,7 @@ handle_put_challenges_2(http_request_context_t *ctx,
 
   const char query[] = "UPDATE challenges SET name = ?, description = ?, flag = ?, genre = ? "
                        "WHERE id = ? AND creator_id = ?";
+  string_t user = auth_request_user(ctx->request);
   const db_param_t params[] = {
       {
           .type = DB_PARAM_STRING,
@@ -433,7 +446,7 @@ handle_put_challenges_2(http_request_context_t *ctx,
       },
       {.type = DB_PARAM_INT64, .value.integer = state->input.genre},
       {.type = DB_PARAM_INT64, .value.integer = state->id},
-      {.type = DB_PARAM_STRING, .value.string = {.ptr = "dummy", .len = 5}},
+      {.type = DB_PARAM_STRING, .value.string = {.ptr = user.ptr, .len = user.len}},
   };
 
   if (db_exec_query_param(db, query, sizeof(query) - 1, params, 6, ctx) < 0)
@@ -467,7 +480,7 @@ handle_put_challenges_3(http_request_context_t *ctx,
     return select_challenge_owners(ctx, db);
   }
 
-  updated_challenge_response(ctx->request->app_data, out_response);
+  updated_challenge_response(ctx->request->app_data, auth_request_user(ctx->request), out_response);
   return true;
 }
 
@@ -479,13 +492,13 @@ handle_put_challenges_4(http_request_context_t *ctx,
 {
   assert(ctx->current_handler->next == NULL);
   challenge_write_state *state = ctx->request->app_data;
-  http_status access = challenge_write_access(task->result, state->id);
+  http_status access = challenge_write_access(task->result, state->id, auth_request_user(ctx->request));
   free_challenge_task(task);
   *out_response = (http_response_t){.status = access};
 
   if (access == HTTP_STATUS_OK)
   {
-    updated_challenge_response(state, out_response);
+    updated_challenge_response(state, auth_request_user(ctx->request), out_response);
   }
 
   return true;
@@ -497,6 +510,11 @@ handle_delete_challenges_1(http_request_context_t *ctx,
                            db_task_t *task,
                            http_response_t *out_response)
 {
+  if (!auth_request_user(ctx->request).ptr)
+  {
+    return auth_unauthorized(out_response);
+  }
+
   if (!new_challenge_write_state(ctx, out_response))
   {
     return true;
@@ -513,7 +531,7 @@ handle_delete_challenges_2(http_request_context_t *ctx,
 {
   assert(ctx->current_handler->next != NULL);
   challenge_write_state *state = ctx->request->app_data;
-  http_status access = challenge_write_access(task->result, state->id);
+  http_status access = challenge_write_access(task->result, state->id, auth_request_user(ctx->request));
   free_challenge_task(task);
   *out_response = (http_response_t){.status = access};
 
@@ -523,9 +541,10 @@ handle_delete_challenges_2(http_request_context_t *ctx,
   }
 
   const char query[] = "DELETE FROM challenges WHERE id = ? AND creator_id = ?";
+  string_t user = auth_request_user(ctx->request);
   const db_param_t params[] = {
       {.type = DB_PARAM_INT64, .value.integer = state->id},
-      {.type = DB_PARAM_STRING, .value.string = {.ptr = "dummy", .len = 5}},
+      {.type = DB_PARAM_STRING, .value.string = {.ptr = user.ptr, .len = user.len}},
   };
 
   if (db_exec_query_param(db, query, sizeof(query) - 1, params, 2, ctx) < 0)
@@ -571,7 +590,7 @@ handle_delete_challenges_4(http_request_context_t *ctx,
 {
   assert(ctx->current_handler->next == NULL);
   challenge_write_state *state = ctx->request->app_data;
-  http_status access = challenge_write_access(task->result, state->id);
+  http_status access = challenge_write_access(task->result, state->id, auth_request_user(ctx->request));
   free_challenge_task(task);
   *out_response = (http_response_t){
       .status = access == HTTP_STATUS_OK ? HTTP_STATUS_INTERNAL_SERVER_ERROR : access,

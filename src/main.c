@@ -1,5 +1,6 @@
 #include "app/auth.h"
 #include "app/handler.h"
+#include "app/handler_auth.h"
 #include "app/password_worker.h"
 
 #include "http_server.h"
@@ -37,6 +38,9 @@ main()
     return 1;
   }
 
+  auth_runtime_t runtime = {.config = &auth, .password_worker = server->password_worker};
+  server->http_server->app_context = &runtime;
+
   http_handler_t root_handler = {handle_root, NULL};
   http_handler_t hello_2_handler = {handle_hello_2, NULL};
   http_handler_t hello_1_handler = {handle_hello_1, &hello_2_handler};
@@ -70,15 +74,47 @@ main()
   http_handler_t get_own_answers_2_handler = {handle_get_own_answers_2, &get_own_answers_3_handler};
   http_handler_t get_own_answers_1_handler = {handle_get_own_answers_1, &get_own_answers_2_handler};
 
+  http_handler_t signup_5_handler = {handle_signup_5, NULL};
+  http_handler_t signup_4_handler = {handle_signup_4, &signup_5_handler};
+  http_handler_t signup_3_handler = {handle_signup_3, &signup_4_handler};
+  http_handler_t signup_2_handler = {handle_signup_2, &signup_3_handler};
+  http_handler_t signup_1_handler = {handle_signup_1, &signup_2_handler};
+
+  http_handler_t login_5_handler = {handle_login_5, NULL};
+  http_handler_t login_4_handler = {handle_login_4, &login_5_handler};
+  http_handler_t login_3_handler = {handle_login_3, &login_4_handler};
+  http_handler_t login_2_handler = {handle_login_2, &login_3_handler};
+  http_handler_t login_1_handler = {handle_login_1, &login_2_handler};
+
+  http_handler_t logout_2_handler = {handle_logout_2, NULL};
+  http_handler_t logout_1_handler = {handle_logout_1, &logout_2_handler};
+
+  http_handler_t post_challenges_auth_2 = {handle_auth_2, &post_challenges_1_handler};
+  http_handler_t post_challenges_auth_1 = {handle_auth_1, &post_challenges_auth_2};
+  http_handler_t put_challenges_auth_2 = {handle_auth_2, &put_challenges_1_handler};
+  http_handler_t put_challenges_auth_1 = {handle_auth_1, &put_challenges_auth_2};
+  http_handler_t delete_challenges_auth_2 = {handle_auth_2, &delete_challenges_1_handler};
+  http_handler_t delete_challenges_auth_1 = {handle_auth_1, &delete_challenges_auth_2};
+  http_handler_t post_answers_auth_2 = {handle_auth_2, &post_answers_1_handler};
+  http_handler_t post_answers_auth_1 = {handle_auth_1, &post_answers_auth_2};
+  http_handler_t get_own_answers_auth_2 = {handle_auth_2, &get_own_answers_1_handler};
+  http_handler_t get_own_answers_auth_1 = {handle_auth_1, &get_own_answers_auth_2};
+  http_handler_t logout_auth_2 = {handle_auth_2, &logout_1_handler};
+  http_handler_t logout_auth_1 = {handle_auth_1, &logout_auth_2};
+
   http_server_add_route(server->http_server, HTTP_METHOD_GET, "/", &root_handler);
   http_server_add_route(server->http_server, HTTP_METHOD_GET, "/hello", &hello_1_handler);
   http_server_add_route(server->http_server, HTTP_METHOD_GET, "/challenges", &get_challenges_1_handler);
-  http_server_add_route(server->http_server, HTTP_METHOD_POST, "/challenges", &post_challenges_1_handler);
-  http_server_add_route(server->http_server, HTTP_METHOD_PUT, "/challenges", &put_challenges_1_handler);
-  http_server_add_route(server->http_server, HTTP_METHOD_DELETE, "/challenges", &delete_challenges_1_handler);
-  http_server_add_route(server->http_server, HTTP_METHOD_POST, "/answers", &post_answers_1_handler);
+  http_server_add_route(server->http_server, HTTP_METHOD_POST, "/challenges", &post_challenges_auth_1);
+  http_server_add_route(server->http_server, HTTP_METHOD_PUT, "/challenges", &put_challenges_auth_1);
+  http_server_add_route(server->http_server, HTTP_METHOD_DELETE, "/challenges", &delete_challenges_auth_1);
+  http_server_add_route(server->http_server, HTTP_METHOD_POST, "/answers", &post_answers_auth_1);
   http_server_add_route(server->http_server, HTTP_METHOD_GET, "/answers", &get_answers_1_handler);
-  http_server_add_route(server->http_server, HTTP_METHOD_GET, "/answers/me", &get_own_answers_1_handler);
+  http_server_add_route(server->http_server, HTTP_METHOD_GET, "/answers/me", &get_own_answers_auth_1);
+
+  http_server_add_route(server->http_server, HTTP_METHOD_POST, "/signup", &signup_1_handler);
+  http_server_add_route(server->http_server, HTTP_METHOD_POST, "/login", &login_1_handler);
+  http_server_add_route(server->http_server, HTTP_METHOD_POST, "/logout", &logout_auth_1);
 
   serve(server);
 
