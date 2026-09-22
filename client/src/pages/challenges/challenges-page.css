@@ -1,3 +1,7 @@
+.challenges-page .cards {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .challenges-page .excerpt {
   display: -webkit-box;
   -webkit-line-clamp: 3;
@@ -9,6 +13,8 @@
 
 .challenges-page .challenge-card {
   position: relative;
+  min-width: 0;
+  overflow-wrap: anywhere;
   transition: box-shadow 160ms ease;
 }
 
