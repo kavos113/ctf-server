@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { descriptionCases, sqlLikeCases } from '../src/behavior-cases';
+import { createCases, createCredentials } from '../src/cases';
 import { baseUrl, Contract, loadContract } from '../src/contract';
 import { E2eClient, requiredValue } from '../src/e2e-client';
 import type { components } from '../src/generated/schema';
@@ -8,7 +9,13 @@ import type { components } from '../src/generated/schema';
 type ChallengeInput = Required<components['schemas']['CreateChallengeRequest']>;
 type Challenge = components['schemas']['Challenge'];
 type Answer = components['schemas']['Answer'];
-type User = { id: string; username: string; client: E2eClient };
+type User = {
+  id: string;
+  username: string;
+  client: E2eClient;
+  token: string;
+  credentials: ReturnType<typeof createCredentials>;
+};
 type Problem = { id: number; owner: User; input: ChallengeInput };
 
 let base: URL;
@@ -26,7 +33,7 @@ class Scenario {
   constructor(readonly label: string) {}
 
   async user(): Promise<User> {
-    const credentials = { username: `e2e-${randomUUID()}`, password: `password-${randomUUID()}` };
+    const credentials = createCredentials();
     const signup = (await this.publicClient.request(
       { method: 'post', path: '/signup', body: credentials },
       201,
@@ -43,7 +50,13 @@ class Scenario {
     )) as { token?: string };
     const token = requiredValue(login.token, 'string', `${this.label} login.token`);
 
-    return { id, username: credentials.username, client: new E2eClient(base, contract, token) };
+    return {
+      id,
+      username: credentials.username,
+      client: new E2eClient(base, contract, token),
+      token,
+      credentials
+    };
   }
 
   async create(owner: User, overrides: Partial<ChallengeInput> = {}): Promise<Problem> {
@@ -256,6 +269,92 @@ function scenario(label: string, run: (scenario: Scenario) => Promise<void>): vo
 }
 
 describe('API behavior', { concurrent: false }, () => {
+  // Valid bodies and query IDs ensure authentication is tested before resource lookup.
+  const protectedCases = createCases().filter(
+    (test) =>
+      [
+        'post /logout',
+        'post /challenges',
+        'put /challenges',
+        'delete /challenges',
+        'get /challenges/me',
+        'get /answers/me',
+        'post /answers'
+      ].includes(`${test.method} ${test.path}`) && !(test.path === '/answers/me' && test.query)
+  );
+
+  for (const test of protectedCases) {
+    for (const mode of ['missing', 'malformed', 'tampered'] as const) {
+      scenario(`B22 ${mode} JWT: ${test.method} ${test.path}`, async (s) => {
+        let token: string | undefined;
+
+        if (mode === 'malformed') {
+          token = 'not-a-jwt';
+        } else if (mode === 'tampered') {
+          const user = await s.user();
+          const parts = user.token.split('.');
+
+          expect(parts.length, 'JWT segments').toBe(3);
+          expect(parts[2].length > 0, 'JWT signature present').toBe(true);
+          parts[2] = (parts[2][0] === 'A' ? 'B' : 'A') + parts[2].slice(1);
+          token = parts.join('.');
+        }
+
+        await new E2eClient(base, contract, token).request(test, 401, s.label);
+      });
+    }
+  }
+
+  scenario('B23 logout revokes only the presented JWT session', async (s) => {
+    const user = await s.user();
+    const second = (await s.publicClient.request(
+      { method: 'post', path: '/login', body: user.credentials },
+      200,
+      'second login'
+    )) as { token: string };
+    const token = requiredValue(second.token, 'string', 'second login.token');
+    const other = new E2eClient(base, contract, token);
+
+    expect(token !== user.token, 'separate session tokens').toBe(true);
+    await user.client.request({ method: 'get', path: '/challenges/me' }, 200, 'first session');
+    await other.request({ method: 'get', path: '/challenges/me' }, 200, 'second session');
+    await user.client.request({ method: 'post', path: '/logout' }, 200, 'logout');
+
+    for (const test of protectedCases) {
+      await user.client.request(test, 401, 'revoked JWT');
+    }
+
+    await other.request({ method: 'get', path: '/challenges/me' }, 200, 'other session survives');
+    await other.request({ method: 'post', path: '/logout' }, 200, 'second logout');
+  });
+
+  scenario('B24 invalid credentials and duplicate signup', async (s) => {
+    const user = await s.user();
+
+    await s.publicClient.request(
+      { method: 'post', path: '/signup', body: user.credentials },
+      409,
+      'duplicate signup'
+    );
+
+    for (const credentials of [
+      { ...user.credentials, password: `wrong-${randomUUID()}` },
+      createCredentials()
+    ]) {
+      await s.publicClient.request(
+        { method: 'post', path: '/login', body: credentials },
+        401,
+        'invalid credentials'
+      );
+    }
+
+    await user.client.request(
+      { method: 'get', path: '/challenges/me' },
+      200,
+      'existing session survives'
+    );
+  });
+
   for (const { label, value } of sqlLikeCases) {
     for (const field of ['name', 'description', 'genre', 'flag'] as const) {
       scenario(`B20 SQL-like ${field}: ${label}`, async (s) => {

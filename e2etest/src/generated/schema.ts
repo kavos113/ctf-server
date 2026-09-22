@@ -13,7 +13,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** ログイン */
+        /**
+         * ログイン
+         * @description DBへのセッション保存後にJWTを返す。応答にはCache-Control no-storeを付与する。
+         */
         post: {
             parameters: {
                 query?: never;
@@ -23,10 +26,7 @@ export interface paths {
             };
             requestBody: {
                 content: {
-                    "application/json": {
-                        username?: string;
-                        password?: string;
-                    };
+                    "application/json": components["schemas"]["AuthRequest"];
                 };
             };
             responses: {
@@ -37,9 +37,31 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            token?: string;
+                            token: string;
                         };
                     };
+                };
+                /** @description JSONまたは入力制約が不正（空本文） */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                401: components["responses"]["Unauthorized"];
+                /** @description 内部エラー（空本文） */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description パスワードワーカーが満杯または停止中（空本文） */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
                 };
             };
         };
@@ -58,7 +80,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** ログアウト */
+        /**
+         * ログアウト
+         * @description 提示したJWTのセッションだけを失効させる。成功時は空本文。
+         */
         post: {
             parameters: {
                 query?: never;
@@ -70,6 +95,14 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                401: components["responses"]["Unauthorized"];
+                /** @description 内部エラー（空本文） */
+                500: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -102,10 +135,7 @@ export interface paths {
             };
             requestBody: {
                 content: {
-                    "application/json": {
-                        username?: string;
-                        password?: string;
-                    };
+                    "application/json": components["schemas"]["AuthRequest"];
                 };
             };
             responses: {
@@ -116,10 +146,38 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            id?: string;
-                            username?: string;
+                            id: string;
+                            username: string;
                         };
                     };
+                };
+                /** @description JSONまたは入力制約が不正（空本文） */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description ユーザー名が登録済み（空本文） */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description 内部エラー（空本文） */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description パスワードワーカーが満杯または停止中（空本文） */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
                 };
             };
         };
@@ -136,7 +194,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** すべての問題（フラグを除く） */
+        /**
+         * すべての問題（フラグを除く）
+         * @description CONTEST_START_ATより前はログイン状態によらず403。未設定・空の場合は制限なし。
+         */
         get: {
             parameters: {
                 query?: never;
@@ -154,6 +215,13 @@ export interface paths {
                     content: {
                         "application/json": components["schemas"]["ChallengeWithoutFlag"][];
                     };
+                };
+                /** @description コンテスト開始前（空本文、Cache-Control no-store） */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
                 };
             };
         };
@@ -182,6 +250,7 @@ export interface paths {
                         "application/json": components["schemas"]["Challenge"];
                     };
                 };
+                401: components["responses"]["Unauthorized"];
                 /** @description 自分の問題ではない */
                 403: {
                     headers: {
@@ -221,6 +290,7 @@ export interface paths {
                         "application/json": components["schemas"]["Challenge"];
                     };
                 };
+                401: components["responses"]["Unauthorized"];
             };
         };
         /** 問題を削除 */
@@ -242,6 +312,7 @@ export interface paths {
                     };
                     content?: never;
                 };
+                401: components["responses"]["Unauthorized"];
                 /** @description 自分の問題ではない */
                 403: {
                     headers: {
@@ -270,7 +341,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** 自分が作った問題 */
+        /**
+         * 自分が作った問題
+         * @description コンテスト開始前も取得可能。認証済みユーザーの問題だけをフラグ付きで返す。該当なしは空配列。
+         */
         get: {
             parameters: {
                 query?: never;
@@ -288,6 +362,14 @@ export interface paths {
                     content: {
                         "application/json": components["schemas"]["Challenge"][];
                     };
+                };
+                401: components["responses"]["Unauthorized"];
+                /** @description 内部エラー（空本文） */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
                 };
             };
         };
@@ -360,6 +442,7 @@ export interface paths {
                         "application/json": components["schemas"]["Answer"];
                     };
                 };
+                401: components["responses"]["Unauthorized"];
                 /** @description 問題が存在しない */
                 404: {
                     headers: {
@@ -403,6 +486,7 @@ export interface paths {
                         "application/json": components["schemas"]["Answer"][];
                     };
                 };
+                401: components["responses"]["Unauthorized"];
                 /** @description 問題が存在しない */
                 404: {
                     headers: {
@@ -460,6 +544,15 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** @description JSONをデコードして検証する。重複キーと未知フィールドは拒否する。 */
+        AuthRequest: {
+            username: string;
+            /**
+             * Format: password
+             * @description デコード後のUTF-8で8〜128バイト。NULは禁止。
+             */
+            password: string;
+        };
         ChallengeWithoutFlag: {
             /** Format: int64 */
             id?: number;
@@ -510,7 +603,17 @@ export interface components {
             score?: number;
         };
     };
-    responses: never;
+    responses: {
+        /** @description 認証失敗・期限切れ・失効済み（空本文） */
+        Unauthorized: {
+            headers: {
+                "WWW-Authenticate"?: "Bearer";
+                "Cache-Control"?: "no-store";
+                [name: string]: unknown;
+            };
+            content?: never;
+        };
+    };
     parameters: never;
     requestBodies: never;
     headers: never;

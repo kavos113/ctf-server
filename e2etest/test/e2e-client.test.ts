@@ -32,6 +32,25 @@ describe('E2eClient without HTTP', () => {
       },
       { label: 'public GET', request: { method: 'get', path: '/users' }, body: '[]' },
       {
+        label: 'public GET omits JWT',
+        token: 'test-token',
+        request: { method: 'get', path: '/users' },
+        body: '[]'
+      },
+      {
+        label: 'unauthenticated protected GET',
+        request: { method: 'get', path: '/challenges/me' },
+        status: 401,
+        body: ''
+      },
+      {
+        label: 'invalid JWT is sent for rejection tests',
+        token: 'not-a-jwt',
+        request: { method: 'get', path: '/answers/me' },
+        status: 401,
+        body: ''
+      },
+      {
         label: 'query',
         request: { method: 'get', path: '/answers', query: { challenge_id: 7 } },
         body: '[]'
@@ -119,7 +138,7 @@ describe('E2eClient without HTTP', () => {
           `http://example.invalid/api${test.request.path}${test.request.query ? '?challenge_id=7' : ''}`
         );
         expect(headers.get('Authorization'), test.label).toBe(
-          test.token ? `Bearer ${test.token}` : null
+          test.token && contract.requiresBearer(test.request) ? `Bearer ${test.token}` : null
         );
         expect(headers.get('Accept'), test.label).toBe('application/json');
         expect(headers.get('Content-Type'), test.label).toBe(

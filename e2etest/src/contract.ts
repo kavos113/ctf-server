@@ -173,6 +173,12 @@ export class Contract {
 
     return Boolean(response?.content?.['application/json']);
   }
+
+  requiresBearer(test: RequestCase): boolean {
+    const security = this.operation(test).security ?? this.document.security ?? [];
+
+    return security.some((requirement) => Object.hasOwn(requirement, 'bearerAuth'));
+  }
 }
 
 export function baseUrl(value: string | undefined): URL {

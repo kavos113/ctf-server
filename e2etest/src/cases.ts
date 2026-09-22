@@ -1,6 +1,13 @@
 import { randomUUID } from 'node:crypto';
 import type { paths } from './generated/schema';
 
+export function createCredentials() {
+  return {
+    username: `e2e-${randomUUID().replaceAll('-', '').slice(0, 28)}`,
+    password: `password-${randomUUID()}`
+  };
+}
+
 type Method = 'get' | 'post' | 'put' | 'delete' | 'patch' | 'head' | 'options' | 'trace';
 type Body<T> = T extends { requestBody: { content: { 'application/json': infer B } } }
   ? { body: B }
@@ -21,7 +28,7 @@ export type ContractCase = {
 
 export function createCases(): ContractCase[] {
   const suffix = randomUUID();
-  const credentials = { username: `e2e-${suffix}`, password: `password-${suffix}` };
+  const credentials = createCredentials();
   const challenge = {
     name: `e2e-${suffix}`,
     description: `OpenAPI contract test ${suffix}`,

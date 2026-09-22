@@ -9,6 +9,24 @@ beforeAll(async () => {
 });
 
 describe('Contract', () => {
+  it('requiresBearer follows the OpenAPI operation security', () => {
+    const protectedOperations = new Set([
+      'post /logout',
+      'post /challenges',
+      'put /challenges',
+      'delete /challenges',
+      'get /challenges/me',
+      'post /answers',
+      'get /answers/me'
+    ]);
+
+    for (const test of createCases()) {
+      expect(contract.requiresBearer(test)).toBe(
+        protectedOperations.has(`${test.method} ${test.path}`)
+      );
+    }
+  });
+
   it('assertCoverage detects missing and unknown operations', () => {
     const cases = createCases();
 
@@ -30,8 +48,8 @@ describe('Contract', () => {
   it('assertRequest checks body and query schemas without adding required properties', () => {
     const cases: [RequestCase, RegExp | undefined][] = [
       ...createCases().map((test) => [test, undefined] as [RequestCase, undefined]),
-      [{ method: 'post', path: '/signup', body: {} }, undefined],
-      [{ method: 'post', path: '/signup', body: { extra: true } }, undefined],
+      [{ method: 'post', path: '/signup', body: {} }, /required/],
+      [{ method: 'post', path: '/signup', body: { extra: true } }, /additional properties/],
       [{ method: 'post', path: '/signup' }, /body: required/],
       [{ method: 'post', path: '/signup', body: { username: 123 } }, /username.*string/],
       [{ method: 'post', path: '/signup', body: null }, /object/],
@@ -60,8 +78,13 @@ describe('Contract', () => {
       contentType?: string | null;
       error?: RegExp;
     }[] = [
-      { request: { method: 'post', path: '/login' }, status: 200, body: '{}' },
-      { request: { method: 'post', path: '/login' }, status: 200, body: '{"extra":true}' },
+      { request: { method: 'post', path: '/login' }, status: 200, body: '{}', error: /required/ },
+      {
+        request: { method: 'post', path: '/login' },
+        status: 200,
+        body: '{"extra":true}',
+        error: /required/
+      },
       {
         request: { method: 'post', path: '/login' },
         status: 200,
@@ -77,8 +100,7 @@ describe('Contract', () => {
       {
         request: { method: 'post', path: '/login' },
         status: 401,
-        body: '{}',
-        error: /response 401.*undefined status/
+        body: ''
       },
       {
         request: { method: 'post', path: '/login' },

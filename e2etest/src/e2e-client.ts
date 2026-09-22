@@ -21,7 +21,9 @@ export class E2eClient {
         method: test.method.toUpperCase(),
         headers: {
           Accept: 'application/json',
-          ...(this.token ? { Authorization: `Bearer ${this.token}` } : {}),
+          ...(this.token && this.contract.requiresBearer(test)
+            ? { Authorization: `Bearer ${this.token}` }
+            : {}),
           ...(test.body === undefined ? {} : { 'Content-Type': 'application/json' })
         },
         body: test.body === undefined ? undefined : JSON.stringify(test.body),
