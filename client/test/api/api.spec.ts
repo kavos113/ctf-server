@@ -47,7 +47,15 @@ describe('API', () => {
         body: body === undefined ? undefined : JSON.stringify(body),
         headers: {
           Accept: 'application/json',
-          Authorization: 'Bearer test-token',
+          ...([
+            'POST /login',
+            'POST /signup',
+            'GET /challenges',
+            'GET /answers',
+            'GET /users'
+          ].includes(`${method} ${path.split('?')[0]}`)
+            ? {}
+            : { Authorization: 'Bearer test-token' }),
           ...(body === undefined ? {} : { 'Content-Type': 'application/json' })
         }
       });

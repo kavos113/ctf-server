@@ -1,5 +1,6 @@
 import type { RouteNode } from '@aurelia/router';
 import { PageState } from '../shared/page-state';
+import { credentialsError } from '../../services/credentials';
 import './auth-page.css';
 
 export class AuthPage extends PageState {
@@ -18,9 +19,9 @@ export class AuthPage extends PageState {
   }
 
   async submit() {
-    if (!this.username.trim() || !this.password) {
-      this.error = 'ユーザー名とパスワードを入力してください。';
+    this.error = credentialsError({ username: this.username, password: this.password });
 
+    if (this.error) {
       return;
     }
 

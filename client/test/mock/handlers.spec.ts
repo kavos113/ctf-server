@@ -10,8 +10,8 @@ describe('mock', () => {
     const token = call('POST', '/login', { username: 'alice', password: 'demo-password' }).body
       .token;
 
-    expect(call('POST', '/signup', { username: 'new', password: 'p' }).status).toBe(201);
-    expect(call('POST', '/login', { username: 'new', password: 'p' }).status).toBe(200);
+    expect(call('POST', '/signup', { username: 'new', password: 'password' }).status).toBe(201);
+    expect(call('POST', '/login', { username: 'new', password: 'password' }).status).toBe(200);
 
     for (const [method, path] of [
       ['POST', '/logout'],

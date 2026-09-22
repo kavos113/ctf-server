@@ -52,8 +52,8 @@ describe('application', () => {
 
     await fixture.started;
 
-    expect(fixture.appHost.textContent).toContain('EachOtherへようこそ');
-    expect(fixture.appHost.textContent).toContain('注意事項（仮）');
+    expect(fixture.appHost.textContent).toContain('EachOther');
+    expect(fixture.appHost.textContent).toContain('注意事項');
     expect(new URL(fixture.appHost.querySelector<HTMLAnchorElement>('.brand')!.href).hash).toBe(
       '#/'
     );

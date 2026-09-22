@@ -41,6 +41,21 @@ export function handleRequest(
 
   if (protectedRoutes.has(key) && !userId) return response(401);
 
+  if (key === 'POST /signup' || key === 'POST /login') {
+    if (
+      !validStrings(body, ['username', 'password']) ||
+      Object.keys(body).some((key) => !['username', 'password'].includes(key)) ||
+      body.username.length < 3 ||
+      body.username.length > 32 ||
+      /[^A-Za-z0-9_-]/.test(body.username) ||
+      body.password.includes('\0') ||
+      new TextEncoder().encode(body.password).length < 8 ||
+      new TextEncoder().encode(body.password).length > 128
+    ) {
+      return response(400);
+    }
+  }
+
   if (key === 'POST /signup') {
     if (!validStrings(body, ['username', 'password'])) return response(400);
 

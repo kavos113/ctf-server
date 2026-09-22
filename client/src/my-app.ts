@@ -1,5 +1,5 @@
 import { Api } from './api/api';
-import { errorMessage } from './api/http-client';
+import { ApiError, errorMessage } from './api/http-client';
 import { SessionService } from './services/session-service';
 import { AuthPage } from './pages/auth/auth-page';
 import { HomePage } from './pages/home/home-page';
@@ -61,17 +61,26 @@ export class MyApp {
     }
 
     this.busy = true;
+    const version = this.session.version;
 
     let notice = 'ログアウトしました。';
 
     try {
       await this.api.logout();
     } catch (error) {
-      notice = `端末のログイン情報を削除しました。サーバー側の失効は確認できませんでした。${errorMessage(error)}`;
+      if (!(error instanceof ApiError && error.status === 401)) {
+        notice = `端末のログイン情報を削除しました。サーバー側の失効は確認できませんでした。${errorMessage(error)}`;
+      }
     } finally {
-      this.session.clear(notice);
+      if (version === this.session.version) {
+        this.session.clear(notice);
+      }
+
       this.busy = false;
-      window.location.hash = '/login';
+
+      if (!this.session.authenticated) {
+        window.location.hash = '/login';
+      }
     }
   }
 }

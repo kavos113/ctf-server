@@ -7,18 +7,25 @@
       id="username"
       value.bind="username"
       autocomplete="username"
+      minlength="3"
+      maxlength="32"
+      pattern="[A-Za-z0-9_\-]+"
+      aria-describedby="username-help"
       required
       disabled.bind="busy"
     />
+    <p id="username-help" class="muted">半角英数字・ハイフン・アンダースコアで3〜32文字。</p>
     <label for="password">パスワード</label>
     <input
       id="password"
       type="password"
       value.bind="password"
       autocomplete.bind="signup ? 'new-password' : 'current-password'"
+      aria-describedby="password-help"
       required
       disabled.bind="busy"
     />
+    <p id="password-help" class="muted">UTF-8で8〜128バイト（半角英数字なら8〜128文字）。</p>
     <button type="submit" disabled.bind="busy">
       ${busy ? '送信中…' : signup ? '登録する' : 'ログイン'}
     </button>

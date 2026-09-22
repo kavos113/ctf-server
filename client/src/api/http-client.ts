@@ -46,7 +46,7 @@ export class HttpClient {
       headers['Content-Type'] = 'application/json';
     }
 
-    if (this.session.token) {
+    if (options.protected && this.session.token) {
       headers.Authorization = `Bearer ${this.session.token}`;
     }
 
@@ -80,7 +80,11 @@ export class HttpClient {
 
     if (!response.ok) {
       if (response.status === 401 && options.protected) {
-        this.session.clear('ログインの有効期限が切れました。再度ログインしてください。');
+        this.session.clear(
+          path === '/logout'
+            ? 'ログアウトしました。'
+            : 'ログインが無効になりました。再度ログインしてください。'
+        );
       }
 
       const messages: Record<number, string> = {
@@ -88,7 +92,8 @@ export class HttpClient {
         401: '認証に失敗しました。ログイン情報を確認してください。',
         403: 'この操作を行う権限がありません。',
         404: '対象の問題が見つかりません。',
-        409: '同じユーザー名が登録されています。'
+        409: '同じユーザー名が登録されています。',
+        503: 'サーバーが混み合っています。しばらく待ってから再試行してください。'
       };
 
       throw new ApiError(

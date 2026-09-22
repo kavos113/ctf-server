@@ -25,7 +25,10 @@ export class SessionService {
   }
 
   start(token: string) {
-    this.clear();
     this.token = token;
+    this.notice = '';
+    this.version++;
+
+    this.listeners.forEach((listener) => listener());
   }
 }
