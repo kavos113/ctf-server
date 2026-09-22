@@ -13,7 +13,7 @@ beforeAll(async () => {
   for (const test of cases) contract.assertRequest(test);
 });
 
-describe.sequential('OpenAPI contract', () => {
+describe('OpenAPI contract', { concurrent: false }, () => {
   for (const test of cases) {
     const label = `${test.method.toUpperCase()} ${test.path}${test.query ? ` ${JSON.stringify(test.query)}` : ''}`;
     it(label, async () => {
