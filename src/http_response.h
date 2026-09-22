@@ -2,6 +2,7 @@
 #define HTTP_RESPONSE_H
 
 #include <stddef.h>
+#include <stdbool.h>
 
 #include "error.h"
 #include "http.h"
@@ -11,6 +12,8 @@ typedef struct
   http_status status;
   const char *body;
   size_t body_len;
+  bool bearer_challenge;
+  bool no_store;
   const char *content_type; // NULL: text/plain
 } http_response_t;
 
