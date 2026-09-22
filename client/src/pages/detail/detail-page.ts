@@ -103,7 +103,7 @@ export class DetailPage extends PageState {
         return;
       }
 
-      this.message = result.correct ? '正解です！' : '不正解です。もう一度挑戦できます。';
+      this.message = result.correct ? '正解' : '不正解';
       this.answer = '';
 
       await this.refreshHistory();

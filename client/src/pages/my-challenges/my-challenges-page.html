@@ -3,7 +3,7 @@
   <h1>自分の問題</h1>
   <div class="toolbar">
     <a class="button" href="#/me/challenges/new">問題を作成</a>
-    ><button class="secondary" click.trigger="refresh()" disabled.bind="pending">更新</button>
+    <button class="secondary" click.trigger="refresh()" disabled.bind="pending">更新</button>
   </div>
   <p if.bind="pending" role="status">読み込み中…</p>
   <p if.bind="error" role="alert" class="error">${error}</p>

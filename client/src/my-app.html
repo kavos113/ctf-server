@@ -5,11 +5,8 @@
     <a href="#/challenges">問題</a>
     <a href="#/ranking">ランキング</a>
     <template if.bind="session.authenticated"
-      ><a href="#/me/answers">自分の解答</a><a href="#/me/challenges">問題管理</a> ><button
-        class="secondary"
-        click.trigger="logout()"
-        disabled.bind="busy"
-      >
+      ><a href="#/me/answers">自分の解答</a><a href="#/me/challenges">問題管理</a
+      ><button class="secondary" click.trigger="logout()" disabled.bind="busy">
         ログアウト
       </button></template
     >
