@@ -1,5 +1,6 @@
-import type { User } from '../api/api';
-import { PageState } from './page-state';
+import type { User } from '../../api/api';
+import { PageState } from '../shared/page-state';
+import './ranking-page.css';
 
 export function sortUsers(users: User[]) {
   return [...users].sort((a, b) => {

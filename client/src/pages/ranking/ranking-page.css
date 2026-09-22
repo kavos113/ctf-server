@@ -1,0 +1,5 @@
+.ranking-page .score {
+  font-variant-numeric: tabular-nums;
+  color: #70dfcc;
+  font-weight: 700;
+}

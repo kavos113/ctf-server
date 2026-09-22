@@ -1,6 +1,6 @@
 import type { RouteNode } from '@aurelia/router';
-import type { Answer, PublicChallenge, User } from '../api/api';
-import { PageState, formatDate, parseId } from './page-state';
+import type { Answer, PublicChallenge, User } from '../../api/api';
+import { PageState, formatDate, parseId } from '../shared/page-state';
 
 export class HistoryPage extends PageState {
   mine = false;

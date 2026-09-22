@@ -1,0 +1,66 @@
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button,
+.button {
+  padding: 0.6rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 0.4rem;
+  background: #70dfcc;
+  color: #101722;
+  cursor: pointer;
+  font-weight: 650;
+  text-decoration: none;
+  display: inline-block;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+button.secondary {
+  background: transparent;
+  color: #e5edf7;
+  border-color: #617188;
+}
+
+button.danger {
+  background: #ffc0bf;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  padding: 0.65rem;
+  border: 1px solid #617188;
+  border-radius: 0.35rem;
+  background: #101722;
+  color: #e5edf7;
+}
+
+label {
+  display: block;
+  margin-bottom: 0.35rem;
+}
+
+form input,
+form textarea,
+form select {
+  margin-bottom: 1.1rem;
+}
+
+fieldset {
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+legend {
+  margin-bottom: 1rem;
+}

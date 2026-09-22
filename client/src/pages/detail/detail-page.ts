@@ -1,6 +1,7 @@
-import type { Answer, CorrectAnswer, PublicChallenge } from '../api/api';
-import { errorMessage } from '../api/http-client';
-import { PageState, formatDate, parseId } from './page-state';
+import type { Answer, CorrectAnswer, PublicChallenge } from '../../api/api';
+import { errorMessage } from '../../api/http-client';
+import { PageState, formatDate, parseId } from '../shared/page-state';
+import './detail-page.css';
 
 export class DetailPage extends PageState {
   id?: number;

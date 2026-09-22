@@ -1,5 +1,5 @@
-import type { Challenge } from '../api/api';
-import { PageState } from './page-state';
+import type { Challenge } from '../../api/api';
+import { PageState } from '../shared/page-state';
 
 export class MyChallengesPage extends PageState {
   items: Challenge[] = [];

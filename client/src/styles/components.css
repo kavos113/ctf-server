@@ -1,0 +1,84 @@
+.panel {
+  background: #192331;
+  border: 1px solid #344359;
+  border-radius: 0.6rem;
+  padding: 1.5rem;
+  margin-block: 1.25rem;
+}
+
+.eyebrow {
+  color: #70dfcc;
+  letter-spacing: 0.12em;
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin-top: 2rem;
+}
+
+.muted {
+  color: #adbbce;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: end;
+  margin-block: 1.5rem;
+}
+
+.toolbar > div {
+  flex: 1;
+  min-width: 160px;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: 1.25rem;
+}
+
+.cards .panel {
+  margin: 0;
+}
+
+.badge {
+  color: #70dfcc;
+  font-size: 0.8rem;
+  border: 1px solid #3c726f;
+  border-radius: 2rem;
+  padding: 0.15rem 0.65rem;
+}
+
+.error {
+  padding: 1rem;
+  border-left: 3px solid #ffa6a3;
+  background: #3a232b;
+}
+
+.empty {
+  padding: 2rem;
+  border: 1px dashed #617188;
+  text-align: center;
+}
+
+.table-wrap {
+  overflow-x: auto;
+  margin-top: 1.5rem;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+th,
+td {
+  padding: 1rem;
+  border-bottom: 1px solid #344359;
+  overflow-wrap: anywhere;
+}
+
+th {
+  color: #adbbce;
+}

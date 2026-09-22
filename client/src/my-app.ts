@@ -1,14 +1,15 @@
 import { Api } from './api/api';
 import { errorMessage } from './api/http-client';
 import { SessionService } from './services/session-service';
-import { AuthPage } from './pages/auth-page';
-import { ChallengesPage } from './pages/challenges-page';
-import { DetailPage } from './pages/detail-page';
-import { HistoryPage } from './pages/history-page';
-import { RankingPage } from './pages/ranking-page';
-import { MyChallengesPage } from './pages/my-challenges-page';
-import { EditorPage } from './pages/editor-page';
-import { NotFoundPage } from './pages/not-found-page';
+import { AuthPage } from './pages/auth/auth-page';
+import { ChallengesPage } from './pages/challenges/challenges-page';
+import { DetailPage } from './pages/detail/detail-page';
+import { HistoryPage } from './pages/history/history-page';
+import { RankingPage } from './pages/ranking/ranking-page';
+import { MyChallengesPage } from './pages/my-challenges/my-challenges-page';
+import { EditorPage } from './pages/editor/editor-page';
+import { NotFoundPage } from './pages/not-found/not-found-page';
+import './my-app.css';
 
 export class MyApp {
   static inject = [Api, SessionService];

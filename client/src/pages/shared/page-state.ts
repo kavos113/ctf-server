@@ -1,6 +1,6 @@
-import { Api } from '../api/api';
-import { errorMessage } from '../api/http-client';
-import { SessionService } from '../services/session-service';
+import { Api } from '../../api/api';
+import { errorMessage } from '../../api/http-client';
+import { SessionService } from '../../services/session-service';
 
 export class PageState {
   static inject = [Api, SessionService];

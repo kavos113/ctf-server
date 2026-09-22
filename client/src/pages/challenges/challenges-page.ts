@@ -1,5 +1,6 @@
-import type { PublicChallenge } from '../api/api';
-import { PageState } from './page-state';
+import type { PublicChallenge } from '../../api/api';
+import { PageState } from '../shared/page-state';
+import './challenges-page.css';
 
 export class ChallengesPage extends PageState {
   items: PublicChallenge[] = [];

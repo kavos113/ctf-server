@@ -1,5 +1,6 @@
-import type { ChallengeInput } from '../api/api';
-import { PageState, parseId } from './page-state';
+import type { ChallengeInput } from '../../api/api';
+import { PageState, parseId } from '../shared/page-state';
+import './editor-page.css';
 
 export class EditorPage extends PageState {
   id?: number;

@@ -2,10 +2,10 @@ import { describe, it, expect, vi } from 'vitest';
 import { Api } from '../../src/api/api';
 import { HttpClient } from '../../src/api/http-client';
 import { SessionService } from '../../src/services/session-service';
-import { PageState, formatDate, parseId } from '../../src/pages/page-state';
-import { sortUsers } from '../../src/pages/ranking-page';
-import { EditorPage } from '../../src/pages/editor-page';
-import { DetailPage } from '../../src/pages/detail-page';
+import { PageState, formatDate, parseId } from '../../src/pages/shared/page-state';
+import { sortUsers } from '../../src/pages/ranking/ranking-page';
+import { EditorPage } from '../../src/pages/editor/editor-page';
+import { DetailPage } from '../../src/pages/detail/detail-page';
 
 describe('page state', () => {
   it('read ignores stale responses and clears private data on session loss', async () => {

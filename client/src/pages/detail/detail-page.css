@@ -1,0 +1,12 @@
+.detail-page .description {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.detail-page .result {
+  color: #70dfcc;
+}
+
+.detail-page code {
+  overflow-wrap: anywhere;
+}

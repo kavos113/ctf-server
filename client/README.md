@@ -2,6 +2,32 @@
 
 Aurelia 2 + TypeScriptのCTFフロントエンドです。API契約は [`../docs/openapi.yaml`](../docs/openapi.yaml) を参照します。
 
+## ソースの構成
+
+`src/pages/` はページコンポーネントごとにディレクトリを分け、TypeScript・HTML・ページ固有のCSSを同じ場所に配置します。ログインと登録など、既存の同一コンポーネントを使う画面は引き続き共通化しています。
+
+```text
+src/
+  pages/
+    auth/
+    challenges/
+    detail/
+    editor/
+    history/
+    my-challenges/
+    not-found/
+    ranking/
+    shared/page-state.ts
+  styles/
+    app.css          # 共通CSSの読み込み口
+    base.css         # 基本の色・文字・要素
+    controls.css     # ボタン・フォーム
+    components.css   # 共通のカード・表・状態表示
+  my-app.css         # ヘッダー・ナビゲーション・全体レイアウト
+```
+
+ページ固有のCSSはページ名のクラスを起点に適用し、対応するTypeScriptから読み込みます。共通スタイルだけを使うページには空のCSSファイルを作りません。
+
 ## 開発環境
 
 Node.js 22.12以降とpnpmを使用します。依存関係はlockfileで固定しています。
