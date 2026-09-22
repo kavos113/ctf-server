@@ -9,8 +9,8 @@ typedef struct
   unsigned fields;
   size_t count;
   size_t cursor;
-  char *rows[16][6];
-  unsigned long lengths[6];
+  char *rows[16][7];
+  unsigned long lengths[7];
 } test_mysql_rows;
 
 extern int test_mysql_live_results;

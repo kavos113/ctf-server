@@ -1,12 +1,11 @@
 import type { RouteNode } from '@aurelia/router';
-import type { Answer, PublicChallenge, User } from '../../api/api';
+import type { Answer, PublicChallenge } from '../../api/api';
 import { PageState, formatDate, parseId } from '../shared/page-state';
 
 export class HistoryPage extends PageState {
   mine = false;
   items: Answer[] = [];
   challenges: PublicChallenge[] = [];
-  users: User[] = [];
   filter = '';
   formatDate = formatDate;
 
@@ -38,13 +37,12 @@ export class HistoryPage extends PageState {
 
     await this.read(
       async () => {
-        const [items, challenges, users] = await Promise.all([
+        const [items, challenges] = await Promise.all([
           this.mine ? this.api.myAnswers(id) : this.api.answers(id),
-          this.api.challenges().catch(() => []),
-          this.api.users().catch(() => [])
+          this.api.challenges().catch(() => [])
         ]);
 
-        return { items, challenges, users };
+        return { items, challenges };
       },
       (result) => Object.assign(this, result)
     );
@@ -52,9 +50,5 @@ export class HistoryPage extends PageState {
 
   challengeName(id?: number) {
     return this.challenges.find((item) => item.id === id)?.name ?? `問題 ${id ?? '不明'}`;
-  }
-
-  userName(id?: string) {
-    return this.users.find((item) => item.id === id)?.username ?? id ?? 'ユーザー不明';
   }
 }

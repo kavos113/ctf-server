@@ -76,7 +76,7 @@ __wrap_mysql_free_result(MYSQL_RES *result)
 
   for (size_t i = 0; i < rows->count; i++)
   {
-    for (size_t j = 0; j < 6; j++)
+    for (size_t j = 0; j < 7; j++)
     {
       free(rows->rows[i][j]);
     }

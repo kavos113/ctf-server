@@ -511,7 +511,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** すべてのユーザー（ランキング含む） */
+        /**
+         * すべてのユーザー（ランキング含む）
+         * @description 認証不要。開始時刻による制限なし。正解した異なる問題数×100点（自作問題を含む）。未回答者は0点。得点降順、同点はユーザーID昇順。ユーザーなしは空配列。
+         */
         get: {
             parameters: {
                 query?: never;
@@ -529,6 +532,13 @@ export interface paths {
                     content: {
                         "application/json": components["schemas"]["User"][];
                     };
+                };
+                /** @description 内部エラー（空本文） */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
                 };
             };
         };
@@ -586,20 +596,24 @@ export interface components {
             challenge_id?: number;
             answer?: string;
             correct?: boolean;
-            user_id?: string;
+            username?: string;
             /** Format: date-time */
             answered_at?: string;
         };
         CorrectAnswer: {
             /** Format: int64 */
             challenge_id?: number;
-            user_id?: string;
+            username?: string;
             /** Format: date-time */
             answered_at?: string;
         };
         User: {
             id?: string;
             username?: string;
+            /**
+             * Format: int64
+             * @description 現存する正解回答から集計する。重複正解は加点しない。問題削除に伴い回答が削除された場合は得点も減る。
+             */
             score?: number;
         };
     };

@@ -596,14 +596,14 @@ export interface components {
             challenge_id?: number;
             answer?: string;
             correct?: boolean;
-            user_id?: string;
+            username?: string;
             /** Format: date-time */
             answered_at?: string;
         };
         CorrectAnswer: {
             /** Format: int64 */
             challenge_id?: number;
-            user_id?: string;
+            username?: string;
             /** Format: date-time */
             answered_at?: string;
         };

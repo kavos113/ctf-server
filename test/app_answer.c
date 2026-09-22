@@ -55,7 +55,16 @@ answer_fixture(bool empty)
       {"13", "2", "0123456789abcdef0123456789abcdef", "second", "1", DATE},
       {"14", "1", "0123456789abcdef0123456789abcdef", "flag", "1", DATE},
   };
-  return test_mysql_result(values, empty ? 0 : 5, 6);
+  MYSQL_RES *result = test_mysql_result(values, empty ? 0 : 5, 6);
+  test_mysql_rows *rows = (test_mysql_rows *)result;
+  rows->fields = 7;
+
+  for (size_t i = 0; i < rows->count; i++)
+  {
+    rows->rows[i][6] = string_from_cstr_dup(i == 1 ? "Bob" : "Alice").ptr;
+  }
+
+  return result;
 }
 
 static MYSQL_RES *
@@ -201,8 +210,9 @@ run_answer_cases(
           if (strstr(task->query, "FROM answers"))
           {
             ASSERT_STR_EQ(tc->name,
-                          "SELECT id, challenge_id, user_id, answer, is_correct, "
-                          "DATE_FORMAT(created_at, '%Y-%m-%dT%H:%i:%sZ') FROM answers ORDER BY id",
+                          "SELECT a.id,a.challenge_id,a.user_id,a.answer,a.is_correct,"
+                          "DATE_FORMAT(a.created_at,'%Y-%m-%dT%H:%i:%sZ'),u.username "
+                          "FROM answers a JOIN users u ON u.id=a.user_id ORDER BY a.id",
                           task->query);
             task->result->res = answer_fixture(final_stage && tc->empty);
             test_mysql_rows *rows = (test_mysql_rows *)task->result->res;
@@ -283,10 +293,17 @@ run_answer_cases(
           ASSERT_STR_EQ(tc->name, "application/json", response.content_type);
           ASSERT_EQ(tc->name, strlen(response.body), response.body_len);
           ASSERT_NULL(tc->name, strstr(response.body, "created_at"));
+          ASSERT_NULL(tc->name, strstr(response.body, "\"user_id\""));
+
+          if (response.body_len > 2)
+          {
+            ASSERT_NOT_NULL(tc->name, strstr(response.body, "\"username\":"));
+          }
 
           if (route == POST_ANSWER)
           {
             ASSERT_NOT_NULL(tc->name, strstr(response.body, saved_answer));
+            ASSERT_NOT_NULL(tc->name, strstr(response.body, "\"username\":\"Alice\""));
             ASSERT_NOT_NULL(
                 tc->name,
                 strstr(response.body, saved_correct ? "\"correct\":true" : "\"correct\":false"));
@@ -312,7 +329,7 @@ run_answer_cases(
             }
             else
             {
-              ASSERT_NULL(tc->name, strstr(response.body, "\"user_id\":\"other\""));
+              ASSERT_NULL(tc->name, strstr(response.body, "\"username\":\"Bob\""));
 
               if (tc->entries && (!tc->filter || strcmp(tc->filter, "1") == 0))
               {
@@ -967,6 +984,8 @@ test_bind_answers(test_ctx_t *ctx)
     bool empty;
     bool invalid_shape;
     bool null_cell;
+    bool null_username;
+    bool invalid_username;
     bool invalid_id;
     bool invalid_correct;
     bool fail_calloc;
@@ -978,6 +997,8 @@ test_bind_answers(test_ctx_t *ctx)
       {.name = "empty rows", .empty = true, .success = true},
       {.name = "invalid shape", .invalid_shape = true},
       {.name = "NULL column", .null_cell = true},
+      {.name = "NULL username", .null_username = true},
+      {.name = "invalid username", .invalid_username = true},
       {.name = "invalid ID", .invalid_id = true},
       {.name = "invalid correct", .invalid_correct = true},
       {.name = "array allocation", .fail_calloc = true},
@@ -1001,6 +1022,17 @@ test_bind_answers(test_ctx_t *ctx)
     {
       free(mock->rows[0][2]);
       mock->rows[0][2] = NULL;
+    }
+
+    if (cases[i].null_username)
+    {
+      free(mock->rows[0][6]);
+      mock->rows[0][6] = NULL;
+    }
+
+    if (cases[i].invalid_username)
+    {
+      mock->rows[0][6][0] = '"';
     }
 
     if (cases[i].invalid_id)
@@ -1038,6 +1070,7 @@ test_bind_answers(test_ctx_t *ctx)
       if (count)
       {
         ASSERT_STR_EQ(cases[i].name, "wrong", answers[0].answer.ptr);
+        ASSERT_STR_EQ(cases[i].name, "Alice", answers[0].username.ptr);
         ASSERT_TRUE(cases[i].name, answers[0].is_string_allocated);
       }
     }
@@ -1048,18 +1081,20 @@ test_bind_answers(test_ctx_t *ctx)
     }
 
     free_answers(answers, count);
+    ASSERT_EQ(cases[i].name, 0, test_mysql_live_results);
     CHECK_TEST(cases[i].name);
   }
 }
 
 #define PRIVATE_ANSWER                                                                             \
-  "{\"challenge_id\":1,\"answer\":\"a\\n\\\"b\",\"correct\":false,\"user_id\":\"0123456789abcdef0123456789abcdef\","          \
+  "{\"challenge_id\":1,\"answer\":\"a\\n\\\"b\",\"correct\":false,\"username\":\"Alice\","          \
   "\"answered_at\":\"" DATE "\"}"
-#define PUBLIC_ANSWER "{\"challenge_id\":1,\"user_id\":\"0123456789abcdef0123456789abcdef\",\"answered_at\":\"" DATE "\"}"
+#define PUBLIC_ANSWER "{\"challenge_id\":1,\"username\":\"Alice\",\"answered_at\":\"" DATE "\"}"
 
 static const answer_t serialized_answer = {
     .challenge_id = 1,
     .user_id = {.ptr = "0123456789abcdef0123456789abcdef", .len = 32},
+    .username = {.ptr = "Alice", .len = 5},
     .answer = {.ptr = "a\\n\\\"b", .len = 6},
     .created_at = {.ptr = DATE, .len = sizeof(DATE) - 1},
 };

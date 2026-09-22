@@ -74,10 +74,10 @@ format_answer(char *buffer, size_t size, const answer_t *answer, bool public_vie
   {
     return snprintf(buffer,
                     size,
-                    "{\"challenge_id\":%d,\"user_id\":\"%.*s\",\"answered_at\":\"%.*s\"}",
+                    "{\"challenge_id\":%d,\"username\":\"%.*s\",\"answered_at\":\"%.*s\"}",
                     answer->challenge_id,
-                    (int)answer->user_id.len,
-                    answer->user_id.ptr,
+                    (int)answer->username.len,
+                    answer->username.ptr,
                     (int)answer->created_at.len,
                     answer->created_at.ptr);
   }
@@ -85,13 +85,13 @@ format_answer(char *buffer, size_t size, const answer_t *answer, bool public_vie
   return snprintf(buffer,
                   size,
                   "{\"challenge_id\":%d,\"answer\":\"%.*s\",\"correct\":%s,"
-                  "\"user_id\":\"%.*s\",\"answered_at\":\"%.*s\"}",
+                  "\"username\":\"%.*s\",\"answered_at\":\"%.*s\"}",
                   answer->challenge_id,
                   (int)answer->answer.len,
                   answer->answer.ptr,
                   answer->is_corrected ? "true" : "false",
-                  (int)answer->user_id.len,
-                  answer->user_id.ptr,
+                  (int)answer->username.len,
+                  answer->username.ptr,
                   (int)answer->created_at.len,
                   answer->created_at.ptr);
 }

@@ -21,7 +21,7 @@ const challengeFields: SchemaFields = {
 
 const answerFields: SchemaFields = {
   challenge_id: 'number',
-  user_id: 'string',
+  username: 'string',
   answered_at: 'string'
 };
 

@@ -224,8 +224,9 @@ handle_post_answers_3(http_request_context_t *ctx,
   }
 
   state->insert_id = (int)insert_id;
-  const char query[] = "SELECT id, challenge_id, user_id, answer, is_correct, "
-                       "DATE_FORMAT(created_at, '%Y-%m-%dT%H:%i:%sZ') FROM answers ORDER BY id";
+  const char query[] = "SELECT a.id,a.challenge_id,a.user_id,a.answer,a.is_correct,"
+                       "DATE_FORMAT(a.created_at,'%Y-%m-%dT%H:%i:%sZ'),u.username "
+                       "FROM answers a JOIN users u ON u.id=a.user_id ORDER BY a.id";
   ctx->current_handler = ctx->current_handler->next;
   return db_pool_exec_query(db, query, sizeof(query) - 1, ctx) < 0;
 }
@@ -402,8 +403,9 @@ handle_get_answers_2(http_request_context_t *ctx,
     return true;
   }
 
-  const char query[] = "SELECT id, challenge_id, user_id, answer, is_correct, "
-                       "DATE_FORMAT(created_at, '%Y-%m-%dT%H:%i:%sZ') FROM answers ORDER BY id";
+  const char query[] = "SELECT a.id,a.challenge_id,a.user_id,a.answer,a.is_correct,"
+                       "DATE_FORMAT(a.created_at,'%Y-%m-%dT%H:%i:%sZ'),u.username "
+                       "FROM answers a JOIN users u ON u.id=a.user_id ORDER BY a.id";
   ctx->current_handler = ctx->current_handler->next;
   return db_pool_exec_query(db, query, sizeof(query) - 1, ctx) < 0;
 }
@@ -545,8 +547,9 @@ handle_get_own_answers_2(http_request_context_t *ctx,
     return true;
   }
 
-  const char query[] = "SELECT id, challenge_id, user_id, answer, is_correct, "
-                       "DATE_FORMAT(created_at, '%Y-%m-%dT%H:%i:%sZ') FROM answers ORDER BY id";
+  const char query[] = "SELECT a.id,a.challenge_id,a.user_id,a.answer,a.is_correct,"
+                       "DATE_FORMAT(a.created_at,'%Y-%m-%dT%H:%i:%sZ'),u.username "
+                       "FROM answers a JOIN users u ON u.id=a.user_id ORDER BY a.id";
   ctx->current_handler = ctx->current_handler->next;
   return db_pool_exec_query(db, query, sizeof(query) - 1, ctx) < 0;
 }

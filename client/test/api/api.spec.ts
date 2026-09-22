@@ -99,6 +99,25 @@ describe('API', () => {
     ).resolves.toBeUndefined();
   });
 
+  it.each([
+    { name: 'public answers', operation: 'public' },
+    { name: 'own answers', operation: 'own' },
+    { name: 'submitted answer', operation: 'submit' }
+  ])('$name preserves username and excludes user_id', async ({ operation }) => {
+    const answer = { challenge_id: 1, username: 'Alice', user_id: 'internal-id', correct: true };
+    const payload = operation === 'submit' ? answer : [answer];
+    const api = new Api(
+      new HttpClient(new SessionService(), async () => new Response(JSON.stringify(payload)))
+    );
+    const result =
+      operation === 'submit'
+        ? await api.answer(1, 'flag')
+        : (operation === 'own' ? await api.myAnswers() : await api.answers())[0];
+
+    expect(result.username).toBe('Alice');
+    expect(result).not.toHaveProperty('user_id');
+  });
+
   it('objectResponse preserves optional fields and excludes unlisted data', () => {
     for (const [input, expected] of [
       [{}, {}],

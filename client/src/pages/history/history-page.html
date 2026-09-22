@@ -32,7 +32,7 @@
       <tbody>
         <tr repeat.for="item of items">
           <td>${challengeName(item.challenge_id)}</td>
-          <td>${mine ? item.answer : userName(item.user_id)}</td>
+          <td>${mine ? item.answer : (item.username || 'ユーザー不明')}</td>
           <td if.bind="mine">
             ${item.correct === true ? '正解' : item.correct === false ? '不正解' : '判定不明'}
           </td>

@@ -89,6 +89,7 @@ free_answer(answer_t *answer)
   if (answer->is_string_allocated)
   {
     free(answer->user_id.ptr);
+    free(answer->username.ptr);
     free(answer->answer.ptr);
     free(answer->created_at.ptr);
   }
@@ -126,6 +127,7 @@ free_answers(answer_t *answers, size_t count)
     if (answers[i].is_string_allocated)
     {
       free(answers[i].user_id.ptr);
+      free(answers[i].username.ptr);
       free(answers[i].answer.ptr);
       free(answers[i].created_at.ptr);
     }

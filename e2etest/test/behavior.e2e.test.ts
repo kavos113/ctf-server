@@ -158,7 +158,7 @@ class Scenario {
     const context = `${this.label} answer id=${problem.id}`;
 
     expect(actual.challenge_id, `${context} challenge_id`).toBe(problem.id);
-    expect(actual.user_id, `${context} user_id`).toBe(user.id);
+    expect(actual.username, `${context} username`).toBe(user.username);
     expect(actual.answer === answer, `${context} answer equality`).toBe(true);
     expect(actual.correct, `${context} correct`).toBe(correct);
     requiredValue(actual.answered_at, 'string', `${context} answered_at`);
@@ -183,7 +183,7 @@ class Scenario {
       }
 
       if (user) {
-        expect(row.user_id, `${this.label} history owner`).toBe(user.id);
+        expect(row.username, `${this.label} history owner`).toBe(user.username);
       } else {
         expect(Object.hasOwn(row, 'answer'), `${this.label} public answer absent`).toBe(false);
         expect(Object.hasOwn(row, 'flag'), `${this.label} public flag absent`).toBe(false);
@@ -206,7 +206,7 @@ class Scenario {
       }
 
       const published = (await this.history(undefined, id)).filter(
-        (row) => row.challenge_id === problem.id && row.user_id === user.id
+        (row) => row.challenge_id === problem.id && row.username === user.username
       );
 
       expect(published.length > 0, `${this.label} public history id=${problem.id}`).toBe(correct);

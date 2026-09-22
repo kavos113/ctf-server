@@ -124,7 +124,7 @@ bind_answers(const db_result_t *result, answer_t **out_answers, size_t *out_coun
   *out_answers = NULL;
   *out_count = 0;
 
-  if (!result || !result->success || !result->res || mysql_num_fields(result->res) != 6)
+  if (!result || !result->success || !result->res || mysql_num_fields(result->res) != 7)
   {
     return false;
   }
@@ -158,7 +158,7 @@ bind_answers(const db_result_t *result, answer_t **out_answers, size_t *out_coun
       goto error;
     }
 
-    for (size_t j = 0; j < 6; j++)
+    for (size_t j = 0; j < 7; j++)
     {
       if (!row[j])
       {
@@ -174,13 +174,31 @@ bind_answers(const db_result_t *result, answer_t **out_answers, size_t *out_coun
       goto error;
     }
 
+    // Usernames use the same ASCII alphabet as signup and can be emitted directly as JSON.
+    if (lengths[6] < 3 || lengths[6] > 32)
+    {
+      goto error;
+    }
+
+    for (size_t j = 0; j < lengths[6]; j++)
+    {
+      char ch = row[6][j];
+
+      if (!((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') ||
+            (ch >= '0' && ch <= '9') || ch == '_' || ch == '-'))
+      {
+        goto error;
+      }
+    }
+
     answers[i].is_string_allocated = true;
+    answers[i].username = string_from_cstr_dup_n(row[6], lengths[6]);
     answers[i].user_id = string_from_cstr_dup_n(row[2], lengths[2]);
     answers[i].answer = string_from_cstr_dup_n(row[3], lengths[3]);
     answers[i].created_at = string_from_cstr_dup_n(row[5], lengths[5]);
     answers[i].is_corrected = row[4][0] == '1';
 
-    if (!answers[i].user_id.ptr || !answers[i].answer.ptr || !answers[i].created_at.ptr)
+    if (!answers[i].username.ptr || !answers[i].user_id.ptr || !answers[i].answer.ptr || !answers[i].created_at.ptr)
     {
       goto error;
     }

@@ -365,7 +365,7 @@ components:
           type: string
         correct:
           type: boolean
-        user_id:
+        username:
           type: string
         answered_at:
           type: string
@@ -377,7 +377,7 @@ components:
         challenge_id:
           type: integer
           format: int64
-        user_id:
+        username:
           type: string
         answered_at:
           type: string

@@ -36,6 +36,7 @@ typedef struct
   int id;
   int challenge_id;
   string_t user_id;
+  string_t username;
   string_t answer;
   int is_corrected;
   string_t created_at;

@@ -44,7 +44,7 @@
       <p if.bind="!publicAnswers.length">まだ正答がありません。</p>
       <ul>
         <li repeat.for="item of publicAnswers">
-          ${item.user_id || 'ユーザー不明'} — ${formatDate(item.answered_at)}
+          ${item.username || 'ユーザー不明'} — ${formatDate(item.answered_at)}
         </li>
       </ul>
     </section>

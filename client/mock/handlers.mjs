@@ -8,7 +8,15 @@ const project = (value, keys) =>
 const publicChallenge = (value) =>
   project(value, ['id', 'name', 'description', 'genre', 'creator_id']);
 
-const publicAnswer = (value) => project(value, ['challenge_id', 'user_id', 'answered_at']);
+const answerResponse = (store, value, publicView = false) => ({
+  ...project(
+    value,
+    publicView
+      ? ['challenge_id', 'answered_at']
+      : ['challenge_id', 'answer', 'correct', 'answered_at']
+  ),
+  username: store.users.find((user) => user.id === value.user_id)?.username
+});
 
 const publicUser = (value) => project(value, ['id', 'username', 'score']);
 
@@ -190,7 +198,7 @@ export function handleRequest(
 
     return response(
       200,
-      scenario === 'missing' ? project(answer, ['challenge_id']) : { ...answer }
+      scenario === 'missing' ? project(answer, ['challenge_id']) : answerResponse(store, answer)
     );
   }
 
@@ -210,7 +218,7 @@ export function handleRequest(
 
     return response(
       200,
-      answers.map((item) => (path === '/answers/me' ? { ...item } : publicAnswer(item)))
+      answers.map((item) => answerResponse(store, item, path !== '/answers/me'))
     );
   }
 
