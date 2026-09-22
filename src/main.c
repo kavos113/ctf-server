@@ -45,28 +45,28 @@ main()
   http_handler_t delete_challenges_2_handler = {handle_delete_challenges_2, &delete_challenges_3_handler};
   http_handler_t delete_challenges_1_handler = {handle_delete_challenges_1, &delete_challenges_2_handler};
 
+  http_handler_t post_answers_5_handler = {handle_post_answers_5, NULL};
+  http_handler_t post_answers_4_handler = {handle_post_answers_4, &post_answers_5_handler};
+  http_handler_t post_answers_3_handler = {handle_post_answers_3, &post_answers_4_handler};
+  http_handler_t post_answers_2_handler = {handle_post_answers_2, &post_answers_3_handler};
+  http_handler_t post_answers_1_handler = {handle_post_answers_1, &post_answers_2_handler};
+
+  http_handler_t get_answers_3_handler = {handle_get_answers_3, NULL};
+  http_handler_t get_answers_2_handler = {handle_get_answers_2, &get_answers_3_handler};
+  http_handler_t get_answers_1_handler = {handle_get_answers_1, &get_answers_2_handler};
+
+  http_handler_t get_own_answers_3_handler = {handle_get_own_answers_3, NULL};
+  http_handler_t get_own_answers_2_handler = {handle_get_own_answers_2, &get_own_answers_3_handler};
+  http_handler_t get_own_answers_1_handler = {handle_get_own_answers_1, &get_own_answers_2_handler};
+
   http_server_add_route(server->http_server, HTTP_METHOD_GET, "/", &root_handler);
   http_server_add_route(server->http_server, HTTP_METHOD_GET, "/hello", &hello_1_handler);
   http_server_add_route(server->http_server, HTTP_METHOD_GET, "/challenges", &get_challenges_1_handler);
   http_server_add_route(server->http_server, HTTP_METHOD_POST, "/challenges", &post_challenges_1_handler);
   http_server_add_route(server->http_server, HTTP_METHOD_PUT, "/challenges", &put_challenges_1_handler);
   http_server_add_route(server->http_server, HTTP_METHOD_DELETE, "/challenges", &delete_challenges_1_handler);
-
-  http_handler_t post_answers_5_handler = {handle_post_answers_5, NULL};
-  http_handler_t post_answers_4_handler = {handle_post_answers_4, &post_answers_5_handler};
-  http_handler_t post_answers_3_handler = {handle_post_answers_3, &post_answers_4_handler};
-  http_handler_t post_answers_2_handler = {handle_post_answers_2, &post_answers_3_handler};
-  http_handler_t post_answers_1_handler = {handle_post_answers_1, &post_answers_2_handler};
   http_server_add_route(server->http_server, HTTP_METHOD_POST, "/answers", &post_answers_1_handler);
-
-  http_handler_t get_answers_3_handler = {handle_get_answers_3, NULL};
-  http_handler_t get_answers_2_handler = {handle_get_answers_2, &get_answers_3_handler};
-  http_handler_t get_answers_1_handler = {handle_get_answers_1, &get_answers_2_handler};
   http_server_add_route(server->http_server, HTTP_METHOD_GET, "/answers", &get_answers_1_handler);
-
-  http_handler_t get_own_answers_3_handler = {handle_get_own_answers_3, NULL};
-  http_handler_t get_own_answers_2_handler = {handle_get_own_answers_2, &get_own_answers_3_handler};
-  http_handler_t get_own_answers_1_handler = {handle_get_own_answers_1, &get_own_answers_2_handler};
   http_server_add_route(server->http_server, HTTP_METHOD_GET, "/answers/me", &get_own_answers_1_handler);
 
   serve(server);
