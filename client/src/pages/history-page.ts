@@ -9,22 +9,29 @@ export class HistoryPage extends PageState {
   users: User[] = [];
   filter = '';
   formatDate = formatDate;
+
   canLoad(_params: unknown, next: RouteNode) {
     return !next.data.mine || this.allowed ? true : 'login';
   }
+
   loading(_params: unknown, next: RouteNode) {
     this.reset();
     this.items = [];
     this.mine = next.data.mine === true;
     this.filter = '';
+
     return this.refresh();
   }
+
   clearPrivate() {
     if (this.mine) this.items = [];
   }
+
   async refresh() {
     if (this.mine && !this.allowed) return;
+
     const id = parseId(this.filter);
+
     await this.read(
       async () => {
         const [items, challenges, users] = await Promise.all([
@@ -32,14 +39,17 @@ export class HistoryPage extends PageState {
           this.api.challenges().catch(() => []),
           this.api.users().catch(() => [])
         ]);
+
         return { items, challenges, users };
       },
       (result) => Object.assign(this, result)
     );
   }
+
   challengeName(id?: number) {
     return this.challenges.find((item) => item.id === id)?.name ?? `問題 ${id ?? '不明'}`;
   }
+
   userName(id?: string) {
     return this.users.find((item) => item.id === id)?.username ?? id ?? 'ユーザー不明';
   }

@@ -10,20 +10,25 @@ createServer(async (request, response) => {
   try {
     const url = new URL(request.url, 'http://localhost');
     let text = '';
+
     for await (const chunk of request) {
       text += chunk;
+
       if (text.length > 1_000_000) {
         response.writeHead(413).end();
         return;
       }
     }
+
     let body;
+
     try {
       body = text ? JSON.parse(text) : undefined;
     } catch {
       response.writeHead(400).end();
       return;
     }
+
     const result = handleRequest(
       store,
       {
@@ -37,7 +42,9 @@ createServer(async (request, response) => {
       },
       scenario
     );
+
     if (delay) await new Promise((resolve) => setTimeout(resolve, delay));
+
     response.writeHead(result.status, {
       'Content-Type': result.raw ? 'text/plain' : 'application/json',
       'Cache-Control': 'no-store'

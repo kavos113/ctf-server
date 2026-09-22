@@ -1,5 +1,6 @@
 export function createStore(scenario = 'normal') {
   const empty = scenario === 'empty';
+
   return {
     users: empty
       ? []

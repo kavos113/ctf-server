@@ -5,6 +5,7 @@ import { beforeAll, afterEach } from 'vitest';
 // Sets up the Aurelia environment for testing
 function bootstrapTextEnv() {
   const platform = new BrowserPlatform(window);
+
   setPlatform(platform);
   BrowserPlatform.set(globalThis, platform);
 }

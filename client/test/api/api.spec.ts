@@ -6,7 +6,9 @@ import { SessionService } from '../../src/services/session-service';
 describe('API', () => {
   it('maps all operations to the OpenAPI contract', async () => {
     const session = new SessionService();
+
     session.start('test-token');
+
     const fetcher = vi.fn<typeof fetch>();
     const api = new Api(new HttpClient(session, fetcher));
     const credentials = { username: 'a', password: 'p' };
@@ -33,11 +35,13 @@ describe('API', () => {
       [() => api.myAnswers(2), 'GET', '/answers/me?challenge_id=2', undefined, [], 200],
       [() => api.users(), 'GET', '/users', undefined, [], 200]
     ];
+
     for (const [call, method, path, body, result, status] of cases) {
       fetcher.mockResolvedValueOnce(
         new Response(result === undefined ? null : JSON.stringify(result), { status })
       );
       await call();
+
       expect(fetcher).toHaveBeenLastCalledWith(`/api${path}`, {
         method,
         body: body === undefined ? undefined : JSON.stringify(body),
@@ -59,14 +63,19 @@ describe('API', () => {
       [500, false, true]
     ] as const) {
       const session = new SessionService();
+
       session.start('t');
+
       const http = new HttpClient(session, async () => new Response('plain text', { status }));
+
       await expect(
         http.request('GET', '/challenges/me', { protected: protectedRequest })
       ).rejects.toMatchObject({ status });
       expect(session.authenticated).toBe(loggedIn);
     }
+
     const session = new SessionService();
+
     await expect(
       new HttpClient(session, async () => new Response('bad')).request('GET', '/challenges')
     ).rejects.toThrow('応答を読み取れません');
@@ -89,12 +98,14 @@ describe('API', () => {
     ]) {
       expect(objectResponse(input, { id: 'number' })).toEqual(expected);
     }
+
     for (const input of [null, [], 'text', { id: '1' }])
       expect(() => objectResponse(input, { id: 'number' })).toThrow();
   });
 
   it('login and answer reject missing decision fields', async () => {
     const api = new Api(new HttpClient(new SessionService(), async () => new Response('{}')));
+
     await expect(api.login({})).rejects.toThrow('token');
     await expect(api.answer(1, 'f')).rejects.toThrow('正誤');
   });

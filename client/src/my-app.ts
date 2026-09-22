@@ -12,6 +12,7 @@ import { NotFoundPage } from './pages/not-found-page';
 
 export class MyApp {
   static inject = [Api, SessionService];
+
   static routes = [
     { path: '', redirectTo: 'challenges' },
     { path: 'login', component: AuthPage, title: 'ログイン' },
@@ -26,28 +27,38 @@ export class MyApp {
     { path: 'me/challenges/:id/edit', component: EditorPage, title: '問題編集' },
     { path: 'not-found', component: NotFoundPage, title: 'ページが見つかりません' }
   ];
+
   busy = false;
   private unsubscribe?: () => void;
+
   constructor(
     public api: Api,
     public session: SessionService
   ) {}
+
   binding() {
     this.unsubscribe = this.session.subscribe(() => {
       if (this.session.notice && !this.session.authenticated) window.location.hash = '/login';
     });
   }
+
   unbinding() {
     this.unsubscribe?.();
   }
+
   focusMain() {
     document.querySelector<HTMLElement>('main')?.focus();
+
     return false;
   }
+
   async logout() {
     if (this.busy) return;
+
     this.busy = true;
+
     let notice = 'ログアウトしました。';
+
     try {
       await this.api.logout();
     } catch (error) {

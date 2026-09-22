@@ -9,8 +9,10 @@ describe('mock', () => {
       handleRequest(store, { method, path, body, token, query });
     const token = call('POST', '/login', { username: 'alice', password: 'demo-password' }).body
       .token;
+
     expect(call('POST', '/signup', { username: 'new', password: 'p' }).status).toBe(201);
     expect(call('POST', '/login', { username: 'new', password: 'p' }).status).toBe(200);
+
     for (const [method, path] of [
       ['POST', '/logout'],
       ['GET', '/challenges/me'],
@@ -22,20 +24,29 @@ describe('mock', () => {
     ]) {
       expect(call(method, path).status).toBe(401);
     }
+
     const input = { name: 'test', genre: 'misc', description: 'test', flag: 'secret' };
     const created = call('POST', '/challenges', input, token);
+
     expect(created.status).toBe(201);
+
     const id = created.body.id;
+
     expect(call('PUT', '/challenges', { ...input, name: 'edited' }, token, { id }).body.name).toBe(
       'edited'
     );
+
     for (const answer of ['wrong', 'secret', 'secret']) {
       const result = call('POST', '/answers', { challenge_id: id, answer }, token);
+
       expect(result.status).toBe(200);
       expect(result.body.correct).toBe(answer === 'secret');
     }
+
     expect(call('GET', '/answers/me', undefined, token, { challenge_id: id }).body).toHaveLength(3);
+
     const publicAnswers = call('GET', '/answers', undefined, undefined, { challenge_id: id }).body;
+
     expect(publicAnswers).toHaveLength(2);
     expect(publicAnswers[0]).not.toHaveProperty('answer');
     expect(call('GET', '/challenges').body[0]).not.toHaveProperty('flag');

@@ -22,6 +22,7 @@ export function errorMessage(error: unknown): string {
 
 export class HttpClient {
   static inject = [SessionService];
+
   constructor(
     public session: SessionService,
     private fetcher: typeof fetch = (input, init) => globalThis.fetch(input, init),
@@ -40,13 +41,19 @@ export class HttpClient {
   ): Promise<unknown> {
     const version = this.session.version;
     const headers: Record<string, string> = { Accept: 'application/json' };
+
     if (options.body !== undefined) headers['Content-Type'] = 'application/json';
+
     if (this.session.token) headers.Authorization = `Bearer ${this.session.token}`;
+
     const query = new URLSearchParams();
+
     Object.entries(options.query ?? {}).forEach(([key, value]) => {
       if (value !== undefined) query.set(key, String(value));
     });
+
     let response: Response;
+
     try {
       response = await this.fetcher(`${this.baseUrl}${path}${query.size ? `?${query}` : ''}`, {
         method,
@@ -60,13 +67,16 @@ export class HttpClient {
           : '通信が切れました。処理が完了している可能性があります。履歴や一覧を確認してください。'
       );
     }
+
     if (options.protected && version !== this.session.version) {
       throw new ApiError('ログイン状態が変わったため結果を破棄しました。');
     }
+
     if (!response.ok) {
       if (response.status === 401 && options.protected) {
         this.session.clear('ログインの有効期限が切れました。再度ログインしてください。');
       }
+
       const messages: Record<number, string> = {
         400: '入力内容を確認してください。',
         401: '認証に失敗しました。ログイン情報を確認してください。',
@@ -74,21 +84,27 @@ export class HttpClient {
         404: '対象の問題が見つかりません。',
         409: '同じユーザー名が登録されています。'
       };
+
       throw new ApiError(
         messages[response.status] ?? 'サーバーでエラーが発生しました。再試行してください。',
         response.status
       );
     }
+
     if (options.empty) return undefined;
+
     let result: unknown;
+
     try {
       result = await response.json();
     } catch {
       throw new ApiError('サーバーの応答を読み取れませんでした。');
     }
+
     if (options.protected && version !== this.session.version) {
       throw new ApiError('ログイン状態が変わったため結果を破棄しました。');
     }
+
     return result;
   }
 }

@@ -13,6 +13,7 @@ import { handleRequest } from '../mock/handlers.mjs';
 describe('application', () => {
   it('renders every route with an in-memory API and enforces private navigation', async () => {
     window.history.replaceState(null, '', '/#/challenges');
+
     const session = new SessionService();
     const store = createStore();
     const fetcher: typeof fetch = async (input, init) => {
@@ -24,6 +25,7 @@ describe('application', () => {
         token: (init?.headers as Record<string, string>)?.Authorization?.replace('Bearer ', ''),
         body: init?.body ? JSON.parse(String(init.body)) : undefined
       });
+
       return new Response(result.body === undefined ? null : JSON.stringify(result.body), {
         status: result.status
       });
@@ -35,8 +37,11 @@ describe('application', () => {
       Registration.instance(Api, api),
       Registration.instance(SessionService, session)
     ]);
+
     await fixture.started;
+
     const router = fixture.container.get(IRouter);
+
     for (const [path, expected] of [
       ['challenges', 'はじめてのフラグ'],
       ['challenges/1', 'フラグを提出'],
@@ -48,9 +53,12 @@ describe('application', () => {
       ['missing-route', 'ページが見つかりません']
     ]) {
       await router.load(path);
+
       expect(fixture.appHost.textContent, path).toContain(expected);
     }
+
     session.start(await api.login({ username: 'alice', password: 'demo-password' }));
+
     for (const [path, expected] of [
       ['me/challenges', 'はじめてのフラグ'],
       ['me/challenges/new', '問題を作成'],
@@ -59,20 +67,30 @@ describe('application', () => {
       ['challenges/1', '解答する']
     ]) {
       await router.load(path);
+
       expect(fixture.appHost.textContent, path).toContain(expected);
     }
+
     const input = fixture.appHost.querySelector<HTMLInputElement>('#answer')!;
+
     input.value = 'flag{welcome}';
     input.dispatchEvent(new Event('input', { bubbles: true }));
     input.closest('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
     await vi.waitFor(() => expect(fixture.appHost.textContent).toContain('正解です！'));
+
     expect(store.answers.filter((item) => item.user_id === 'alice')).toHaveLength(1);
+
     await router.load('me/answers');
+
     expect(fixture.appHost.textContent).toContain('flag{welcome}');
+
     await router.load('answers');
+
     expect(fixture.appHost.textContent).not.toContain('flag{welcome}');
+
     session.clear();
     await router.load('me/answers');
+
     expect(fixture.appHost.querySelector('#password')).not.toBeNull();
   });
 });

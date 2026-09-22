@@ -10,6 +10,7 @@ export class SessionService {
 
   subscribe(listener: () => void) {
     this.listeners.add(listener);
+
     return () => {
       this.listeners.delete(listener);
     };
@@ -19,6 +20,7 @@ export class SessionService {
     this.token = '';
     this.notice = notice;
     this.version++;
+
     this.listeners.forEach((listener) => listener());
   }
 
