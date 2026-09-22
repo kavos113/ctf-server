@@ -11,6 +11,7 @@ typedef struct
   http_status status;
   const char *body;
   size_t body_len;
+  const char *content_type; // NULL: text/plain
 } http_response_t;
 
 // とりあえずbodyを一括で返すことにする
