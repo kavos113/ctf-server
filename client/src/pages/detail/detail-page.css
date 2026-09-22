@@ -1,3 +1,11 @@
+.detail-page .challenge-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  overflow-wrap: anywhere;
+}
+
 .detail-page .description {
   white-space: pre-wrap;
   overflow-wrap: anywhere;

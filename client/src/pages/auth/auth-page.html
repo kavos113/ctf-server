@@ -14,7 +14,7 @@
       required
       disabled.bind="busy"
     />
-    <p id="username-help" class="muted">半角英数字・ハイフン・アンダースコアで3〜32文字。</p>
+    <p id="username-help" class="muted">半角英数字-_で3〜32文字</p>
     <label for="password">パスワード</label>
     <input
       id="password"
@@ -25,7 +25,7 @@
       required
       disabled.bind="busy"
     />
-    <p id="password-help" class="muted">UTF-8で8〜128バイト（半角英数字なら8〜128文字）。</p>
+    <p id="password-help" class="muted">半角英数字記号8〜128文字</p>
     <button type="submit" disabled.bind="busy">
       ${busy ? '送信中…' : signup ? '登録する' : 'ログイン'}
     </button>

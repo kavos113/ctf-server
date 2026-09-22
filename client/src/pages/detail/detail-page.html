@@ -12,6 +12,10 @@
   </button>
   <template if.bind="challenge">
     <h1>${challenge.name || '名前未設定'}</h1>
+    <div class="challenge-meta">
+      <span class="badge">${challenge.genre || 'ジャンル未設定'}</span>
+      <span class="creator">作成者: ${creatorName}</span>
+    </div>
     <p class="description panel">${challenge.description || '説明はありません。'}</p>
     <section class="panel">
       <h2>フラグを提出</h2>
