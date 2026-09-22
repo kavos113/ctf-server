@@ -29,10 +29,10 @@ main()
       .next = &post_challenges_2_handler,
   };
 
-  http_server_add_route(server->http_server, HTTP_METHOD_POST, "/challenges", &post_challenges_1_handler);
   http_server_add_route(server->http_server, HTTP_METHOD_GET, "/", &root_handler);
   http_server_add_route(server->http_server, HTTP_METHOD_GET, "/hello", &hello_1_handler);
   http_server_add_route(server->http_server, HTTP_METHOD_GET, "/challenges", &get_challenges_1_handler);
+  http_server_add_route(server->http_server, HTTP_METHOD_POST, "/challenges", &post_challenges_1_handler);
 
   serve(server);
 
