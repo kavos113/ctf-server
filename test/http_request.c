@@ -15,6 +15,7 @@ void test_parse_version(test_ctx_t *ctx);
 void test_parse_header(test_ctx_t *ctx);
 
 void test_parse_chunk(test_ctx_t *ctx);
+void test_parse_chunk_body(test_ctx_t *ctx);
 void test_parse_chunk_state_transition(test_ctx_t *ctx);
 void test_parse_chunk_parse_method(test_ctx_t *ctx);
 void test_parse_chunk_parse_uri(test_ctx_t *ctx);
@@ -31,6 +32,7 @@ test_http_request(test_ctx_t *ctx)
   test_parse_version(ctx);
   test_parse_header(ctx);
   test_parse_chunk(ctx);
+  test_parse_chunk_body(ctx);
 
   ctx->indent -= PREFACE_INDENT;
 }
@@ -54,7 +56,7 @@ test_parse_method(test_ctx_t *ctx)
       {
           .name = "GET",
           .buf = "GET / HTTP/1.1\r\n",
-          .buf_len = 16,
+          .buf_len = sizeof("GET / HTTP/1.1\r\n") - 1,
           .expected_result = 0,
           .expected_method = HTTP_METHOD_GET,
           .expected_method_len = 3,
@@ -62,7 +64,7 @@ test_parse_method(test_ctx_t *ctx)
       {
           .name = "PUT",
           .buf = "PUT / HTTP/1.1\r\n",
-          .buf_len = 16,
+          .buf_len = sizeof("PUT / HTTP/1.1\r\n") - 1,
           .expected_result = 0,
           .expected_method = HTTP_METHOD_PUT,
           .expected_method_len = 3,
@@ -70,7 +72,7 @@ test_parse_method(test_ctx_t *ctx)
       {
           .name = "POST",
           .buf = "POST / HTTP/1.1\r\n",
-          .buf_len = 17,
+          .buf_len = sizeof("POST / HTTP/1.1\r\n") - 1,
           .expected_result = 0,
           .expected_method = HTTP_METHOD_POST,
           .expected_method_len = 4,
@@ -78,7 +80,7 @@ test_parse_method(test_ctx_t *ctx)
       {
           .name = "HEAD",
           .buf = "HEAD / HTTP/1.1\r\n",
-          .buf_len = 17,
+          .buf_len = sizeof("HEAD / HTTP/1.1\r\n") - 1,
           .expected_result = 0,
           .expected_method = HTTP_METHOD_HEAD,
           .expected_method_len = 4,
@@ -86,7 +88,7 @@ test_parse_method(test_ctx_t *ctx)
       {
           .name = "PATCH",
           .buf = "PATCH / HTTP/1.1\r\n",
-          .buf_len = 18,
+          .buf_len = sizeof("PATCH / HTTP/1.1\r\n") - 1,
           .expected_result = 0,
           .expected_method = HTTP_METHOD_PATCH,
           .expected_method_len = 5,
@@ -94,7 +96,7 @@ test_parse_method(test_ctx_t *ctx)
       {
           .name = "TRACE",
           .buf = "TRACE / HTTP/1.1\r\n",
-          .buf_len = 18,
+          .buf_len = sizeof("TRACE / HTTP/1.1\r\n") - 1,
           .expected_result = 0,
           .expected_method = HTTP_METHOD_TRACE,
           .expected_method_len = 5,
@@ -102,7 +104,7 @@ test_parse_method(test_ctx_t *ctx)
       {
           .name = "DELETE",
           .buf = "DELETE / HTTP/1.1\r\n",
-          .buf_len = 19,
+          .buf_len = sizeof("DELETE / HTTP/1.1\r\n") - 1,
           .expected_result = 0,
           .expected_method = HTTP_METHOD_DELETE,
           .expected_method_len = 6,
@@ -110,7 +112,7 @@ test_parse_method(test_ctx_t *ctx)
       {
           .name = "OPTIONS",
           .buf = "OPTIONS / HTTP/1.1\r\n",
-          .buf_len = 20,
+          .buf_len = sizeof("OPTIONS / HTTP/1.1\r\n") - 1,
           .expected_result = 0,
           .expected_method = HTTP_METHOD_OPTIONS,
           .expected_method_len = 7,
@@ -118,7 +120,7 @@ test_parse_method(test_ctx_t *ctx)
       {
           .name = "CONNECT",
           .buf = "CONNECT / HTTP/1.1\r\n",
-          .buf_len = 20,
+          .buf_len = sizeof("CONNECT / HTTP/1.1\r\n") - 1,
           .expected_result = 0,
           .expected_method = HTTP_METHOD_CONNECT,
           .expected_method_len = 7,
@@ -126,7 +128,7 @@ test_parse_method(test_ctx_t *ctx)
       {
           .name = "too long method",
           .buf = "TOOLONGMETHOD / HTTP/1.1\r\n",
-          .buf_len = 27,
+          .buf_len = sizeof("TOOLONGMETHOD / HTTP/1.1\r\n") - 1,
           .expected_result = -1,
           .expected_method = HTTP_METHOD_GET, // dummy value
           .expected_method_len = 0,
@@ -134,7 +136,7 @@ test_parse_method(test_ctx_t *ctx)
       {
           .name = "invalid method",
           .buf = "INVALID / HTTP/1.1\r\n",
-          .buf_len = 21,
+          .buf_len = sizeof("INVALID / HTTP/1.1\r\n") - 1,
           .expected_result = -1,
           .expected_method = HTTP_METHOD_GET, // dummy value
           .expected_method_len = 0,
@@ -142,7 +144,7 @@ test_parse_method(test_ctx_t *ctx)
       {
           .name = "empty method",
           .buf = " / HTTP/1.1\r\n",
-          .buf_len = 14,
+          .buf_len = sizeof(" / HTTP/1.1\r\n") - 1,
           .expected_result = -1,
           .expected_method = HTTP_METHOD_GET, // dummy value
           .expected_method_len = 0,
@@ -150,7 +152,7 @@ test_parse_method(test_ctx_t *ctx)
       {
           .name = "no method",
           .buf = "",
-          .buf_len = 0,
+          .buf_len = sizeof("") - 1,
           .expected_result = -1,
           .expected_method = HTTP_METHOD_GET, // dummy value
           .expected_method_len = 0,
@@ -209,35 +211,35 @@ test_parse_version(test_ctx_t *ctx)
       {
           .name = "HTTP/1.0",
           .buf = "HTTP/1.0",
-          .buf_len = 8,
+          .buf_len = sizeof("HTTP/1.0") - 1,
           .expected_result = 0,
           .expected_version = HTTP_VERSION_1_0,
       },
       {
           .name = "HTTP/1.1",
           .buf = "HTTP/1.1",
-          .buf_len = 8,
+          .buf_len = sizeof("HTTP/1.1") - 1,
           .expected_result = 0,
           .expected_version = HTTP_VERSION_1_1,
       },
       {
           .name = "invalid version",
           .buf = "HTTP/2.0",
-          .buf_len = 8,
+          .buf_len = sizeof("HTTP/2.0") - 1,
           .expected_result = -1,
           .expected_version = HTTP_VERSION_1_0, // dummy value
       },
       {
           .name = "too short version",
           .buf = "HTTP/1.",
-          .buf_len = 7,
+          .buf_len = sizeof("HTTP/1.") - 1,
           .expected_result = -1,
           .expected_version = HTTP_VERSION_1_0, // dummy value
       },
       {
           .name = "too long version",
           .buf = "HTTP/1.10",
-          .buf_len = 9,
+          .buf_len = sizeof("HTTP/1.10") - 1,
           .expected_result = -1,
           .expected_version = HTTP_VERSION_1_0, // dummy value
       },
@@ -342,7 +344,7 @@ test_parse_header(test_ctx_t *ctx)
     http_request_t req;
     memset(&req, 0, sizeof(http_request_t));
 
-    parse_header(&req, &tc->header);
+    ASSERT_EQ(tc->name, 0, parse_header(&req, &tc->header));
 
     if (tc->expected_content_length > 0)
     {
@@ -401,16 +403,16 @@ test_parse_chunk_state_transition(test_ctx_t *ctx)
       {
           .name = "with 1 chunk: request line and headers",
           .buf = "GET / HTTP/1.1\r\nHost: example.com\r\n\r\n",
-          .buf_len = 44,
-          .bytes_read = 44,
+          .buf_len = sizeof("GET / HTTP/1.1\r\nHost: example.com\r\n\r\n") - 1,
+          .bytes_read = 37,
           .current_state = STATE_REQ_METHOD,
           .expected_error = ERR_NONE,
-          .expected_state = STATE_HEADER_END,
+          .expected_state = STATE_DONE,
       },
       {
           .name = "with 1 chunk: method -> uri",
           .buf = "GET /aaaaaaa",
-          .buf_len = 12,
+          .buf_len = sizeof("GET /aaaaaaa") - 1,
           .bytes_read = 12,
           .current_state = STATE_REQ_METHOD,
           .expected_error = ERR_MORE_DATA_NEEDED,
@@ -419,7 +421,7 @@ test_parse_chunk_state_transition(test_ctx_t *ctx)
       {
           .name = "with 1 chunk: uri -> version",
           .buf = "GET /www HTTP/1.",
-          .buf_len = 16,
+          .buf_len = sizeof("GET /www HTTP/1.") - 1,
           .bytes_read = 10,
           .current_state = STATE_REQ_URI,
           .expected_error = ERR_MORE_DATA_NEEDED,
@@ -428,7 +430,7 @@ test_parse_chunk_state_transition(test_ctx_t *ctx)
       {
           .name = "with 1 chunk: version -> header key",
           .buf = "GET / HTTP/1.1\r\n",
-          .buf_len = 16,
+          .buf_len = sizeof("GET / HTTP/1.1\r\n") - 1,
           .bytes_read = 16,
           .current_state = STATE_REQ_METHOD,
           .expected_error = ERR_MORE_DATA_NEEDED,
@@ -437,7 +439,7 @@ test_parse_chunk_state_transition(test_ctx_t *ctx)
       {
           .name = "with 1 chunk, error: unknown method",
           .buf = "UNKNOWN / HTTP/1.1\r\n",
-          .buf_len = 20,
+          .buf_len = sizeof("UNKNOWN / HTTP/1.1\r\n") - 1,
           .bytes_read = 20,
           .current_state = STATE_REQ_METHOD,
           .expected_error = ERR_HTTP_PARSE_FAILED,
@@ -446,7 +448,7 @@ test_parse_chunk_state_transition(test_ctx_t *ctx)
       {
           .name = "with 1 chunk, error: invalid version",
           .buf = "GET / HTTP/2.0\r\n",
-          .buf_len = 16,
+          .buf_len = sizeof("GET / HTTP/2.0\r\n") - 1,
           .bytes_read = 16,
           .current_state = STATE_REQ_VERSION,
           .expected_error = ERR_HTTP_PARSE_FAILED,
@@ -455,7 +457,7 @@ test_parse_chunk_state_transition(test_ctx_t *ctx)
       {
           .name = "with 1 chunk, error: single CR",
           .buf = "GET / HTTP/1.1\r",
-          .buf_len = 15,
+          .buf_len = sizeof("GET / HTTP/1.1\r") - 1,
           .bytes_read = 15,
           .current_state = STATE_REQ_VERSION,
           .expected_error = ERR_HTTP_PARSE_FAILED,
@@ -504,15 +506,15 @@ test_parse_chunk_state_transition(test_ctx_t *ctx)
       {
           .name = "with 1 byte at a time: request line and headers",
           .buf = "GET / HTTP/1.1\r\nHost: example.com\r\n\r\n",
-          .buf_len = 44,
+          .buf_len = sizeof("GET / HTTP/1.1\r\nHost: example.com\r\n\r\n") - 1,
           .current_state = STATE_REQ_METHOD,
           .expected_error = ERR_NONE,
-          .expected_state = STATE_HEADER_END,
+          .expected_state = STATE_DONE,
       },
       {
           .name = "with 1 byte at a time: method -> uri",
           .buf = "GET /aaaaaaa",
-          .buf_len = 12,
+          .buf_len = sizeof("GET /aaaaaaa") - 1,
           .current_state = STATE_REQ_METHOD,
           .expected_error = ERR_MORE_DATA_NEEDED,
           .expected_state = STATE_REQ_URI,
@@ -520,7 +522,7 @@ test_parse_chunk_state_transition(test_ctx_t *ctx)
       {
           .name = "with 1 byte at a time: uri -> version",
           .buf = "GET /www HTTP/1.",
-          .buf_len = 16,
+          .buf_len = sizeof("GET /www HTTP/1.") - 1,
           .current_state = STATE_REQ_METHOD,
           .expected_error = ERR_MORE_DATA_NEEDED,
           .expected_state = STATE_REQ_VERSION,
@@ -528,7 +530,7 @@ test_parse_chunk_state_transition(test_ctx_t *ctx)
       {
           .name = "with 1 byte at a time: version -> header key",
           .buf = "GET / HTTP/1.1\r\n",
-          .buf_len = 16,
+          .buf_len = sizeof("GET / HTTP/1.1\r\n") - 1,
           .current_state = STATE_REQ_METHOD,
           .expected_error = ERR_MORE_DATA_NEEDED,
           .expected_state = STATE_HEADER_KEY,
@@ -536,7 +538,7 @@ test_parse_chunk_state_transition(test_ctx_t *ctx)
       {
           .name = "with 1 byte at a time, error: unknown method",
           .buf = "UNKNOWN / HTTP/1.1\r\n",
-          .buf_len = 20,
+          .buf_len = sizeof("UNKNOWN / HTTP/1.1\r\n") - 1,
           .current_state = STATE_REQ_METHOD,
           .expected_error = ERR_HTTP_PARSE_FAILED,
           .expected_state = STATE_ERROR,
@@ -544,7 +546,7 @@ test_parse_chunk_state_transition(test_ctx_t *ctx)
       {
           .name = "with 1 byte at a time, error: invalid version",
           .buf = "GET / HTTP/2.0\r\n",
-          .buf_len = 16,
+          .buf_len = sizeof("GET / HTTP/2.0\r\n") - 1,
           .current_state = STATE_REQ_METHOD,
           .expected_error = ERR_HTTP_PARSE_FAILED,
           .expected_state = STATE_ERROR,
@@ -552,7 +554,7 @@ test_parse_chunk_state_transition(test_ctx_t *ctx)
       {
           .name = "with 1 byte at a time, error: single CR",
           .buf = "GET / HTTP/1.1\raaa",
-          .buf_len = 18,
+          .buf_len = sizeof("GET / HTTP/1.1\raaa") - 1,
           .current_state = STATE_REQ_METHOD,
           .expected_error = ERR_HTTP_PARSE_FAILED,
           .expected_state = STATE_ERROR,
@@ -620,7 +622,7 @@ test_parse_chunk_parse_method(test_ctx_t *ctx)
       {
           .name = "success: GET method",
           .buf = "GET /aaaaaaa HTTP/1.1\r\n\r\n",
-          .buf_len = 25,
+          .buf_len = sizeof("GET /aaaaaaa HTTP/1.1\r\n\r\n") - 1,
           .expected_error = ERR_NONE,
           .expected_method = HTTP_METHOD_GET,
           .expected_method_len = 3,
@@ -628,7 +630,7 @@ test_parse_chunk_parse_method(test_ctx_t *ctx)
       {
           .name = "success: POST method",
           .buf = "POST /aaaaaaa HTTP/1.1\r\n\r\n",
-          .buf_len = 26,
+          .buf_len = sizeof("POST /aaaaaaa HTTP/1.1\r\n\r\n") - 1,
           .expected_error = ERR_NONE,
           .expected_method = HTTP_METHOD_POST,
           .expected_method_len = 4,
@@ -636,7 +638,7 @@ test_parse_chunk_parse_method(test_ctx_t *ctx)
       {
           .name = "error: unknown method",
           .buf = "UNKNOWN /aaaaaaa HTTP/1.1\r\n\r\n",
-          .buf_len = 29,
+          .buf_len = sizeof("UNKNOWN /aaaaaaa HTTP/1.1\r\n\r\n") - 1,
           .expected_error = ERR_HTTP_PARSE_FAILED,
           .expected_method = HTTP_METHOD_GET, // dummy value
           .expected_method_len = 0,
@@ -694,7 +696,7 @@ test_parse_chunk_parse_uri(test_ctx_t *ctx)
       {
           .name = "success: simple uri",
           .buf = "GET /aaaaaaa HTTP/1.1\r\n\r\n",
-          .buf_len = 26,
+          .buf_len = sizeof("GET /aaaaaaa HTTP/1.1\r\n\r\n") - 1,
           .expected_error = ERR_NONE,
           .expected_uri = "/aaaaaaa",
           .expected_uri_len = 8,
@@ -702,7 +704,7 @@ test_parse_chunk_parse_uri(test_ctx_t *ctx)
       {
           .name = "success: complex uri",
           .buf = "GET /path/to/resource?query=param HTTP/1.1\r\n\r\n",
-          .buf_len = 46,
+          .buf_len = sizeof("GET /path/to/resource?query=param HTTP/1.1\r\n\r\n") - 1,
           .expected_error = ERR_NONE,
           .expected_uri = "/path/to/resource?query=param",
           .expected_uri_len = 29,
@@ -710,7 +712,7 @@ test_parse_chunk_parse_uri(test_ctx_t *ctx)
       {
           .name = "error: no uri",
           .buf = "GET  HTTP/1.1\r\n\r\n",
-          .buf_len = 17,
+          .buf_len = sizeof("GET  HTTP/1.1\r\n\r\n") - 1,
           .expected_error = ERR_HTTP_PARSE_FAILED,
           .expected_uri = NULL,
           .expected_uri_len = 0,
@@ -718,7 +720,7 @@ test_parse_chunk_parse_uri(test_ctx_t *ctx)
       {
           .name = "error: too many spaces before uri",
           .buf = "GET    / HTTP/1.1\r\n\r\n",
-          .buf_len = 21,
+          .buf_len = sizeof("GET    / HTTP/1.1\r\n\r\n") - 1,
           .expected_error = ERR_HTTP_PARSE_FAILED,
           .expected_uri = NULL,
           .expected_uri_len = 0,
@@ -726,7 +728,7 @@ test_parse_chunk_parse_uri(test_ctx_t *ctx)
       {
           .name = "error: unexpected CR",
           .buf = "GET \raa HTTP/1.1\r\r\n",
-          .buf_len = 19,
+          .buf_len = sizeof("GET \raa HTTP/1.1\r\r\n") - 1,
           .expected_error = ERR_HTTP_PARSE_FAILED,
           .expected_uri = NULL,
           .expected_uri_len = 0,
@@ -734,7 +736,7 @@ test_parse_chunk_parse_uri(test_ctx_t *ctx)
       {
           .name = "error: unexpected LF",
           .buf = "GET \naa HTTP/1.1\n\r\n",
-          .buf_len = 19,
+          .buf_len = sizeof("GET \naa HTTP/1.1\n\r\n") - 1,
           .expected_error = ERR_HTTP_PARSE_FAILED,
           .expected_uri = NULL,
           .expected_uri_len = 0,
@@ -797,28 +799,28 @@ test_parse_chunk_parse_version(test_ctx_t *ctx)
       {
           .name = "success: HTTP/1.0",
           .buf = "GET / HTTP/1.0\r\n\r\n",
-          .buf_len = 18,
+          .buf_len = sizeof("GET / HTTP/1.0\r\n\r\n") - 1,
           .expected_error = ERR_NONE,
           .expected_version = HTTP_VERSION_1_0,
       },
       {
           .name = "success: HTTP/1.1",
           .buf = "GET / HTTP/1.1\r\n\r\n",
-          .buf_len = 18,
+          .buf_len = sizeof("GET / HTTP/1.1\r\n\r\n") - 1,
           .expected_error = ERR_NONE,
           .expected_version = HTTP_VERSION_1_1,
       },
       {
           .name = "error: invalid version",
           .buf = "GET / HTTP/2.0\r\n\r\n",
-          .buf_len = 18,
+          .buf_len = sizeof("GET / HTTP/2.0\r\n\r\n") - 1,
           .expected_error = ERR_HTTP_PARSE_FAILED,
           .expected_version = HTTP_VERSION_1_0, // dummy value
       },
       {
           .name = "error: not http version",
           .buf = "GET / SOMETEXT\r\n\r\n",
-          .buf_len = 18,
+          .buf_len = sizeof("GET / SOMETEXT\r\n\r\n") - 1,
           .expected_error = ERR_HTTP_PARSE_FAILED,
           .expected_version = HTTP_VERSION_1_0, // dummy value
       }};
@@ -877,7 +879,7 @@ test_parse_chunk_parse_headers(test_ctx_t *ctx)
       {
           .name = "success: single header",
           .buf = "GET / HTTP/1.1\r\nHost: example.com\r\n\r\n",
-          .buf_len = 37,
+          .buf_len = sizeof("GET / HTTP/1.1\r\nHost: example.com\r\n\r\n") - 1,
           .expected_error = ERR_NONE,
           .expected_headers = {
               {
@@ -892,7 +894,7 @@ test_parse_chunk_parse_headers(test_ctx_t *ctx)
       {
           .name = "success: multiple headers",
           .buf = "GET / HTTP/1.1\r\nHost: example.com\r\nUser-Agent: TestAgent\r\n\r\n",
-          .buf_len = 60,
+          .buf_len = sizeof("GET / HTTP/1.1\r\nHost: example.com\r\nUser-Agent: TestAgent\r\n\r\n") - 1,
           .expected_error = ERR_NONE,
           .expected_headers = {
               {
@@ -913,7 +915,7 @@ test_parse_chunk_parse_headers(test_ctx_t *ctx)
       {
           .name = "success: header with no whitespace after colon",
           .buf = "GET / HTTP/1.1\r\nHost:example.com\r\n\r\n",
-          .buf_len = 36,
+          .buf_len = sizeof("GET / HTTP/1.1\r\nHost:example.com\r\n\r\n") - 1,
           .expected_error = ERR_NONE,
           .expected_headers = {
               {
@@ -928,7 +930,7 @@ test_parse_chunk_parse_headers(test_ctx_t *ctx)
       {
           .name = "success: header with whitespace after colon",
           .buf = "GET / HTTP/1.1\r\nHost:   example.com\r\n\r\n",
-          .buf_len = 40,
+          .buf_len = sizeof("GET / HTTP/1.1\r\nHost:   example.com\r\n\r\n") - 1,
           .expected_error = ERR_NONE,
           .expected_headers = {
               {
@@ -943,7 +945,7 @@ test_parse_chunk_parse_headers(test_ctx_t *ctx)
       {
           .name = "success: whitespace after header value: stripping whitespace",
           .buf = "GET / HTTP/1.1\r\nHost: example.com   \n\r\n\r\n",
-          .buf_len = 40,
+          .buf_len = sizeof("GET / HTTP/1.1\r\nHost: example.com   \n\r\n\r\n") - 1,
           .expected_error = ERR_NONE,
           .expected_headers = {
               {
@@ -958,7 +960,7 @@ test_parse_chunk_parse_headers(test_ctx_t *ctx)
       {
           .name = "success: whitespace in header value",
           .buf = "GET / HTTP/1.1\r\nAuthorization: Bearer token with spaces\r\n\r\n",
-          .buf_len = 59,
+          .buf_len = sizeof("GET / HTTP/1.1\r\nAuthorization: Bearer token with spaces\r\n\r\n") - 1,
           .expected_error = ERR_NONE,
           .expected_headers = {
               {
@@ -973,21 +975,21 @@ test_parse_chunk_parse_headers(test_ctx_t *ctx)
       {
           .name = "error: malformed header",
           .buf = "GET / HTTP/1.1\r\nHost example.com\r\n\r\n",
-          .buf_len = 46,
+          .buf_len = sizeof("GET / HTTP/1.1\r\nHost example.com\r\n\r\n") - 1,
           .expected_error = ERR_HTTP_PARSE_FAILED,
           .expected_header_count = 0,
       },
       {
           .name = "error: whitespace in header name",
           .buf = "GET / HTTP/1.1\r\nHo st: example.com\r\n\r\n",
-          .buf_len = 38,
+          .buf_len = sizeof("GET / HTTP/1.1\r\nHo st: example.com\r\n\r\n") - 1,
           .expected_error = ERR_HTTP_PARSE_FAILED,
           .expected_header_count = 0,
       },
       {
           .name = "error: unexpected CR in header",
           .buf = "GET / HTTP/1.1\r\nHost: example.com\r\r\n\r\n",
-          .buf_len = 38,
+          .buf_len = sizeof("GET / HTTP/1.1\r\nHost: example.com\r\r\n\r\n") - 1,
           .expected_error = ERR_HTTP_PARSE_FAILED,
           .expected_header_count = 0,
       },
@@ -1039,5 +1041,144 @@ test_parse_chunk_parse_headers(test_ctx_t *ctx)
 
 #undef TEST_MAX_HEADER_COUNT
 
+  ctx->indent -= PREFACE_INDENT;
+}
+
+void
+test_parse_chunk_body(test_ctx_t *ctx)
+{
+  PRINT_TEST_PREFACE("test_parse_chunk_body");
+  ctx->indent += PREFACE_INDENT;
+
+  struct test_case
+  {
+    const char *name;
+    const char *headers;
+    size_t body_len;
+    size_t chunk_size;
+    error_code expected_error;
+    http_status expected_status;
+    size_t expected_body_len;
+  } test_cases[] = {
+      {"body in one chunk", "Content-Length: 7\r\n", 7, 0, ERR_NONE, HTTP_STATUS_OK, 7},
+      {"one byte at a time", "Content-Length: 7\r\n", 7, 1, ERR_NONE, HTTP_STATUS_OK, 7},
+      {"split body", "Content-Length: 100\r\n", 100, 13, ERR_NONE, HTTP_STATUS_OK, 100},
+      {"split at header end", "Content-Length: 7\r\n", 7, 38, ERR_NONE, HTTP_STATUS_OK, 7},
+      {"LF headers", "Content-Length: 7\n", 7, 1, ERR_NONE, HTTP_STATUS_OK, 7},
+      {"no body", "", 0, 1, ERR_NONE, HTTP_STATUS_OK, 0},
+      {"zero length", "Content-Length: 0\r\n", 0, 1, ERR_NONE, HTTP_STATUS_OK, 0},
+      {"incomplete body", "Content-Length: 8\r\n", 7, 1, ERR_MORE_DATA_NEEDED, HTTP_STATUS_OK, 7},
+      {"extra bytes", "Content-Length: 7\r\n", 12, 0, ERR_NONE, HTTP_STATUS_OK, 7},
+      {"body larger than header limit", "Content-Length: 5000\r\n", 5000, 0, ERR_NONE, HTTP_STATUS_OK, 5000},
+      {"empty length", "Content-Length:\r\n", 0, 1, ERR_HTTP_PARSE_FAILED, HTTP_STATUS_BAD_REQUEST, 0},
+      {"negative length", "Content-Length: -1\r\n", 0, 1, ERR_HTTP_PARSE_FAILED, HTTP_STATUS_BAD_REQUEST, 0},
+      {"positive sign", "Content-Length: +1\r\n", 0, 0, ERR_HTTP_PARSE_FAILED, HTTP_STATUS_BAD_REQUEST, 0},
+      {"invalid digit", "Content-Length: 1x\r\n", 0, 0, ERR_HTTP_PARSE_FAILED, HTTP_STATUS_BAD_REQUEST, 0},
+      {"overflow", "Content-Length: 184467440737095516160\r\n", 0, 0, ERR_HTTP_PARSE_FAILED, HTTP_STATUS_BAD_REQUEST, 0},
+      {"duplicate length", "Content-Length: 0\r\ncontent-length: 0\r\n", 0, 1, ERR_HTTP_PARSE_FAILED, HTTP_STATUS_BAD_REQUEST, 0},
+      {"duplicate LF length", "Content-Length: 7\nContent-Length: 7\n", 0, 0, ERR_HTTP_PARSE_FAILED, HTTP_STATUS_BAD_REQUEST, 0},
+      {"transfer encoding", "Transfer-Encoding: chunked\r\n", 0, 1, ERR_HTTP_PARSE_FAILED, HTTP_STATUS_BAD_REQUEST, 0},
+      {"length and encoding", "Content-Length: 7\r\nTransfer-Encoding: chunked\r\n", 0, 0, ERR_HTTP_PARSE_FAILED, HTTP_STATUS_BAD_REQUEST, 0},
+      {"large declaration", "Content-Length: 65536\r\n", 0, 1, ERR_HTTP_PARSE_FAILED, HTTP_STATUS_CONTENT_TOO_LARGE, 0},
+  };
+
+  for (size_t i = 0; i < sizeof(test_cases) / sizeof(test_cases[0]); i++)
+  {
+    ctx->is_canceled = false;
+    struct test_case *tc = &test_cases[i];
+    http_parser_internal_state s = {0};
+    http_request_t req = {.internal = &s};
+    http_response_t response = {.status = HTTP_STATUS_OK};
+    char input[MAX_REQUEST_BYTES];
+    size_t header_len = snprintf(input, sizeof(input), "POST / HTTP/1.1\r\n%s\r\n", tc->headers);
+    // Include NUL and CR/LF: body bytes must be preserved without interpretation.
+    for (size_t j = 0; j < tc->body_len; j++)
+    {
+      input[header_len + j] = (char)(j % 256);
+    }
+    size_t len = header_len + tc->body_len;
+    size_t chunk_size = tc->chunk_size ? tc->chunk_size : len;
+    error e = {.code = ERR_MORE_DATA_NEEDED};
+    while (s.buf_len < len && e.code == ERR_MORE_DATA_NEEDED)
+    {
+      size_t count = len - s.buf_len;
+      if (count > chunk_size)
+      {
+        count = chunk_size;
+      }
+      memcpy(s.buf + s.buf_len, input + s.buf_len, count);
+      s.buf_len += count;
+      e = parse_chunk(&req, count, &response);
+    }
+    ASSERT_EQ(tc->name, tc->expected_error, e.code);
+    ASSERT_EQ(tc->name, tc->expected_status, response.status);
+    ASSERT_EQ(tc->name, tc->expected_body_len, req.body_bytes_read);
+    if (req.body_bytes_read)
+    {
+      ASSERT_EQ(tc->name, 0, memcmp(req.body, input + header_len, req.body_bytes_read));
+      ASSERT_EQ(tc->name, 1, req.body == s.buf + header_len);
+    }
+    if (e.code == ERR_NONE && req.content_length == 0)
+    {
+      ASSERT_TRUE(tc->name, req.body == NULL);
+    }
+    if (e.code == ERR_NONE)
+    {
+      ASSERT_EQ(tc->name, (parse_state)STATE_DONE, s.state);
+      ASSERT_EQ(tc->name, (error_code)ERR_NONE, parse_chunk(&req, 0, &response).code);
+    }
+    CHECK_TEST(tc->name);
+  }
+
+  struct boundary_case
+  {
+    const char *name;
+    size_t header_len;
+    size_t total_len;
+    size_t chunk_size;
+    http_status expected_status;
+  } boundaries[] = {
+      {"65535 bytes", 100, 65535, 65535, HTTP_STATUS_OK},
+      {"65535 bytes fragmented", 100, 65535, 37, HTTP_STATUS_OK},
+      {"65536 bytes", 100, 65536, 65536, HTTP_STATUS_CONTENT_TOO_LARGE},
+      {"65536 declared early", 100, 65536, 1, HTTP_STATUS_CONTENT_TOO_LARGE},
+      {"65537 declared early", 100, 65537, 1, HTTP_STATUS_CONTENT_TOO_LARGE},
+      {"4095 header bytes", 4095, 4100, 4100, HTTP_STATUS_OK},
+      {"4096 header bytes", 4096, 4100, 4100, HTTP_STATUS_REQUEST_HEADER_FIELDS_TOO_LARGE},
+      {"4096 header bytes fragmented", 4096, 4100, 1, HTTP_STATUS_REQUEST_HEADER_FIELDS_TOO_LARGE},
+  };
+  for (size_t i = 0; i < sizeof(boundaries) / sizeof(boundaries[0]); i++)
+  {
+    ctx->is_canceled = false;
+    struct boundary_case *tc = &boundaries[i];
+    http_parser_internal_state s = {0};
+    http_request_t req = {.internal = &s};
+    http_response_t response = {.status = HTTP_STATUS_OK};
+    char input[MAX_REQUEST_BYTES + 1];
+    size_t prefix = snprintf(input, sizeof(input), "POST / HTTP/1.1\r\nContent-Length: %zu\r\nX-Padding: ", tc->total_len - tc->header_len);
+    memset(input + prefix, 'a', tc->header_len - prefix - 4);
+    memcpy(input + tc->header_len - 4, "\r\n\r\n", 4);
+    memset(input + tc->header_len, 'b', tc->total_len - tc->header_len);
+    error e = {.code = ERR_MORE_DATA_NEEDED};
+    while (s.buf_len < tc->total_len && e.code == ERR_MORE_DATA_NEEDED)
+    {
+      size_t count = tc->total_len - s.buf_len;
+      if (count > tc->chunk_size)
+      {
+        count = tc->chunk_size;
+      }
+      memcpy(s.buf + s.buf_len, input + s.buf_len, count);
+      s.buf_len += count;
+      e = parse_chunk(&req, count, &response);
+    }
+    ASSERT_EQ(tc->name, tc->expected_status, response.status);
+    ASSERT_EQ(tc->name, (error_code)(tc->expected_status == HTTP_STATUS_OK ? ERR_NONE : ERR_HTTP_PARSE_FAILED), e.code);
+    if (e.code == ERR_NONE)
+    {
+      ASSERT_EQ(tc->name, tc->total_len - tc->header_len, req.body_bytes_read);
+      ASSERT_EQ(tc->name, 0, memcmp(req.body, input + tc->header_len, req.body_bytes_read));
+    }
+    CHECK_TEST(tc->name);
+  }
   ctx->indent -= PREFACE_INDENT;
 }

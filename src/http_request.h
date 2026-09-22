@@ -41,6 +41,8 @@ typedef struct http_request
 {
   connection_t *conn; // weak ref
 
+  // References internal->buf; not NUL-terminated. Valid until disposal.
+  const char *body;
   size_t body_bytes_read;
   int tmp_file_fd;
 

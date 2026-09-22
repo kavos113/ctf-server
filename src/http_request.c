@@ -45,6 +45,11 @@ parse_http_request(connection_t *conn, http_request_t *out_request)
   out_request->internal = malloc(sizeof(http_parser_internal_state));
   http_parser_internal_state *s = out_request->internal;
 
+  if (!s)
+  {
+    return (http_response_t){.status = HTTP_STATUS_INTERNAL_SERVER_ERROR};
+  }
+
   memset(s, 0, sizeof(http_parser_internal_state));
   s->state = STATE_REQ_METHOD;
 
@@ -53,7 +58,7 @@ parse_http_request(connection_t *conn, http_request_t *out_request)
     ssize_t bytes_read = recv(
         conn->fd,
         s->buf + s->buf_len,
-        MAX_HEADER_BYTES - s->buf_len,
+        sizeof(s->buf) - s->buf_len,
         0);
 
     if (bytes_read > 0)
@@ -146,31 +151,20 @@ parse_chunk(http_request_t *req, size_t read_bytes, http_response_t *out_respons
   size_t start_idx = s->buf_len - read_bytes;
   size_t end_idx = s->buf_len;
 
-  if (s->buf_len >= MAX_HEADER_BYTES)
+  if (s->state == STATE_DONE)
   {
-    s->state = STATE_ERROR;
-    error e = {
-        .code = ERR_HTTP_PARSE_FAILED,
-        .msg = "header too large"};
-    out_response->status = HTTP_STATUS_REQUEST_HEADER_FIELDS_TOO_LARGE;
-    return e;
+    return (error){.code = ERR_NONE};
   }
 
   for (size_t i = start_idx; i < end_idx; i++)
   {
     char *cur = &s->buf[i];
-    // if (*cur == '\r')
-    // {
-    //   printf("reading: \\r, state = %d\n", s->state);
-    // }
-    // else if (*cur == '\n')
-    // {
-    //   printf("reading: \\n, state = %d\n", s->state);
-    // }
-    // else
-    // {
-    //   printf("reading: %c, state = %d\n", *cur, s->state);
-    // }
+    if (s->state < STATE_BODY && i + 1 >= MAX_HEADER_BYTES)
+    {
+      s->state = STATE_ERROR;
+      out_response->status = HTTP_STATUS_REQUEST_HEADER_FIELDS_TOO_LARGE;
+      return (error){.code = ERR_HTTP_PARSE_FAILED, .msg = "header too large"};
+    }
 
     switch (s->state)
     {
@@ -301,8 +295,7 @@ parse_chunk(http_request_t *req, size_t read_bytes, http_response_t *out_respons
       }
       else if (*cur == '\n')
       {
-        s->state = STATE_HEADER_END;
-        return (error){.code = ERR_NONE};
+        s->state = STATE_BODY;
       }
       else if (*cur == ':')
       {
@@ -382,16 +375,19 @@ parse_chunk(http_request_t *req, size_t read_bytes, http_response_t *out_respons
         h->value_len = 0;
       }
 
-      if (*cur == '\r')
+      if (*cur == '\r' || *cur == '\n')
       {
-        s->state = STATE_HEADER_LF;
-        parse_header(req, h);
-      }
-      else if (*cur == '\n')
-      {
-        req->header_count++;
-        parse_header(req, h);
-        s->state = STATE_HEADER_KEY;
+        if (parse_header(req, h) < 0)
+        {
+          s->state = STATE_ERROR;
+          out_response->status = HTTP_STATUS_BAD_REQUEST;
+          return (error){.code = ERR_HTTP_PARSE_FAILED, .msg = "invalid header"};
+        }
+        s->state = *cur == '\r' ? STATE_HEADER_LF : STATE_HEADER_KEY;
+        if (*cur == '\n')
+        {
+          req->header_count++;
+        }
       }
 
       if (!is_whitespace(*cur))
@@ -421,17 +417,53 @@ parse_chunk(http_request_t *req, size_t read_bytes, http_response_t *out_respons
       break;
 
     case STATE_HEADER_END:
-      if (*cur == '\n')
+      if (*cur != '\n')
       {
+        s->state = STATE_ERROR;
+        out_response->status = HTTP_STATUS_BAD_REQUEST;
+        return (error){.code = ERR_HTTP_PARSE_FAILED, .msg = "expected LF after CR"};
+      }
+      s->state = STATE_BODY;
+      break;
+
+    case STATE_BODY:
+    {
+      size_t remaining = req->content_length - req->body_bytes_read;
+      size_t available = end_idx - i;
+      req->body_bytes_read += available < remaining ? available : remaining;
+      if (req->body_bytes_read == req->content_length)
+      {
+        s->state = STATE_DONE;
         return (error){.code = ERR_NONE};
       }
-      break;
+      return (error){.code = ERR_MORE_DATA_NEEDED, .msg = "more body data needed"};
+    }
+
+    case STATE_DONE:
+      return (error){.code = ERR_NONE};
 
     case STATE_ERROR:
       out_response->status = HTTP_STATUS_BAD_REQUEST;
       return (error){
           .code = ERR_HTTP_PARSE_FAILED,
           .msg = "parse error"};
+    }
+
+    if (s->state == STATE_BODY)
+    {
+      size_t header_bytes = i + 1;
+      if (req->content_length >= MAX_REQUEST_BYTES - header_bytes)
+      {
+        s->state = STATE_ERROR;
+        out_response->status = HTTP_STATUS_CONTENT_TOO_LARGE;
+        return (error){.code = ERR_HTTP_PARSE_FAILED, .msg = "request too large"};
+      }
+      if (req->content_length == 0)
+      {
+        s->state = STATE_DONE;
+        return (error){.code = ERR_NONE};
+      }
+      req->body = s->buf + header_bytes;
     }
   }
 
@@ -551,7 +583,7 @@ parse_version(http_request_t *req, const char *cur, size_t len)
   return -1;
 }
 
-void
+int
 parse_header(http_request_t *req, http_header_t *header)
 {
   switch (header->name[0] | 0x20)
@@ -559,11 +591,32 @@ parse_header(http_request_t *req, http_header_t *header)
   case 'c':
     if (header->name_len == 14 && strncasecmp(header->name, "Content-Length", 14) == 0)
     {
-      req->content_length = (size_t)strtoul(header->value, NULL, 10);
+      if (header->value_len == 0 || http_request_get_header(req, "Content-Length"))
+      {
+        return -1;
+      }
+      size_t value = 0;
+      for (size_t i = 0; i < header->value_len; i++)
+      {
+        unsigned char c = header->value[i];
+        if (c < '0' || c > '9' || value > (SIZE_MAX - (c - '0')) / 10)
+        {
+          return -1;
+        }
+        value = value * 10 + (c - '0');
+      }
+      req->content_length = value;
     }
     else if (header->name_len == 12 && strncasecmp(header->name, "Content-Type", 12) == 0)
     {
       req->content_type = header->value;
+    }
+    break;
+
+  case 't':
+    if (header->name_len == 17 && strncasecmp(header->name, "Transfer-Encoding", 17) == 0)
+    {
+      return -1;
     }
     break;
 
@@ -574,4 +627,5 @@ parse_header(http_request_t *req, http_header_t *header)
     }
     break;
   }
+  return 0;
 }

@@ -1,5 +1,6 @@
 #include "handler.h"
 
+#include <assert.h>
 #include <stddef.h>
 
 #include "json.h"

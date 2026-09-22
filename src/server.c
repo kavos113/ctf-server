@@ -317,8 +317,6 @@ client_handler(const server_t *srv, connection_t *conn)
   fwrite(req->uri, sizeof(char), req->uri_len, stderr);
   fprintf(stderr, "\n");
 
-  http_request_register_dispose(conn, req);
-
   if (!is_error_status(response.status))
   {
     bool is_complete = 0;

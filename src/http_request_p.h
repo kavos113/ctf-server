@@ -7,6 +7,7 @@
 #include "http_request.h"
 
 #define MAX_HEADER_BYTES                    4096
+#define MAX_REQUEST_BYTES                   (64 * 1024) // 64KB
 #define NORMALIZE_URI_TOO_MANY_QUERY_PARAMS -2
 
 typedef enum
@@ -20,13 +21,15 @@ typedef enum
   STATE_HEADER_VALUE,
   STATE_HEADER_LF,
   STATE_HEADER_END,
+  STATE_BODY,
+  STATE_DONE,
   STATE_ERROR,
 } parse_state;
 
 // char*はbufの中のポインタを指す（allocされていない）
 struct http_parser_internal_state
 {
-  char buf[MAX_HEADER_BYTES];
+  char buf[MAX_REQUEST_BYTES];
   size_t buf_len;
 
   parse_state state;
@@ -42,8 +45,9 @@ error parse_chunk(http_request_t *req, size_t read_bytes, http_response_t *out_r
 int parse_method(http_request_t *req, const char *cur);
 int parse_version(http_request_t *req, const char *cur, size_t len);
 
-// if field name is common such as "Content-Type", store to req
-void parse_header(http_request_t *req, http_header_t *header);
+// Store common headers. Returns -1 for invalid or unsupported headers.
+// req->headers[0..header_count) must contain only previously parsed headers.
+int parse_header(http_request_t *req, http_header_t *header);
 
 int normalize_uri(http_request_t *request);
 ssize_t url_decode(char *str, size_t len);
