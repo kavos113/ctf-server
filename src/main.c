@@ -1,4 +1,7 @@
 #include "app/handler.h"
+#include "app/auth.h"
+
+#include <stdio.h>
 #include "http_server.h"
 #include "server.h"
 
@@ -8,9 +11,18 @@
 int
 main()
 {
+  auth_config_t auth;
+
+  if (auth_init_from_env(&auth) != AUTH_OK)
+  {
+    fprintf(stderr, "Authentication initialization failed; check JWT configuration.\n");
+    return 1;
+  }
+
   server_t *server = create_server(PORT, MAX_CONNECTIONS);
   if (!server)
   {
+    auth_config_dispose(&auth);
     return 1;
   }
 
@@ -93,6 +105,7 @@ main()
   serve(server);
 
   destroy_server(server);
+  auth_config_dispose(&auth);
 
   return 0;
 }
