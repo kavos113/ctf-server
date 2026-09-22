@@ -8,3 +8,6 @@ test-ctf-server
 AGENTS.md
 docs_p
 node_modules
+.pnpm-store
+.agents
+.codex
