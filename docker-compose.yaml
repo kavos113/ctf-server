@@ -26,6 +26,10 @@ services:
       MARIADB_USER: root
       MARIADB_PASS: ${MARIADB_ROOT_PASSWORD}
       MARIADB_DB: ctf_server
+      JWT_KEY_HEX: ${JWT_KEY_HEX}
+      JWT_ISSUER: ${JWT_ISSUER}
+      JWT_AUDIENCE: ${JWT_AUDIENCE}
+      JWT_TTL_SECONDS: ${JWT_TTL_SECONDS:-3600}
     ports:
       - "8080:8080"
     networks:
