@@ -1,32 +1,35 @@
 <section class="challenges-page">
   <h1>問題一覧</h1>
-  <div class="toolbar">
-    <div>
-      <label for="genre">ジャンル</label>
-      <select id="genre" value.bind="genre">
-        <option value="">すべて</option>
-        <option repeat.for="item of genres" model.bind="item">${item}</option>
-      </select>
+  <p if.bind="!contest.started" class="panel" role="status">${contest.notice}</p>
+  <template if.bind="contest.started">
+    <div class="toolbar">
+      <div>
+        <label for="genre">ジャンル</label>
+        <select id="genre" value.bind="genre">
+          <option value="">すべて</option>
+          <option repeat.for="item of genres" model.bind="item">${item}</option>
+        </select>
+      </div>
+      <button class="secondary" click.trigger="refresh()" disabled.bind="pending">更新</button>
     </div>
-    <button class="secondary" click.trigger="refresh()" disabled.bind="pending">更新</button>
-  </div>
-  <p if.bind="pending" role="status">読み込み中…</p>
-  <p if.bind="error" role="alert" class="error">${error}</p>
-  <p if.bind="!pending && !error && !filtered.length" class="empty">
-    条件に一致する問題はありません。
-  </p>
-  <div class="cards">
-    <article
-      repeat.for="item of filtered"
-      class="panel challenge-card ${item.id !== undefined ? 'is-link' : ''}"
-    >
-      <span class="badge" data-genre.bind="item.genre">${item.genre || 'ジャンル未設定'}</span>
-      <h2>
-        <a if.bind="item.id !== undefined" load.bind="'/challenges/' + item.id"
-          >${item.name || '名前未設定'}</a
-        ><span else>${item.name || '名前未設定'}</span>
-      </h2>
-      <p class="creator">作成者: ${creatorName(item.creator_id)}</p>
-    </article>
-  </div>
+    <p if.bind="pending" role="status">読み込み中…</p>
+    <p if.bind="error" role="alert" class="error">${error}</p>
+    <p if.bind="!pending && !error && !filtered.length" class="empty">
+      条件に一致する問題はありません。
+    </p>
+    <div class="cards">
+      <article
+        repeat.for="item of filtered"
+        class="panel challenge-card ${item.id !== undefined ? 'is-link' : ''}"
+      >
+        <span class="badge" data-genre.bind="item.genre">${item.genre || 'ジャンル未設定'}</span>
+        <h2>
+          <a if.bind="item.id !== undefined" load.bind="'/challenges/' + item.id"
+            >${item.name || '名前未設定'}</a
+          ><span else>${item.name || '名前未設定'}</span>
+        </h2>
+        <p class="creator">作成者: ${creatorName(item.creator_id)}</p>
+      </article>
+    </div>
+  </template>
 </section>
