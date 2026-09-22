@@ -23,6 +23,13 @@ typedef struct
 
 typedef struct
 {
+  char user_id[AUTH_ID_LENGTH + 1];
+  int64_t challenge_id;
+  int64_t created_at; // UTC seconds since 1970-01-01.
+} score_answer_t;
+
+typedef struct
+{
   char id[AUTH_ID_LENGTH + 1];
   char user_id[AUTH_ID_LENGTH + 1];
   int64_t issued_at; // UTC seconds since 1970-01-01.

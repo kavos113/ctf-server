@@ -17,7 +17,7 @@ fixed_now(void *data)
 }
 
 static void
-test_contest_start_parse(test_ctx_t *ctx)
+test_contest_time_parse(test_ctx_t *ctx)
 {
   const struct
   {
@@ -62,7 +62,7 @@ test_contest_start_parse(test_ctx_t *ctx)
   {
     ctx->is_canceled = false;
     int64_t start_at = -1;
-    ASSERT_EQ(cases[i].name, cases[i].valid, contest_start_parse(cases[i].value, &start_at));
+    ASSERT_EQ(cases[i].name, cases[i].valid, contest_time_parse(cases[i].value, &start_at));
     ASSERT_EQ(cases[i].name, cases[i].expected, start_at);
     CHECK_TEST(cases[i].name);
   }
@@ -254,7 +254,7 @@ test_handle_get_own_challenges_2(test_ctx_t *ctx)
 void
 test_app_contest(test_ctx_t *ctx)
 {
-  test_contest_start_parse(ctx);
+  test_contest_time_parse(ctx);
   test_handle_get_challenges_1(ctx);
   test_handle_get_own_challenges_1(ctx);
   test_handle_get_own_challenges_2(ctx);

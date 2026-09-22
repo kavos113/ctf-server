@@ -17,8 +17,11 @@ bool bind_answers(const db_result_t *result, answer_t **out_answers, size_t *out
 // SELECT id, username, password_hash FROM users
 bool bind_users(const db_result_t *result, user_t **out_users, size_t *out_count);
 
-// Columns: user id, username, nonnegative score. No authentication secrets.
+// Columns: user id, username. Scores are initialized to zero.
 bool bind_public_users(const db_result_t *result, public_user_t **out_users, size_t *out_count);
+
+// Columns: user id, challenge id, UTC answer time as epoch seconds. Caller frees the array.
+bool bind_score_answers(const db_result_t *result, score_answer_t **out_answers, size_t *out_count);
 
 // Columns: session id, joined user id, issued_at and expires_at as UTC epoch seconds.
 // Use TIMESTAMPDIFF(SECOND, '1970-01-01', column) on UTC DATETIME columns;

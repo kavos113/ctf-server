@@ -1,5 +1,6 @@
 #include "repository.h"
 
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -201,7 +202,7 @@ bind_auth_sessions(const db_result_t *result, auth_session_t **out_sessions, siz
 }
 
 static bool
-read_score(const char *value, size_t length, int64_t *out)
+read_nonnegative_integer(const char *value, size_t length, int64_t *out)
 {
   int64_t score = 0;
 
@@ -235,7 +236,7 @@ bind_public_users(const db_result_t *result, public_user_t **out_users, size_t *
   *out_users = NULL;
   *out_count = 0;
 
-  if (!result || !result->success || !result->res || mysql_num_fields(result->res) != 3)
+  if (!result || !result->success || !result->res || mysql_num_fields(result->res) != 2)
   {
     return false;
   }
@@ -265,7 +266,7 @@ bind_public_users(const db_result_t *result, public_user_t **out_users, size_t *
     unsigned long *lengths = row ? mysql_fetch_lengths(result->res) : NULL;
 
     if (!row || !lengths || !read_auth_id(row[0], lengths[0], users[i].id) ||
-        !valid_username(row[1], lengths[1]) || !read_score(row[2], lengths[2], &users[i].score))
+        !valid_username(row[1], lengths[1]))
     {
       goto error;
     }
@@ -285,4 +286,54 @@ bind_public_users(const db_result_t *result, public_user_t **out_users, size_t *
 error:
   free_public_users(users, (size_t)count);
   return false;
+}
+
+bool
+bind_score_answers(const db_result_t *result, score_answer_t **out_answers, size_t *out_count)
+{
+  *out_answers = NULL;
+  *out_count = 0;
+
+  if (!result || !result->success || !result->res || mysql_num_fields(result->res) != 3)
+  {
+    return false;
+  }
+
+  uint64_t count = mysql_num_rows(result->res);
+
+  if (count > SIZE_MAX / sizeof(score_answer_t))
+  {
+    return false;
+  }
+
+  if (!count)
+  {
+    return true;
+  }
+
+  score_answer_t *answers = calloc((size_t)count, sizeof(*answers));
+
+  if (!answers)
+  {
+    return false;
+  }
+
+  for (size_t i = 0; i < count; i++)
+  {
+    MYSQL_ROW row = mysql_fetch_row(result->res);
+    unsigned long *lengths = row ? mysql_fetch_lengths(result->res) : NULL;
+
+    if (!row || !lengths || !read_auth_id(row[0], lengths[0], answers[i].user_id) ||
+        !read_nonnegative_integer(row[1], lengths[1], &answers[i].challenge_id) ||
+        answers[i].challenge_id < 1 || answers[i].challenge_id > INT_MAX ||
+        !read_auth_time(row[2], lengths[2], &answers[i].created_at))
+    {
+      free(answers);
+      return false;
+    }
+  }
+
+  *out_answers = answers;
+  *out_count = (size_t)count;
+  return true;
 }

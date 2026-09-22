@@ -9,6 +9,7 @@
 
 bool handle_get_users_1(http_request_context_t *ctx, db_pool_t *db, db_task_t *task, http_response_t *response);
 bool handle_get_users_2(http_request_context_t *ctx, db_pool_t *db, db_task_t *task, http_response_t *response);
+bool handle_get_users_3(http_request_context_t *ctx, db_pool_t *db, db_task_t *task, http_response_t *response);
 
 bool handle_root(struct http_request_context *ctx, db_pool_t *db, db_task_t *task, http_response_t *out_response);
 

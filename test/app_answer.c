@@ -25,6 +25,7 @@ typedef struct
   const char *name;
   const char *body;
   bool missing_body;
+  int64_t contest_end_at;
   const char *filter;
   bool duplicate_filter;
   bool empty;
@@ -168,7 +169,9 @@ run_answer_cases(
       request->query_param_count = tc->duplicate_filter ? 2 : 1;
     }
 
-    http_request_context_t context = {.request = request, .current_handler = &handlers[0]};
+    auth_runtime_t runtime = {.contest_end_at = tc->contest_end_at,
+                              .contest_end_enabled = tc->contest_end_at != 0};
+    http_request_context_t context = {.app_context = &runtime, .request = request, .current_handler = &handlers[0]};
     http_response_t response;
     bool complete = false;
     char *saved_answer = NULL;
@@ -465,6 +468,7 @@ test_handle_post_answers_4(test_ctx_t *ctx)
 {
   const answer_case cases[] = {
       {.name = "saved correct answer", .complete = true, .status = HTTP_STATUS_OK},
+      {.name = "saved correct answer after contest end", .contest_end_at = 1, .complete = true, .status = HTTP_STATUS_OK},
       {.name = "saved incorrect answer",
        .body = "{\"challenge_id\":1,\"answer\":\"wrong\"}",
        .incorrect = true,

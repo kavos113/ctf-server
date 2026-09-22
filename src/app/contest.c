@@ -22,9 +22,9 @@ read_digits(const char *value, size_t length)
 }
 
 bool
-contest_start_parse(const char *value, int64_t *start_at)
+contest_time_parse(const char *value, int64_t *timestamp)
 {
-  *start_at = 0;
+  *timestamp = 0;
 
   if (!value || !*value)
   {
@@ -102,6 +102,6 @@ contest_start_parse(const char *value, int64_t *start_at)
     return false;
   }
 
-  *start_at = parsed;
+  *timestamp = parsed;
   return true;
 }

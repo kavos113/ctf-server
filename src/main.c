@@ -16,10 +16,27 @@ int
 main()
 {
   int64_t contest_start_at;
+  const char *start_setting = getenv("CONTEST_START_AT");
 
-  if (!contest_start_parse(getenv("CONTEST_START_AT"), &contest_start_at))
+  if (!contest_time_parse(start_setting, &contest_start_at))
   {
     fprintf(stderr, "Invalid CONTEST_START_AT; use an ISO 8601 timestamp with timezone.\n");
+    return 1;
+  }
+
+  int64_t contest_end_at;
+  const char *end_setting = getenv("CONTEST_END_AT");
+  bool contest_end_enabled = end_setting && *end_setting;
+
+  if (!contest_time_parse(end_setting, &contest_end_at))
+  {
+    fprintf(stderr, "Invalid CONTEST_END_AT; use an ISO 8601 timestamp with timezone.\n");
+    return 1;
+  }
+
+  if (start_setting && *start_setting && contest_end_enabled && contest_end_at <= contest_start_at)
+  {
+    fprintf(stderr, "CONTEST_END_AT must be later than CONTEST_START_AT.\n");
     return 1;
   }
 
@@ -49,10 +66,12 @@ main()
   }
 
   auth_runtime_t runtime = {.config = &auth, .password_worker = server->password_worker,
-                            .contest_start_at = contest_start_at};
+                            .contest_start_at = contest_start_at, .contest_end_at = contest_end_at,
+                            .contest_end_enabled = contest_end_enabled};
   server->http_server->app_context = &runtime;
 
-  http_handler_t get_users_2_handler = {handle_get_users_2, NULL};
+  http_handler_t get_users_3_handler = {handle_get_users_3, NULL};
+  http_handler_t get_users_2_handler = {handle_get_users_2, &get_users_3_handler};
   http_handler_t get_users_1_handler = {handle_get_users_1, &get_users_2_handler};
 
   http_handler_t root_handler = {handle_root, NULL};
