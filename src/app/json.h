@@ -5,6 +5,9 @@
 #include <stddef.h>
 
 #include "model.h"
+#include "model_request.h"
+
+int json_to_create_challenge_request(const char *json, size_t len, create_challenge_request_t *request);
 
 int json_to_challenge(const char *json_str, size_t json_len, challenge_t *challenge);
 void json_to_challenges(const char *json_str, size_t json_len, challenge_t **challenges, size_t *count);
