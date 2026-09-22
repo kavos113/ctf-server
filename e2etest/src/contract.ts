@@ -164,6 +164,15 @@ export class Contract {
 
     this.validate(media.schema as OpenAPIV3.SchemaObject, value, `${label} body`);
   }
+
+  expectsJson(test: RequestCase, status: number): boolean {
+    const responses = this.operation(test).responses;
+    const response = (responses[String(status)] ??
+      responses[`${Math.floor(status / 100)}XX`] ??
+      responses.default) as OpenAPIV3.ResponseObject | undefined;
+
+    return Boolean(response?.content?.['application/json']);
+  }
 }
 
 export function baseUrl(value: string | undefined): URL {
