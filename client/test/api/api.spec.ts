@@ -107,7 +107,7 @@ describe('API', () => {
   it('login and answer reject missing decision fields', async () => {
     const api = new Api(new HttpClient(new SessionService(), async () => new Response('{}')));
 
-    await expect(api.login({})).rejects.toThrow('token');
+    await expect(api.login({ username: 'Alice', password: 'password' })).rejects.toThrow('token');
     await expect(api.answer(1, 'f')).rejects.toThrow('正誤');
   });
 });
