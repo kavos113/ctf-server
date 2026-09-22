@@ -10,6 +10,12 @@
 void *__real_calloc(size_t count, size_t size);
 static int fail_calloc_after = -1;
 
+void
+test_set_calloc_failure(int after)
+{
+  fail_calloc_after = after;
+}
+
 void *
 __wrap_calloc(size_t count, size_t size)
 {
