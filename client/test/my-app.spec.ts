@@ -102,6 +102,8 @@ describe('application', () => {
 
     const input = fixture.appHost.querySelector<HTMLInputElement>('#answer')!;
 
+    expect(fixture.appHost.querySelector('.solved')).toBeNull();
+
     input.value = 'flag{welcome}';
     input.dispatchEvent(new Event('input', { bubbles: true }));
     input.closest('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
@@ -110,6 +112,7 @@ describe('application', () => {
     );
 
     expect(store.answers.filter((item) => item.user_id === 'alice')).toHaveLength(1);
+    expect(fixture.appHost.querySelector('.solved')?.textContent).toContain('正解済み');
 
     await router.load('me/answers');
 
@@ -118,6 +121,14 @@ describe('application', () => {
     await router.load('answers');
 
     expect(fixture.appHost.textContent).not.toContain('flag{welcome}');
+
+    await router.load('challenges/1');
+
+    expect(fixture.appHost.querySelector('.solved')?.textContent).toContain('正解済み');
+
+    await router.load('challenges/2');
+
+    expect(fixture.appHost.querySelector('.solved')).toBeNull();
 
     session.clear();
     await router.load('me/answers');

@@ -21,6 +21,7 @@
         <button type="submit" disabled.bind="busy">${busy ? '判定中…' : '解答する'}</button>
       </form>
       <p else><a href="#/login">ログイン</a>して解答してください。</p>
+      <p if.bind="solved" role="status" class="solved">この問題は正解済みです。</p>
       <p role="status" class="result">${message}</p>
     </section>
     <p if.bind="historyError" role="alert" class="error">

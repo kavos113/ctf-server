@@ -10,8 +10,17 @@ export class DetailPage extends PageState {
   own: Answer[] = [];
   publicAnswers: CorrectAnswer[] = [];
   historyError = '';
+  private submittedCorrectly = false;
   private historyGeneration = 0;
   formatDate = formatDate;
+
+  get solved() {
+    return (
+      this.allowed &&
+      (this.submittedCorrectly ||
+        this.own.some((item) => item.challenge_id === this.id && item.correct === true))
+    );
+  }
 
   loading(params: Record<string, unknown>) {
     this.reset();
@@ -26,6 +35,7 @@ export class DetailPage extends PageState {
     this.answer = '';
     this.own = [];
     this.message = '';
+    this.submittedCorrectly = false;
   }
 
   async refresh() {
@@ -104,6 +114,7 @@ export class DetailPage extends PageState {
       }
 
       this.message = result.correct ? '正解' : '不正解';
+      this.submittedCorrectly ||= result.correct === true;
       this.answer = '';
 
       await this.refreshHistory();

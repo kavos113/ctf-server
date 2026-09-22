@@ -7,6 +7,11 @@
   color: var(--color-accent);
 }
 
+.detail-page .solved {
+  color: var(--color-accent);
+  font-weight: 700;
+}
+
 .detail-page code {
   overflow-wrap: anywhere;
 }
