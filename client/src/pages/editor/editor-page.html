@@ -9,14 +9,63 @@
       <fieldset disabled.bind="busy">
         <legend>問題の内容</legend>
         <label for="name">問題名</label><input id="name" value.bind="form.name" required />
-        <label for="description">説明</label
-        ><textarea
-          id="description"
-          value.bind="form.description"
-          rows="8"
-          aria-describedby="description-help"
-        ></textarea>
-        <p id="description-help" class="muted">Markdown形式で入力できます。</p>
+        <div
+          class="description-tabs"
+          role="tablist"
+          aria-label="説明"
+          keydown.trigger="descriptionTabKeydown($event)"
+        >
+          <button
+            id="description-tab-edit"
+            type="button"
+            role="tab"
+            aria-controls="description-edit"
+            aria-selected.bind="descriptionTab === 'edit'"
+            tabindex.bind="descriptionTab === 'edit' ? 0 : -1"
+            click.trigger="selectDescriptionTab('edit')"
+          >
+            編集
+          </button>
+          <button
+            id="description-tab-preview"
+            type="button"
+            role="tab"
+            aria-controls="description-preview"
+            aria-selected.bind="descriptionTab === 'preview'"
+            tabindex.bind="descriptionTab === 'preview' ? 0 : -1"
+            click.trigger="selectDescriptionTab('preview')"
+          >
+            プレビュー
+          </button>
+        </div>
+        <div
+          id="description-edit"
+          role="tabpanel"
+          aria-labelledby="description-tab-edit"
+          show.bind="descriptionTab === 'edit'"
+        >
+          <label for="description">説明</label>
+          <textarea
+            id="description"
+            value.bind="form.description"
+            rows="8"
+            aria-describedby="description-help"
+          ></textarea>
+          <p id="description-help" class="muted">Markdown形式で入力できます。</p>
+        </div>
+        <div
+          id="description-preview"
+          role="tabpanel"
+          aria-labelledby="description-tab-preview"
+          tabindex="0"
+          show.bind="descriptionTab === 'preview'"
+        >
+          <div
+            if.bind="descriptionTab === 'preview'"
+            class="markdown-content description-preview"
+            innerhtml.bind="previewHtml"
+          ></div>
+        </div>
         <label for="genre">ジャンル</label>
         <select id="genre" value.bind="form.genre" required>
           <option model.bind="undefined">選択してください</option>

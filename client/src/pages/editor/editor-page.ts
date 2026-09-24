@@ -1,5 +1,6 @@
 import type { ChallengeInput } from '../../api/api';
 import { genres } from '../../api/genre';
+import { renderMarkdown } from '../../services/markdown';
 import { PageState, parseId } from '../shared/page-state';
 import './editor-page.css';
 
@@ -10,6 +11,40 @@ export class EditorPage extends PageState {
   ready = false;
   confirmDelete = false;
   form: Partial<ChallengeInput> = {};
+  descriptionTab: 'edit' | 'preview' = 'edit';
+
+  get previewHtml() {
+    return renderMarkdown(this.form.description);
+  }
+
+  selectDescriptionTab(tab: 'edit' | 'preview') {
+    if (!this.busy) {
+      this.descriptionTab = tab;
+    }
+  }
+
+  descriptionTabKeydown(event: KeyboardEvent) {
+    if (this.busy || !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
+      return true;
+    }
+
+    event.preventDefault();
+    const tab =
+      event.key === 'Home'
+        ? 'edit'
+        : event.key === 'End'
+          ? 'preview'
+          : this.descriptionTab === 'edit'
+            ? 'preview'
+            : 'edit';
+
+    this.selectDescriptionTab(tab);
+    (event.currentTarget as HTMLElement)
+      .querySelector<HTMLElement>(`#description-tab-${tab}`)
+      ?.focus();
+
+    return true;
+  }
 
   canLoad() {
     return this.allowed ? true : 'login';
@@ -28,6 +63,7 @@ export class EditorPage extends PageState {
     this.form = {};
     this.ready = false;
     this.confirmDelete = false;
+    this.descriptionTab = 'edit';
   }
 
   async refresh() {

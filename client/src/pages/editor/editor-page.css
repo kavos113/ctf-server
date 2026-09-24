@@ -2,3 +2,30 @@
   max-width: 680px;
   margin-inline: auto;
 }
+
+.editor-page .description-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.editor-page .description-tabs button {
+  color: var(--color-muted);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+
+.editor-page .description-tabs [aria-selected='true'] {
+  color: var(--color-accent);
+  border-bottom: 3px solid var(--color-accent);
+  font-weight: 700;
+}
+
+.editor-page .description-preview {
+  min-height: 12rem;
+  padding: 1rem;
+  margin-block: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.4rem;
+}

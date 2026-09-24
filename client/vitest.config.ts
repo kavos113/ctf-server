@@ -5,6 +5,7 @@ import aurelia from '@aurelia/vite-plugin';
 export default defineConfig({
   plugins: [aurelia({ useDev: true })],
   test: {
+    env: { VITE_CONTEST_START_AT: '' },
     environment: 'jsdom',
     watch: false,
     root: fileURLToPath(new URL('./', import.meta.url)),

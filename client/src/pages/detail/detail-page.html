@@ -18,7 +18,7 @@
       >
       <span class="creator">作成者: ${creatorName}</span>
     </div>
-    <div class="description panel" innerhtml.bind="descriptionHtml"></div>
+    <div class="description panel markdown-content" innerhtml.bind="descriptionHtml"></div>
     <section class="panel">
       <h2>フラグを提出</h2>
       <form if.bind="allowed" submit.trigger="submit()">
